@@ -1,0 +1,6 @@
+{
+  "name": "LessonFlow",
+  "description": "Teacher lesson-planning workspace and data-entry automation assistant for structured weekly blocks and plain-text clipboard.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
