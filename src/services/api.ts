@@ -14,13 +14,15 @@ import {
   ClipboardItem,
   WeeklyProgressDTO,
   ExtensionLessonRecordDTO,
-  AiParsedLesson,
+  ParsedWeeklyImport,
+  ImportRecord,
+  ImportSourceType,
   RecordStatus,
   AutomationStatus,
 } from '../types/index.js';
 
 class ApiClient {
-  private activeUserId: string = 'usr_sarah_parker';
+  private activeUserId: string = 'usr_default';
 
   public setActiveUserId(userId: string) {
     this.activeUserId = userId;
@@ -304,12 +306,74 @@ class ApiClient {
     });
   }
 
-  // --- AI Parser ---
+  // --- Document & Shared Link Import Workflow ---
 
-  public async parseLessonWithAi(rawText: string): Promise<{ success: boolean; parsed: AiParsedLesson }> {
-    return this.request('/api/ai/parse', {
+  public async inspectUrl(url: string): Promise<{
+    valid: boolean;
+    sourceType: ImportSourceType | 'unknown';
+    docId?: string;
+    isPublished?: boolean;
+    title?: string;
+    accessible?: boolean;
+    error?: string;
+    hint?: string;
+  }> {
+    return this.request('/api/import/inspect-url', {
       method: 'POST',
-      body: JSON.stringify({ rawText }),
+      body: JSON.stringify({ url }),
+    });
+  }
+
+  public async parseImport(params: {
+    url?: string;
+    sourceType?: ImportSourceType;
+    pdfBase64?: string;
+    rawText?: string;
+    fileName?: string;
+  }): Promise<{
+    success: boolean;
+    parsed: ParsedWeeklyImport;
+    extractedDoc?: {
+      title: string;
+      sourceType: ImportSourceType;
+      sourceUrl?: string;
+      stats?: any;
+    };
+    error?: string;
+    errorType?: string;
+    hint?: string;
+  }> {
+    return this.request('/api/import/parse', {
+      method: 'POST',
+      body: JSON.stringify(params),
+    });
+  }
+
+  public async commitImport(importData: ParsedWeeklyImport): Promise<{ success: boolean; week: Week; recordsCount: number }> {
+    return this.request('/api/import/commit', {
+      method: 'POST',
+      body: JSON.stringify({ importData }),
+    });
+  }
+
+  public async reimport(importId: string): Promise<{
+    success: boolean;
+    parsed: ParsedWeeklyImport;
+    extractedDoc?: any;
+    error?: string;
+  }> {
+    return this.request(`/api/import/reimport/${importId}`, {
+      method: 'POST',
+    });
+  }
+
+  public async listImportHistory(): Promise<ImportRecord[]> {
+    return this.request('/api/import/history');
+  }
+
+  public async deleteImportHistory(importId: string): Promise<{ success: boolean }> {
+    return this.request(`/api/import/history/${importId}`, {
+      method: 'DELETE',
     });
   }
 

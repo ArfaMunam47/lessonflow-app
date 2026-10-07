@@ -27,6 +27,10 @@ import {
   ClipboardPlus,
   Save,
   Check,
+  ExternalLink,
+  RefreshCw,
+  FileText,
+  BookOpen,
 } from 'lucide-react';
 
 interface LessonEditorProps {
@@ -49,6 +53,7 @@ export const LessonEditor: React.FC<LessonEditorProps> = ({ record }) => {
     copyToSystemClipboard,
     addClipboardItem,
     extractRecordToClipboard,
+    initiateImportFromUrl,
     saveStatus,
   } = useApp();
 
@@ -89,10 +94,10 @@ export const LessonEditor: React.FC<LessonEditorProps> = ({ record }) => {
   };
 
   return (
-    <div className="bg-white border border-gray-200 rounded-lg shadow-xs overflow-hidden">
+    <div className="bg-white border border-slate-300 rounded-2xl shadow-xs overflow-hidden">
       
       {/* Top Navigation & Status Bar */}
-      <div className="bg-gray-50 border-b border-gray-200 px-4 py-2.5 flex flex-wrap items-center justify-between gap-3">
+      <div className="bg-slate-50 border-b border-slate-200 px-5 py-3 flex flex-wrap items-center justify-between gap-3">
         {/* Record index and Fast Navigation */}
         <div className="flex items-center space-x-2">
           <button
@@ -100,7 +105,7 @@ export const LessonEditor: React.FC<LessonEditorProps> = ({ record }) => {
             onClick={prevRecord}
             disabled={isFirst}
             title="Previous record (Alt + Left)"
-            className="p-1.5 rounded-md border border-gray-300 bg-white text-gray-700 hover:bg-gray-100 disabled:opacity-30 disabled:hover:bg-white"
+            className="p-1.5 rounded-xl border border-slate-300 bg-white text-slate-700 hover:bg-slate-100 disabled:opacity-30 disabled:hover:bg-white transition-colors"
           >
             <ChevronLeft className="w-4 h-4" />
           </button>
@@ -110,7 +115,7 @@ export const LessonEditor: React.FC<LessonEditorProps> = ({ record }) => {
             onClick={nextRecord}
             disabled={isLast}
             title="Next record (Alt + Right)"
-            className="p-1.5 rounded-md border border-gray-300 bg-white text-gray-700 hover:bg-gray-100 disabled:opacity-30 disabled:hover:bg-white"
+            className="p-1.5 rounded-xl border border-slate-300 bg-white text-slate-700 hover:bg-slate-100 disabled:opacity-30 disabled:hover:bg-white transition-colors"
           >
             <ChevronRight className="w-4 h-4" />
           </button>
@@ -119,7 +124,7 @@ export const LessonEditor: React.FC<LessonEditorProps> = ({ record }) => {
           <select
             value={record.id}
             onChange={e => selectRecord(e.target.value)}
-            className="text-xs font-semibold bg-white border border-gray-300 rounded-md py-1.5 px-2.5 text-gray-900 focus:outline-hidden"
+            className="text-xs font-semibold bg-white border border-slate-300 rounded-xl py-1.5 px-3 text-slate-900 focus:outline-hidden"
           >
             {records.map((r, idx) => (
               <option key={r.id} value={r.id}>
@@ -128,7 +133,7 @@ export const LessonEditor: React.FC<LessonEditorProps> = ({ record }) => {
             ))}
           </select>
 
-          <span className="text-2xs text-gray-500 hidden sm:inline">
+          <span className="text-2xs text-slate-500 hidden sm:inline">
             Record {currentIndex + 1} of {records.length}
           </span>
         </div>
@@ -136,7 +141,7 @@ export const LessonEditor: React.FC<LessonEditorProps> = ({ record }) => {
         {/* Record Status and Actions */}
         <div className="flex items-center space-x-2">
           {/* Quick Mark Complete Checkbox */}
-          <label className="flex items-center space-x-1.5 cursor-pointer text-xs font-semibold text-gray-700 bg-white border border-gray-300 px-2.5 py-1.5 rounded-md hover:bg-gray-50">
+          <label className="flex items-center space-x-1.5 cursor-pointer text-xs font-semibold text-slate-700 bg-white border border-slate-300 px-3 py-1.5 rounded-xl hover:bg-slate-50 transition-colors">
             <input
               type="checkbox"
               checked={record.completed}
@@ -269,6 +274,48 @@ export const LessonEditor: React.FC<LessonEditorProps> = ({ record }) => {
             />
           </div>
         </div>
+
+        {/* Source Document Traceability (Google Doc / PDF origin) */}
+        {(record.sourceUrl || record.sourceFileName) && (
+          <div className="flex flex-wrap items-center justify-between gap-2 px-3.5 py-2 bg-blue-50/60 border border-blue-200/80 rounded-xl text-2xs text-blue-900">
+            <div className="flex items-center space-x-2 min-w-0">
+              {record.sourceType === 'google_doc' ? (
+                <BookOpen className="w-3.5 h-3.5 text-blue-600 shrink-0" />
+              ) : (
+                <FileText className="w-3.5 h-3.5 text-slate-600 shrink-0" />
+              )}
+              <span className="font-semibold text-slate-600">Imported from:</span>
+              <span className="font-bold text-blue-950 truncate max-w-xs">
+                {record.sourceFileName || (record.sourceType === 'google_doc' ? 'Google Document' : 'Document')}
+              </span>
+            </div>
+
+            <div className="flex items-center space-x-2 shrink-0">
+              {record.sourceUrl && (
+                <>
+                  <a
+                    href={record.sourceUrl}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="inline-flex items-center font-bold text-blue-700 hover:text-blue-900 hover:underline"
+                  >
+                    Open Source Doc
+                    <ExternalLink className="w-2.5 h-2.5 ml-1" />
+                  </a>
+                  <span className="text-blue-300">&bull;</span>
+                  <button
+                    type="button"
+                    onClick={() => initiateImportFromUrl(record.sourceUrl!)}
+                    className="inline-flex items-center font-bold text-indigo-700 hover:text-indigo-900 hover:underline"
+                  >
+                    <RefreshCw className="w-2.5 h-2.5 mr-1" />
+                    Re-import
+                  </button>
+                </>
+              )}
+            </div>
+          </div>
+        )}
 
         {/* Core Lesson Fields: Target and Activities */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

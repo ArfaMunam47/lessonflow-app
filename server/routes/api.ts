@@ -1,21 +1,22 @@
 /**
  * LessonFlow Express API Router
  * 
- * Provides all endpoints for:
- * - User and Teacher Profile management
- * - Weekly workspace management and week duplication
- * - Lesson record CRUD, fast navigation, and duplication
- * - Dynamic block builder (batch create N, duplicate, reorder, delete)
- * - Block template configuration
- * - Plain-text clipboard gallery, normalization, and copy queue
- * - AI unstructured text parsing service (Gemini)
- * - Chrome extension integration contracts & automation status
+ * Provides clean, focused endpoints for:
+ * - PDF / Document Upload and AI Multi-Lesson Structuring (Gemini)
+ * - Review & Commit of Imported Weekly Lesson Plans
+ * - Import History
+ * - Weekly workspace and lesson record management
+ * - Dynamic block builder and configurable templates
+ * - Plain-text clipboard gallery
+ * - Chrome extension data contract (GET /api/extension/records/:id)
  */
 
 import { Router } from 'express';
 import { db } from '../db.js';
 import { cleanPlainText } from '../../src/utils/textCleaner.js';
-import { parseUnstructuredLessonPlan } from '../geminiParser.js';
+import { parseWeeklyLessonPlan } from '../geminiParser.js';
+import { ParsedWeeklyImport, ImportSourceType } from '../../src/types/index.js';
+import { importerRegistry } from '../importers/importerRegistry.js';
 
 export const apiRouter = Router();
 
@@ -32,29 +33,6 @@ apiRouter.get('/me', (req, res) => {
   });
 });
 
-apiRouter.get('/users', (_req, res) => {
-  const users = db.listUsers().map(u => ({
-    id: u.id,
-    name: u.name,
-    email: u.email,
-  }));
-  res.json(users);
-});
-
-apiRouter.post('/users', async (req, res) => {
-  try {
-    const { name, email } = req.body;
-    if (!name || !email) {
-      res.status(400).json({ error: 'Name and email are required.' });
-      return;
-    }
-    const newUser = await db.createUser(name, email);
-    res.status(201).json(newUser);
-  } catch (err: any) {
-    res.status(500).json({ error: err.message || 'Failed to create user.' });
-  }
-});
-
 apiRouter.put('/profile', async (req, res) => {
   try {
     const user = req.user!;
@@ -66,7 +44,186 @@ apiRouter.put('/profile', async (req, res) => {
 });
 
 // ==========================================
-// 2. Weeks Endpoints
+// 2. Document & Shared Link Import Workflow
+// ==========================================
+
+/**
+ * Pre-inspects a document URL (Google Docs, PDF, etc.)
+ * Provides instant feedback on format and sharing instructions.
+ */
+apiRouter.post('/import/inspect-url', async (req, res) => {
+  try {
+    const { url } = req.body;
+    if (!url || typeof url !== 'string') {
+      res.status(400).json({ valid: false, error: 'Please provide a valid URL.' });
+      return;
+    }
+    const inspection = await importerRegistry.inspectUrl(url);
+    res.json(inspection);
+  } catch (err: any) {
+    res.status(500).json({ valid: false, error: err.message || 'Error inspecting URL.' });
+  }
+});
+
+/**
+ * Fetches, extracts, and parses a document (Google Docs URL, uploaded PDF, or pasted text).
+ * Does NOT commit to database; returns structured draft for teacher review.
+ */
+apiRouter.post('/import/parse', async (req, res) => {
+  try {
+    const { url, sourceType, pdfBase64, rawText, fileName } = req.body;
+
+    if (!url && !pdfBase64 && (!rawText || !rawText.trim())) {
+      res.status(400).json({ error: 'Please provide a document URL, PDF file, or lesson plan text to import.' });
+      return;
+    }
+
+    // Step 1: Extract structured document content via source-agnostic handler
+    const extractedDoc = await importerRegistry.extractDocument({
+      url,
+      sourceType: sourceType as ImportSourceType,
+      pdfBase64,
+      rawText,
+      fileName,
+    });
+
+    // Step 2: Pass extracted content to Gemini AI structured parser
+    const parsedWeekly = await parseWeeklyLessonPlan({
+      extractedDoc,
+      pdfBase64,
+      rawText,
+      fileName: extractedDoc.title || fileName,
+      sourceUrl: extractedDoc.sourceUrl,
+      sourceType: extractedDoc.sourceType,
+    });
+
+    res.json({
+      success: true,
+      parsed: parsedWeekly,
+      extractedDoc: {
+        title: extractedDoc.title,
+        sourceType: extractedDoc.sourceType,
+        sourceUrl: extractedDoc.sourceUrl,
+        stats: extractedDoc.stats,
+      },
+    });
+  } catch (err: any) {
+    console.error('Document parsing error:', err);
+
+    const isRestricted = err.message && err.message.includes('RESTRICTED_GOOGLE_DOC');
+    const isNotFound = err.message && err.message.includes('NOT_FOUND_GOOGLE_DOC');
+
+    res.status(400).json({
+      success: false,
+      errorType: isRestricted ? 'RESTRICTED_GOOGLE_DOC' : isNotFound ? 'NOT_FOUND_GOOGLE_DOC' : 'EXTRACTION_ERROR',
+      error: err.message || 'Failed to extract and parse lesson plans from document.',
+      hint: isRestricted
+        ? 'Open the Google Doc, click Share (top-right), change General Access to "Anyone with the link can view", or copy the text directly.'
+        : undefined,
+    });
+  }
+});
+
+/**
+ * Commits a teacher-reviewed weekly lesson plan into the database.
+ */
+apiRouter.post('/import/commit', async (req, res) => {
+  try {
+    const user = req.user!;
+    const { importData } = req.body as { importData: ParsedWeeklyImport };
+
+    if (!importData || !Array.isArray(importData.lessons) || importData.lessons.length === 0) {
+      res.status(400).json({ error: 'Valid reviewed lesson plan data is required.' });
+      return;
+    }
+
+    const result = await db.commitImportedWeek(user.id, importData);
+    res.status(201).json({
+      success: true,
+      week: result.week,
+      recordsCount: result.recordsCount,
+    });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message || 'Failed to save imported lesson plan.' });
+  }
+});
+
+/**
+ * Re-imports a past document using its stored source URL.
+ */
+apiRouter.post('/import/reimport/:importId', async (req, res) => {
+  try {
+    const user = req.user!;
+    const { importId } = req.params;
+
+    const record = db.getImportRecord(user.id, importId);
+    if (!record) {
+      res.status(404).json({ error: 'Import record not found.' });
+      return;
+    }
+
+    if (!record.sourceUrl) {
+      res.status(400).json({
+        error: 'This import was not created from a shared document URL and cannot be automatically re-fetched.',
+      });
+      return;
+    }
+
+    // Extract and parse latest document state
+    const extractedDoc = await importerRegistry.extractDocument({
+      url: record.sourceUrl,
+      sourceType: record.sourceType,
+    });
+
+    const parsedWeekly = await parseWeeklyLessonPlan({
+      extractedDoc,
+      sourceUrl: record.sourceUrl,
+      sourceType: record.sourceType,
+    });
+
+    res.json({
+      success: true,
+      parsed: parsedWeekly,
+      extractedDoc: {
+        title: extractedDoc.title,
+        sourceType: extractedDoc.sourceType,
+        sourceUrl: extractedDoc.sourceUrl,
+        stats: extractedDoc.stats,
+      },
+    });
+  } catch (err: any) {
+    res.status(400).json({
+      success: false,
+      error: err.message || 'Failed to re-import document.',
+    });
+  }
+});
+
+/**
+ * Retrieves the teacher's import history.
+ */
+apiRouter.get('/import/history', (req, res) => {
+  const user = req.user!;
+  const history = db.listImportRecords(user.id);
+  res.json(history);
+});
+
+/**
+ * Deletes an import record from history.
+ */
+apiRouter.delete('/import/history/:importId', async (req, res) => {
+  try {
+    const user = req.user!;
+    const { importId } = req.params;
+    const deleted = await db.deleteImportRecord(user.id, importId);
+    res.json({ success: deleted });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message || 'Failed to delete import record.' });
+  }
+});
+
+// ==========================================
+// 3. Weeks Endpoints
 // ==========================================
 
 apiRouter.get('/weeks', (req, res) => {
@@ -134,7 +291,7 @@ apiRouter.delete('/weeks/:id', async (req, res) => {
 });
 
 /**
- * Duplicate an entire week with all its records, blocks, and fields.
+ * Duplicate Week
  */
 apiRouter.post('/weeks/:id/duplicate', async (req, res) => {
   try {
@@ -158,7 +315,7 @@ apiRouter.get('/weeks/:id/progress', (req, res) => {
 });
 
 // ==========================================
-// 3. Lesson Records Endpoints
+// 4. Lesson Records Endpoints
 // ==========================================
 
 apiRouter.get('/weeks/:weekId/lesson-records', (req, res) => {
@@ -172,13 +329,24 @@ apiRouter.get('/weeks/:weekId/lesson-records', (req, res) => {
   res.json(records);
 });
 
+apiRouter.get('/lesson-records', (req, res) => {
+  const user = req.user!;
+  const { weekId, day, className, status } = req.query;
+  const records = db.listLessonRecords(user.id, weekId as string, {
+    day: day as string,
+    className: className as string,
+    status: status as string,
+  });
+  res.json(records);
+});
+
 apiRouter.post('/weeks/:weekId/lesson-records', async (req, res) => {
   try {
     const user = req.user!;
     const { className, section, day, date, target, activities, blockCount, templateId } = req.body;
 
     if (!className || !day) {
-      res.status(400).json({ error: 'Class name and Day are required.' });
+      res.status(400).json({ error: 'Class and Day are required.' });
       return;
     }
 
@@ -209,9 +377,6 @@ apiRouter.get('/lesson-records/:id', (req, res) => {
   res.json(record);
 });
 
-/**
- * Fast Autosave & explicit Save endpoint for lesson records.
- */
 apiRouter.put('/lesson-records/:id', async (req, res) => {
   try {
     const user = req.user!;
@@ -240,9 +405,6 @@ apiRouter.delete('/lesson-records/:id', async (req, res) => {
   }
 });
 
-/**
- * Duplicate a lesson record.
- */
 apiRouter.post('/lesson-records/:id/duplicate', async (req, res) => {
   try {
     const user = req.user!;
@@ -262,9 +424,6 @@ apiRouter.post('/lesson-records/:id/duplicate', async (req, res) => {
   }
 });
 
-/**
- * Update lesson status (draft, in_progress, ready, completed)
- */
 apiRouter.patch('/lesson-records/:id/status', async (req, res) => {
   try {
     const user = req.user!;
@@ -284,12 +443,9 @@ apiRouter.patch('/lesson-records/:id/status', async (req, res) => {
 });
 
 // ==========================================
-// 4. Dynamic Block Builder Endpoints
+// 5. Dynamic Block Operations
 // ==========================================
 
-/**
- * Batch create N blocks for a lesson record at once (e.g. "Create 5 Blocks").
- */
 apiRouter.post('/lesson-records/:id/blocks', async (req, res) => {
   try {
     const user = req.user!;
@@ -307,9 +463,6 @@ apiRouter.post('/lesson-records/:id/blocks', async (req, res) => {
   }
 });
 
-/**
- * Duplicate a single block within a record.
- */
 apiRouter.post('/lesson-records/:id/blocks/:blockId/duplicate', async (req, res) => {
   try {
     const user = req.user!;
@@ -324,9 +477,6 @@ apiRouter.post('/lesson-records/:id/blocks/:blockId/duplicate', async (req, res)
   }
 });
 
-/**
- * Delete a block from a record.
- */
 apiRouter.delete('/lesson-records/:id/blocks/:blockId', async (req, res) => {
   try {
     const user = req.user!;
@@ -341,9 +491,6 @@ apiRouter.delete('/lesson-records/:id/blocks/:blockId', async (req, res) => {
   }
 });
 
-/**
- * Reorder blocks in a lesson record.
- */
 apiRouter.post('/lesson-records/:id/reorder-blocks', async (req, res) => {
   try {
     const user = req.user!;
@@ -363,9 +510,6 @@ apiRouter.post('/lesson-records/:id/reorder-blocks', async (req, res) => {
   }
 });
 
-/**
- * Apply template fields to an existing block without losing matched values.
- */
 apiRouter.post('/lesson-records/:id/blocks/:blockId/apply-template', async (req, res) => {
   try {
     const user = req.user!;
@@ -386,7 +530,7 @@ apiRouter.post('/lesson-records/:id/blocks/:blockId/apply-template', async (req,
 });
 
 // ==========================================
-// 5. Block Templates Endpoints
+// 6. Block Templates Endpoints
 // ==========================================
 
 apiRouter.get('/templates', (req, res) => {
@@ -413,16 +557,6 @@ apiRouter.post('/templates', async (req, res) => {
   } catch (err: any) {
     res.status(500).json({ error: err.message || 'Failed to create template.' });
   }
-});
-
-apiRouter.get('/templates/:id', (req, res) => {
-  const user = req.user!;
-  const template = db.getTemplate(user.id, req.params.id);
-  if (!template) {
-    res.status(404).json({ error: 'Template not found.' });
-    return;
-  }
-  res.json(template);
 });
 
 apiRouter.put('/templates/:id', async (req, res) => {
@@ -454,7 +588,7 @@ apiRouter.delete('/templates/:id', async (req, res) => {
 });
 
 // ==========================================
-// 6. Plain-Text Clipboard Gallery Endpoints
+// 7. Plain-Text Clipboard Endpoints
 // ==========================================
 
 apiRouter.get('/clipboard', (req, res) => {
@@ -479,7 +613,7 @@ apiRouter.post('/clipboard', async (req, res) => {
 
     const item = await db.createClipboardItem(user.id, {
       plainText,
-      label: label || 'Clipboard Snippet',
+      label: label || 'Snippet',
       category,
       weekId,
       lessonRecordId,
@@ -491,20 +625,6 @@ apiRouter.post('/clipboard', async (req, res) => {
     res.status(201).json(item);
   } catch (err: any) {
     res.status(500).json({ error: err.message || 'Failed to create clipboard item.' });
-  }
-});
-
-apiRouter.put('/clipboard/:id', async (req, res) => {
-  try {
-    const user = req.user!;
-    const updated = await db.updateClipboardItem(user.id, req.params.id, req.body);
-    if (!updated) {
-      res.status(404).json({ error: 'Clipboard item not found.' });
-      return;
-    }
-    res.json(updated);
-  } catch (err: any) {
-    res.status(500).json({ error: err.message || 'Failed to update clipboard item.' });
   }
 });
 
@@ -522,18 +642,6 @@ apiRouter.delete('/clipboard/:id', async (req, res) => {
   }
 });
 
-/**
- * Utility endpoint: Normalizes any text or HTML into clean plain text.
- */
-apiRouter.post('/clipboard/clean', (req, res) => {
-  const { rawText } = req.body;
-  const clean = cleanPlainText(rawText);
-  res.json({ cleanText: clean });
-});
-
-/**
- * Bulk extracts fields from an existing lesson record into the user's clipboard gallery.
- */
 apiRouter.post('/lesson-records/:id/extract-clipboard', async (req, res) => {
   try {
     const user = req.user!;
@@ -551,40 +659,9 @@ apiRouter.post('/lesson-records/:id/extract-clipboard', async (req, res) => {
 });
 
 // ==========================================
-// 7. AI Unstructured Parser Service (Gemini)
+// 8. Chrome Extension Integration API
 // ==========================================
 
-apiRouter.post('/ai/parse', async (req, res) => {
-  try {
-    const { rawText } = req.body;
-    if (!rawText || !rawText.trim()) {
-      res.status(400).json({ error: 'Lesson plan text is required for AI parsing.' });
-      return;
-    }
-
-    const structured = await parseUnstructuredLessonPlan(rawText);
-    res.json({
-      success: true,
-      parsed: structured,
-    });
-  } catch (err: any) {
-    console.error('AI parse error:', err);
-    res.status(500).json({
-      success: false,
-      error: err.message || 'Failed to parse lesson plan with AI.',
-    });
-  }
-});
-
-// ==========================================
-// 8. Future Chrome Extension Integration API
-// ==========================================
-
-/**
- * Dedicated contract endpoint consumed by the future Chrome Extension.
- * Returns the exact JSON structure needed to automate school website entry:
- * Class, Section, Day, Target, Activities, Block fields, and Copy queue.
- */
 apiRouter.get('/extension/records/:id', (req, res) => {
   const user = req.user!;
   const dto = db.getExtensionRecordDTO(user.id, req.params.id);
@@ -595,10 +672,6 @@ apiRouter.get('/extension/records/:id', (req, res) => {
   res.json(dto);
 });
 
-/**
- * Chrome extension automation status update endpoint.
- * Reports automation progress: 'not_started', 'in_progress', 'completed', 'failed'.
- */
 apiRouter.patch('/extension/records/:id/status', async (req, res) => {
   try {
     const user = req.user!;
@@ -628,32 +701,16 @@ apiRouter.patch('/extension/records/:id/status', async (req, res) => {
   }
 });
 
-/**
- * Extension Schema Documentation endpoint (for extension developers).
- */
-apiRouter.get('/extension/contract', (_req, res) => {
-  res.json({
-    description: 'LessonFlow Chrome Extension Data Contract',
-    version: '1.0.0',
-    authMethods: [
-      'Authorization: Bearer <apiToken>',
-      'x-api-token: <apiToken>',
-    ],
-    sampleEndpoint: '/api/extension/records/:id',
-    statusEndpoint: '/api/extension/records/:id/status',
-  });
-});
-
 // ==========================================
-// 9. Demo Data Reset / Seed
+// 9. Isolated Demo Data Seeder (Settings only)
 // ==========================================
 
 apiRouter.post('/demo/seed', async (req, res) => {
   try {
     const user = req.user!;
-    db.seedDemoWeek(user.id);
+    const week = db.seedDemoWeek(user.id);
     const weeks = db.listWeeks(user.id);
-    res.json({ success: true, message: 'Demo data re-seeded.', weeks });
+    res.json({ success: true, message: 'Sample demo week loaded.', week, weeks });
   } catch (err: any) {
     res.status(500).json({ error: err.message || 'Failed to seed demo data.' });
   }

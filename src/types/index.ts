@@ -2,11 +2,19 @@
  * LessonFlow Type Definitions & Data Contracts
  * 
  * Provides types for Users, Teacher Profiles, Weeks, Lesson Records,
- * Dynamic Blocks, Configurable Fields, Templates, and Clipboard items.
- * Also defines the DTO contract for the future Chrome Extension.
+ * Dynamic Blocks, Configurable Fields, Templates, Clipboard items,
+ * and Multi-Lesson PDF Import Records.
  */
 
 export type FieldType = 'text' | 'textarea' | 'select' | 'checkbox';
+
+export type ImportSourceType =
+  | 'google_doc'
+  | 'pdf'
+  | 'plain_text'
+  | 'pasted_text'
+  | 'word'
+  | 'spreadsheet';
 
 export type RecordStatus = 'draft' | 'in_progress' | 'ready' | 'completed';
 
@@ -16,7 +24,7 @@ export interface User {
   id: string;
   name: string;
   email: string;
-  apiToken: string; // Token for Chrome Extension authentication
+  apiToken: string; // Token for future Chrome Extension authentication
   createdAt: string;
   updatedAt: string;
 }
@@ -25,7 +33,7 @@ export interface TeacherProfile {
   id: string;
   userId: string;
   teacherName: string;
-  defaultSection: string;
+  defaultSection?: string;
   defaultClass?: string;
   schoolName?: string;
   defaultTemplateId?: string;
@@ -52,7 +60,7 @@ export interface BlockFieldTemplate {
   order: number;
   isRequired: boolean;
   placeholder?: string;
-  options?: string[]; // For select type
+  options?: string[];
 }
 
 export interface BlockTemplate {
@@ -106,6 +114,12 @@ export interface LessonRecord {
   orderIndex: number;
   blocks: Block[];
   
+  // Traceability metadata
+  sourceImportId?: string;
+  sourceFileName?: string;
+  sourceUrl?: string;
+  sourceType?: ImportSourceType;
+
   // Future Chrome extension automation tracking fields
   automationStatus?: AutomationStatus;
   automationStartedAt?: string;
@@ -132,9 +146,58 @@ export interface ClipboardItem {
   updatedAt: string;
 }
 
+export interface ImportRecord {
+  id: string;
+  userId: string;
+  fileName: string;
+  sourceType: ImportSourceType;
+  sourceUrl?: string;
+  sourceTitle?: string;
+  weekId?: string;
+  weekNumber?: string;
+  lessonCount: number;
+  metadata?: Record<string, any>;
+  createdAt: string;
+}
+
+export interface ParsedBlockDraft {
+  blockNumber: number;
+  fields: Record<string, string>;
+  needsReview?: boolean;
+}
+
+export interface ParsedLessonDraft {
+  id: string; // temporary draft id for keying
+  day: string;
+  className: string;
+  section?: string;
+  date?: string;
+  target: string;
+  activities: string;
+  needsReview?: boolean;
+  blocks: ParsedBlockDraft[];
+}
+
+export interface ParsedWeeklyImport {
+  weekNumber: string;
+  weekTitle: string;
+  startDate?: string;
+  endDate?: string;
+  fileName?: string;
+  sourceType: ImportSourceType;
+  sourceUrl?: string;
+  sourceTitle?: string;
+  extractedSummary?: {
+    headingsCount?: number;
+    tablesCount?: number;
+    paragraphsCount?: number;
+    textLength?: number;
+  };
+  lessons: ParsedLessonDraft[];
+}
+
 /**
  * Clean data contract for the future Chrome Extension.
- * The extension calls GET /api/extension/records/:id to receive this structured payload.
  */
 export interface ExtensionLessonRecordDTO {
   id: string;
@@ -174,16 +237,4 @@ export interface WeeklyProgressDTO {
   percentage: number;
   byDay: Record<string, { total: number; completed: number }>;
   byStatus: Record<RecordStatus, number>;
-}
-
-export interface AiParsedLesson {
-  className?: string;
-  section?: string;
-  day?: string;
-  target?: string;
-  activities?: string;
-  blocks: Array<{
-    blockNumber?: number;
-    fields: Record<string, string>; // e.g. { objective: "...", teacher_activity: "..." }
-  }>;
 }

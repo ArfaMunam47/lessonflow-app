@@ -1,12 +1,13 @@
 /**
  * LessonFlow Data Persistence Layer
  * 
- * Provides atomic, user-scoped persistence for all entities:
- * Users, Teacher Profiles, Weeks, Lesson Records, Blocks, Fields,
- * Templates, and Clipboard items.
- * 
- * Uses atomic file write (write to temp file then rename) to prevent
- * corruption, with in-memory caching for sub-millisecond query performance.
+ * Provides clean, atomic, user-scoped persistence for:
+ * - Users and Teacher Profiles (Neutral defaults, zero hardcoded teacher/class names)
+ * - Weeks and Lesson Records
+ * - Dynamic Blocks and Configurable Fields
+ * - Block Templates
+ * - Plain-Text Clipboard Gallery
+ * - Import Records & History
  */
 
 import fs from 'fs';
@@ -21,6 +22,8 @@ import {
   BlockField,
   BlockTemplate,
   ClipboardItem,
+  ImportRecord,
+  ParsedWeeklyImport,
   RecordStatus,
   WeeklyProgressDTO,
   ExtensionLessonRecordDTO,
@@ -34,6 +37,7 @@ interface DatabaseSchema {
   lessonRecords: LessonRecord[];
   templates: BlockTemplate[];
   clipboardItems: ClipboardItem[];
+  importRecords: ImportRecord[];
 }
 
 const DATA_DIR = path.resolve(process.cwd(), 'data');
@@ -42,36 +46,36 @@ const DB_FILE = path.join(DATA_DIR, 'lessonflow.json');
 const DEFAULT_TEMPLATES: Array<Omit<BlockTemplate, 'id' | 'userId' | 'createdAt' | 'updatedAt'>> = [
   {
     name: 'Standard 5-Field Lesson Block',
-    description: 'The standard school lesson-plan block: Objective, Teacher Activity, Student Activity, Resources, and Assessment.',
+    description: 'Standard lesson-plan block: Objective, Teacher Activity, Student Activity, Resources, and Assessment.',
     isDefault: true,
     fields: [
-      { key: 'objective', label: 'Objective', type: 'textarea', order: 1, isRequired: true, placeholder: 'e.g., Students will be able to convert mixed fractions to decimals.' },
-      { key: 'teacher_activity', label: 'Teacher Activity', type: 'textarea', order: 2, isRequired: true, placeholder: 'e.g., Direct instruction on dividing numerator by denominator.' },
-      { key: 'student_activity', label: 'Student Activity', type: 'textarea', order: 3, isRequired: true, placeholder: 'e.g., Solve 5 paired problems on whiteboards.' },
-      { key: 'resources', label: 'Resources / Materials', type: 'text', order: 4, isRequired: false, placeholder: 'e.g., Math Workbook p.42, dry-erase markers.' },
-      { key: 'assessment', label: 'Assessment / Check for Understanding', type: 'textarea', order: 5, isRequired: false, placeholder: 'e.g., Exit ticket problem #3.' },
+      { key: 'objective', label: 'Objective', type: 'textarea', order: 1, isRequired: true, placeholder: 'Lesson objective...' },
+      { key: 'teacher_activity', label: 'Teacher Activity', type: 'textarea', order: 2, isRequired: true, placeholder: 'Teacher direct instruction or modeling...' },
+      { key: 'student_activity', label: 'Student Activity', type: 'textarea', order: 3, isRequired: true, placeholder: 'Student practice, group work, or paired activity...' },
+      { key: 'resources', label: 'Resources / Materials', type: 'text', order: 4, isRequired: false, placeholder: 'Materials, links, or handouts...' },
+      { key: 'assessment', label: 'Assessment / Check for Understanding', type: 'textarea', order: 5, isRequired: false, placeholder: 'Exit ticket, rubric, or check...' },
     ],
   },
   {
     name: 'Direct Instruction & Modeling',
-    description: 'Focuses on the I Do, We Do, You Do teaching sequence.',
+    description: 'Focuses on the I Do, We Do, You Do instructional sequence.',
     isDefault: false,
     fields: [
-      { key: 'hook_warmup', label: 'Hook / Warm-up', type: 'textarea', order: 1, isRequired: true, placeholder: 'e.g., Quick 3-minute review question.' },
-      { key: 'modeling_i_do', label: 'Teacher Modeling (I Do)', type: 'textarea', order: 2, isRequired: true, placeholder: 'e.g., Step-by-step example on the smartboard.' },
-      { key: 'guided_we_do', label: 'Guided Practice (We Do)', type: 'textarea', order: 3, isRequired: true, placeholder: 'e.g., Class works together on example #2.' },
-      { key: 'independent_you_do', label: 'Independent Practice (You Do)', type: 'textarea', order: 4, isRequired: true, placeholder: 'e.g., Complete worksheet exercises 1-8.' },
+      { key: 'hook_warmup', label: 'Hook / Warm-up', type: 'textarea', order: 1, isRequired: true, placeholder: 'Warm-up review...' },
+      { key: 'modeling_i_do', label: 'Teacher Modeling (I Do)', type: 'textarea', order: 2, isRequired: true, placeholder: 'Demonstration and modeling...' },
+      { key: 'guided_we_do', label: 'Guided Practice (We Do)', type: 'textarea', order: 3, isRequired: true, placeholder: 'Guided practice with feedback...' },
+      { key: 'independent_you_do', label: 'Independent Practice (You Do)', type: 'textarea', order: 4, isRequired: true, placeholder: 'Independent student assignment...' },
     ],
   },
   {
     name: 'Station / Workshop Rotation',
-    description: 'Structure for small group rotations and lab stations.',
+    description: 'Structure for small group rotations and workshop stations.',
     isDefault: false,
     fields: [
-      { key: 'station_goal', label: 'Station Goal', type: 'textarea', order: 1, isRequired: true, placeholder: 'e.g., Hands-on measurement verification.' },
-      { key: 'materials_needed', label: 'Materials Needed', type: 'text', order: 2, isRequired: false, placeholder: 'e.g., Rulers, weights, graduated cylinders.' },
-      { key: 'task_instructions', label: 'Task Instructions', type: 'textarea', order: 3, isRequired: true, placeholder: 'e.g., Measure 3 sample objects and record mass.' },
-      { key: 'differentiation', label: 'Differentiation / Support', type: 'text', order: 4, isRequired: false, placeholder: 'e.g., Scaffold sheet for Tier 2 students.' },
+      { key: 'station_goal', label: 'Station Focus', type: 'textarea', order: 1, isRequired: true, placeholder: 'Goal of this station...' },
+      { key: 'materials_needed', label: 'Materials Needed', type: 'text', order: 2, isRequired: false, placeholder: 'Materials...' },
+      { key: 'task_instructions', label: 'Task Instructions', type: 'textarea', order: 3, isRequired: true, placeholder: 'Student instructions...' },
+      { key: 'differentiation', label: 'Differentiation / Support', type: 'text', order: 4, isRequired: false, placeholder: 'Scaffolding or extension notes...' },
     ],
   },
 ];
@@ -84,6 +88,7 @@ class Database {
     lessonRecords: [],
     templates: [],
     clipboardItems: [],
+    importRecords: [],
   };
 
   private writeQueue: Promise<void> = Promise.resolve();
@@ -101,22 +106,20 @@ class Database {
       try {
         const raw = fs.readFileSync(DB_FILE, 'utf-8');
         this.data = JSON.parse(raw);
-        // Ensure all arrays exist
         this.data.users = this.data.users || [];
         this.data.profiles = this.data.profiles || [];
         this.data.weeks = this.data.weeks || [];
         this.data.lessonRecords = this.data.lessonRecords || [];
         this.data.templates = this.data.templates || [];
         this.data.clipboardItems = this.data.clipboardItems || [];
+        this.data.importRecords = this.data.importRecords || [];
       } catch (err) {
-        console.error('Failed to parse database file, resetting to empty:', err);
+        console.error('Failed to parse database file, resetting:', err);
       }
     }
 
-    // Ensure default primary user exists
-    if (this.data.users.length === 0) {
-      this.seedInitialUserAndTemplates();
-    }
+    // Ensure neutral primary user exists without dummy teacher names or fake classes
+    this.ensureNeutralUser();
   }
 
   private async persist(): Promise<void> {
@@ -129,269 +132,60 @@ class Database {
     return this.writeQueue;
   }
 
-  private seedInitialUserAndTemplates() {
+  private ensureNeutralUser() {
     const now = new Date().toISOString();
-    const defaultUser: User = {
-      id: 'usr_sarah_parker',
-      name: 'Sarah Parker',
-      email: 'sarah.parker@school.edu',
-      apiToken: 'lf_tok_sarah_7f8a9b2c3d4e5f6',
-      createdAt: now,
-      updatedAt: now,
-    };
 
-    const defaultProfile: TeacherProfile = {
-      id: 'prof_sarah_parker',
-      userId: defaultUser.id,
-      teacherName: 'Sarah Parker',
-      defaultSection: 'Blue',
-      defaultClass: '6A',
-      schoolName: 'Lincoln Middle School',
-      createdAt: now,
-      updatedAt: now,
-    };
+    // Check if neutral default user exists
+    let defaultUser = this.data.users.find(u => u.id === 'usr_default');
+    if (!defaultUser) {
+      // Remove any legacy invented "Sarah Parker" user
+      this.data.users = this.data.users.filter(u => u.id !== 'usr_sarah_parker');
+      this.data.profiles = this.data.profiles.filter(p => p.id !== 'prof_sarah_parker');
 
-    const seededTemplates: BlockTemplate[] = DEFAULT_TEMPLATES.map((tmpl, idx) => ({
-      ...tmpl,
-      id: `tmpl_default_${idx + 1}`,
-      userId: defaultUser.id,
-      createdAt: now,
-      updatedAt: now,
-    }));
-
-    defaultProfile.defaultTemplateId = seededTemplates[0].id;
-
-    this.data.users.push(defaultUser);
-    this.data.profiles.push(defaultProfile);
-    this.data.templates.push(...seededTemplates);
-
-    this.seedDemoWeek(defaultUser.id, seededTemplates[0].id);
-    this.persist();
-  }
-
-  public seedDemoWeek(userId: string, templateId?: string) {
-    const now = new Date().toISOString();
-    const weekId = `week_demo_8`;
-
-    // Remove any existing demo week
-    this.data.weeks = this.data.weeks.filter(w => w.id !== weekId);
-    this.data.lessonRecords = this.data.lessonRecords.filter(r => r.weekId !== weekId);
-    this.data.clipboardItems = this.data.clipboardItems.filter(c => c.weekId !== weekId);
-
-    const week: Week = {
-      id: weekId,
-      userId,
-      weekNumber: 'Week 8',
-      title: 'Fractions, Decimals & Geometry Fundamentals',
-      startDate: '2026-10-12',
-      endDate: '2026-10-16',
-      status: 'in_progress',
-      createdAt: now,
-      updatedAt: now,
-    };
-
-    this.data.weeks.push(week);
-
-    const tmpl = this.data.templates.find(t => t.id === templateId) || this.data.templates[0];
-
-    const recordsDef = [
-      {
-        day: 'Monday',
-        className: '6A',
-        section: 'Blue',
-        target: 'Students will understand how to convert proper fractions to decimals using long division.',
-        activities: '1. Warm-up fractions drill\n2. Teacher demonstration of numerator divided by denominator\n3. Paired whiteboard calculations\n4. Exit slip evaluation',
-        status: 'completed' as RecordStatus,
-        completed: true,
-        blockCount: 3,
-        blockData: [
-          {
-            objective: 'Master dividing numerator by denominator with no remainder.',
-            teacher_activity: 'Direct instruction showing 3/4 = 0.75 and 1/2 = 0.5 on interactive board.',
-            student_activity: 'Write decimal equivalents on individual mini-whiteboards with partner confirmation.',
-            resources: 'Math Notebooks, dry-erase whiteboards, grid paper.',
-            assessment: 'Exit ticket #1: Convert 5/8 to a decimal.',
-          },
-          {
-            objective: 'Recognize terminating versus repeating decimals.',
-            teacher_activity: 'Introduce repeating notation (bar notation) with 1/3 and 2/3 examples.',
-            student_activity: 'Categorize 6 decimal fractions as terminating or repeating.',
-            resources: 'Classification T-Chart handout.',
-            assessment: 'Thumbs up/down check for understanding.',
-          },
-          {
-            objective: 'Apply fraction-to-decimal conversion in real-world recipe problems.',
-            teacher_activity: 'Guide recipe scaling scenario requiring 3/4 cup converted to decimal measurement.',
-            student_activity: 'Calculate ingredient measurements in teams.',
-            resources: 'Recipe Task Cards.',
-            assessment: 'Turn in group task card solution.',
-          },
-        ],
-      },
-      {
-        day: 'Monday',
-        className: '6B',
-        section: 'Red',
-        target: 'Students will convert fractions to decimals and compare decimal magnitudes on a number line.',
-        activities: 'Group line-up activity with decimal cards, workbook exercises 4A through 4D.',
-        status: 'ready' as RecordStatus,
-        completed: true,
-        blockCount: 3,
-        blockData: [
-          {
-            objective: 'Plot 0.25, 0.5, 0.75 accurately on an open number line.',
-            teacher_activity: 'Demonstrate benchmark fractions on floor number line.',
-            student_activity: 'Place student index cards in correct sequential positions.',
-            resources: 'Number Line tape, student index cards.',
-            assessment: 'Observation checklist during placement.',
-          },
-          {
-            objective: 'Compare decimals using greater than, less than, and equal signs.',
-            teacher_activity: 'Review place-value comparison method (tenths vs hundredths).',
-            student_activity: 'Complete paired inequality worksheet p. 34.',
-            resources: 'Workbook Chapter 4.',
-            assessment: 'Score 4-question warm down.',
-          },
-          {
-            objective: 'Independent practice converting mixed numbers to decimals.',
-            teacher_activity: 'Circulate to provide Tier 2 scaffolding.',
-            student_activity: 'Work through problem set 10 to 18 independently.',
-            resources: 'Math practice booklet.',
-            assessment: 'Teacher stamp on notebook check.',
-          },
-        ],
-      },
-      {
-        day: 'Tuesday',
-        className: '6A',
-        section: 'Blue',
-        target: 'Students will add and subtract decimals with unequal decimal places.',
-        activities: 'Place-value grid alignment exercise, grocery receipt budgeting simulation.',
-        status: 'in_progress' as RecordStatus,
-        completed: false,
-        blockCount: 4,
-        blockData: [
-          {
-            objective: 'Line up decimal points vertically before adding or subtracting.',
-            teacher_activity: 'Emphasize place value zero placeholders for trailing digits.',
-            student_activity: 'Rewrite 5 horizontal addition problems into vertical grid format.',
-            resources: 'Grid paper sheets.',
-            assessment: 'Visual check of student notebooks.',
-          },
-          {
-            objective: 'Add multi-digit decimals including regrouping across place values.',
-            teacher_activity: 'Model regrouping from hundredths to tenths with color-coded markers.',
-            student_activity: 'Solve 4 guided calculation problems in pairs.',
-            resources: 'Color dry-erase markers.',
-            assessment: 'Partner check protocol.',
-          },
-          {
-            objective: 'Calculate total cost and change from grocery receipt simulation.',
-            teacher_activity: 'Provide receipt scenario: $20 budget, 4 items with decimal pricing.',
-            student_activity: 'Calculate subtotal and change remaining from $20.00.',
-            resources: 'Sample grocery store receipts.',
-            assessment: 'Accurate change calculation submission.',
-          },
-          {
-            objective: 'Identify and correct common misconceptions in decimal subtraction.',
-            teacher_activity: 'Present error analysis slide with misaligned decimal point.',
-            student_activity: 'Write brief explanation of the error and provide corrected answer.',
-            resources: 'Slide projection.',
-            assessment: 'Exit slip explanation.',
-          },
-        ],
-      },
-      {
-        day: 'Wednesday',
-        className: '7A',
-        section: 'Green',
-        target: 'Students will solve two-step linear equations using inverse operations.',
-        activities: 'Balance scale visualization, step-by-step inverse operation practice, group relay.',
-        status: 'draft' as RecordStatus,
-        completed: false,
-        blockCount: 3,
-        blockData: [
-          {
-            objective: 'Isolate variable terms by applying addition or subtraction property of equality.',
-            teacher_activity: 'Show pan balance interactive applet with 2x + 3 = 11.',
-            student_activity: 'Draw balance models and subtract 3 from both sides.',
-            resources: 'Digital balance scale simulator.',
-            assessment: 'Immediate response via student response cards.',
-          },
-          {
-            objective: 'Apply multiplication or division to isolate single variable.',
-            teacher_activity: 'Demonstrate dividing both sides by coefficient of x.',
-            student_activity: 'Solve step 2 of equation and check by substitution.',
-            resources: 'Equation solver guide.',
-            assessment: 'Notebook verification check.',
-          },
-          {
-            objective: 'Collaborative equation solving relay in teams of four.',
-            teacher_activity: 'Moderate team relay and monitor pacing.',
-            student_activity: 'Each student executes one step and passes paper to next teammate.',
-            resources: 'Relay problem sheets.',
-            assessment: 'Final equation correctness score.',
-          },
-        ],
-      },
-    ];
-
-    recordsDef.forEach((def, rIdx) => {
-      const recordId = `rec_demo_${rIdx + 1}`;
-      const blocks: Block[] = [];
-
-      for (let b = 1; b <= def.blockCount; b++) {
-        const blockId = `blk_${recordId}_${b}`;
-        const bData = def.blockData[b - 1] || {};
-        const fields: BlockField[] = (tmpl ? tmpl.fields : []).map(f => ({
-          id: `fld_${blockId}_${f.key}`,
-          blockId,
-          fieldKey: f.key,
-          fieldLabel: f.label,
-          fieldValue: (bData as Record<string, string>)[f.key] || '',
-          fieldOrder: f.order,
-          fieldType: f.type,
-          isRequired: f.isRequired,
-          placeholder: f.placeholder,
-          createdAt: now,
-          updatedAt: now,
-        }));
-
-        blocks.push({
-          id: blockId,
-          lessonRecordId: recordId,
-          blockNumber: b,
-          templateId: tmpl?.id,
-          orderIndex: b,
-          fields,
-          createdAt: now,
-          updatedAt: now,
-        });
-      }
-
-      const record: LessonRecord = {
-        id: recordId,
-        weekId,
-        userId,
-        className: def.className,
-        section: def.section,
-        day: def.day,
-        target: def.target,
-        activities: def.activities,
-        status: def.status,
-        completed: def.completed,
-        orderIndex: rIdx + 1,
-        blocks,
-        automationStatus: def.completed ? 'completed' : 'not_started',
+      defaultUser = {
+        id: 'usr_default',
+        name: 'Teacher',
+        email: '',
+        apiToken: `lf_tok_${crypto.randomBytes(16).toString('hex')}`,
         createdAt: now,
         updatedAt: now,
       };
+      this.data.users.unshift(defaultUser);
 
-      this.data.lessonRecords.push(record);
+      const defaultProfile: TeacherProfile = {
+        id: 'prof_default',
+        userId: defaultUser.id,
+        teacherName: 'Teacher',
+        defaultSection: '',
+        defaultClass: '',
+        schoolName: '',
+        createdAt: now,
+        updatedAt: now,
+      };
+      this.data.profiles.unshift(defaultProfile);
+    }
 
-      // Create initial clipboard items from this record for demonstration
-      this.createClipboardItemFromRecord(record, userId);
-    });
+    // Ensure default templates exist for the default user
+    const hasTemplates = this.data.templates.some(t => t.userId === defaultUser!.id);
+    if (!hasTemplates) {
+      const seededTemplates: BlockTemplate[] = DEFAULT_TEMPLATES.map((tmpl, idx) => ({
+        ...tmpl,
+        id: `tmpl_default_${idx + 1}`,
+        userId: defaultUser!.id,
+        createdAt: now,
+        updatedAt: now,
+      }));
+      this.data.templates.push(...seededTemplates);
+      const prof = this.data.profiles.find(p => p.userId === defaultUser!.id);
+      if (prof) prof.defaultTemplateId = seededTemplates[0].id;
+    }
+
+    // Clean up any old demo week from regular view so the app starts clean
+    this.data.weeks = this.data.weeks.filter(w => w.id !== 'week_demo_8');
+    this.data.lessonRecords = this.data.lessonRecords.filter(r => r.weekId !== 'week_demo_8');
+    this.data.clipboardItems = this.data.clipboardItems.filter(c => c.weekId !== 'week_demo_8');
+
+    this.persist();
   }
 
   // --- User & Profile Operations ---
@@ -415,8 +209,8 @@ class Database {
     const id = `usr_${crypto.randomUUID()}`;
     const user: User = {
       id,
-      name,
-      email,
+      name: cleanPlainText(name) || 'Teacher',
+      email: cleanPlainText(email),
       apiToken: `lf_tok_${crypto.randomBytes(16).toString('hex')}`,
       createdAt: now,
       updatedAt: now,
@@ -426,15 +220,13 @@ class Database {
     const profile: TeacherProfile = {
       id: `prof_${crypto.randomUUID()}`,
       userId: id,
-      teacherName: name,
-      defaultSection: 'A',
-      defaultClass: 'Grade 6',
+      teacherName: user.name,
       createdAt: now,
       updatedAt: now,
     };
     this.data.profiles.push(profile);
 
-    // Copy default templates for the user
+    // Provide default templates for user
     for (const defTmpl of DEFAULT_TEMPLATES) {
       this.data.templates.push({
         ...defTmpl,
@@ -461,14 +253,26 @@ class Database {
         id: `prof_${crypto.randomUUID()}`,
         userId,
         teacherName: updates.teacherName || 'Teacher',
-        defaultSection: updates.defaultSection || 'A',
         createdAt: now,
         updatedAt: now,
       };
       this.data.profiles.push(profile);
     }
 
-    Object.assign(profile, updates, { updatedAt: now });
+    if (updates.teacherName !== undefined) profile.teacherName = cleanPlainText(updates.teacherName);
+    if (updates.defaultSection !== undefined) profile.defaultSection = cleanPlainText(updates.defaultSection);
+    if (updates.defaultClass !== undefined) profile.defaultClass = cleanPlainText(updates.defaultClass);
+    if (updates.schoolName !== undefined) profile.schoolName = cleanPlainText(updates.schoolName);
+    if (updates.defaultTemplateId !== undefined) profile.defaultTemplateId = updates.defaultTemplateId;
+    profile.updatedAt = now;
+
+    // Also update User name if teacherName changed
+    const user = this.getUser(userId);
+    if (user && updates.teacherName) {
+      user.name = cleanPlainText(updates.teacherName);
+      user.updatedAt = now;
+    }
+
     await this.persist();
     return profile;
   }
@@ -491,7 +295,7 @@ class Database {
       id: `week_${crypto.randomUUID()}`,
       userId,
       weekNumber: cleanPlainText(weekData.weekNumber) || 'New Week',
-      title: cleanPlainText(weekData.title) || 'Lesson Plans',
+      title: cleanPlainText(weekData.title) || 'Weekly Lesson Plans',
       startDate: weekData.startDate || '',
       endDate: weekData.endDate || '',
       status: weekData.status || 'draft',
@@ -524,7 +328,6 @@ class Database {
     if (index === -1) return false;
 
     this.data.weeks.splice(index, 1);
-    // Delete associated lesson records and clipboard items
     this.data.lessonRecords = this.data.lessonRecords.filter(r => r.weekId !== id);
     this.data.clipboardItems = this.data.clipboardItems.filter(c => c.weekId !== id);
 
@@ -532,10 +335,6 @@ class Database {
     return true;
   }
 
-  /**
-   * Duplicates an entire week along with all lesson records, blocks, and fields.
-   * Generates new stable IDs for everything, ensuring zero mutation of original.
-   */
   public async duplicateWeek(userId: string, sourceWeekId: string, newWeekNumber?: string, newTitle?: string): Promise<Week | null> {
     const sourceWeek = this.getWeek(userId, sourceWeekId);
     if (!sourceWeek) return null;
@@ -557,7 +356,6 @@ class Database {
 
     this.data.weeks.push(duplicatedWeek);
 
-    // Duplicate all lesson records belonging to this week
     const recordsToCopy = this.data.lessonRecords.filter(r => r.userId === userId && r.weekId === sourceWeekId);
 
     for (const record of recordsToCopy) {
@@ -606,10 +404,11 @@ class Database {
 
   // --- Lesson Records Operations ---
 
-  public listLessonRecords(userId: string, weekId: string, filters?: { day?: string; className?: string; status?: string }): LessonRecord[] {
+  public listLessonRecords(userId: string, weekId?: string, filters?: { day?: string; className?: string; status?: string }): LessonRecord[] {
     return this.data.lessonRecords
       .filter(r => {
-        if (r.userId !== userId || r.weekId !== weekId) return false;
+        if (r.userId !== userId) return false;
+        if (weekId && r.weekId !== weekId) return false;
         if (filters?.day && r.day.toLowerCase() !== filters.day.toLowerCase()) return false;
         if (filters?.className && !r.className.toLowerCase().includes(filters.className.toLowerCase())) return false;
         if (filters?.status && r.status !== filters.status) return false;
@@ -639,11 +438,9 @@ class Database {
     const now = new Date().toISOString();
     const recordId = `rec_${crypto.randomUUID()}`;
 
-    // Get highest orderIndex in the week
     const existing = this.data.lessonRecords.filter(r => r.weekId === weekId);
     const orderIndex = existing.length > 0 ? Math.max(...existing.map(e => e.orderIndex)) + 1 : 1;
 
-    // Resolve template
     let template = this.data.templates.find(t => t.id === data.templateId);
     if (!template) {
       template = this.data.templates.find(t => t.userId === userId && t.isDefault) || this.data.templates[0];
@@ -684,7 +481,7 @@ class Database {
       id: recordId,
       weekId,
       userId,
-      className: cleanPlainText(data.className) || 'New Class',
+      className: cleanPlainText(data.className) || 'Class',
       section: cleanPlainText(data.section) || '',
       day: cleanPlainText(data.day) || 'Monday',
       date: data.date || '',
@@ -732,7 +529,6 @@ class Database {
     if (updates.automationError !== undefined) record.automationError = updates.automationError;
 
     if (updates.blocks !== undefined) {
-      // Clean and sanitize any field values inside incoming blocks
       record.blocks = updates.blocks.map(b => ({
         ...b,
         fields: b.fields.map(f => ({
@@ -757,10 +553,6 @@ class Database {
     return true;
   }
 
-  /**
-   * Duplicates a lesson record, copying all blocks and fields with new stable IDs.
-   * Can optionally override target day or class.
-   */
   public async duplicateLessonRecord(
     userId: string,
     sourceId: string,
@@ -772,7 +564,6 @@ class Database {
     const now = new Date().toISOString();
     const newRecordId = `rec_${crypto.randomUUID()}`;
 
-    // Calculate orderIndex
     const existing = this.data.lessonRecords.filter(r => r.weekId === source.weekId);
     const orderIndex = existing.length > 0 ? Math.max(...existing.map(e => e.orderIndex)) + 1 : 1;
 
@@ -818,10 +609,6 @@ class Database {
 
   // --- Dynamic Block Operations ---
 
-  /**
-   * Batch creates N blocks on a lesson record in one operation.
-   * Uses template fields or creates empty fields.
-   */
   public async createBlocks(
     userId: string,
     lessonRecordId: string,
@@ -874,9 +661,6 @@ class Database {
     return record;
   }
 
-  /**
-   * Duplicates a single block inside a lesson record, copying all its fields with new IDs.
-   */
   public async duplicateBlock(userId: string, lessonRecordId: string, blockId: string): Promise<LessonRecord | null> {
     const record = this.getLessonRecord(userId, lessonRecordId);
     if (!record) return null;
@@ -908,7 +692,6 @@ class Database {
 
     record.blocks.splice(sourceIndex + 1, 0, newBlock);
 
-    // Re-index block numbers & order indices
     record.blocks.forEach((b, idx) => {
       b.blockNumber = idx + 1;
       b.orderIndex = idx + 1;
@@ -919,9 +702,6 @@ class Database {
     return record;
   }
 
-  /**
-   * Deletes a single block and re-indexes remaining blocks.
-   */
   public async deleteBlock(userId: string, lessonRecordId: string, blockId: string): Promise<LessonRecord | null> {
     const record = this.getLessonRecord(userId, lessonRecordId);
     if (!record) return null;
@@ -930,7 +710,6 @@ class Database {
     record.blocks = record.blocks.filter(b => b.id !== blockId);
     if (record.blocks.length === initialLength) return null;
 
-    // Re-index remaining blocks
     record.blocks.forEach((b, idx) => {
       b.blockNumber = idx + 1;
       b.orderIndex = idx + 1;
@@ -941,9 +720,6 @@ class Database {
     return record;
   }
 
-  /**
-   * Reorders blocks in a lesson record according to a list of block IDs.
-   */
   public async reorderBlocks(userId: string, lessonRecordId: string, orderedBlockIds: string[]): Promise<LessonRecord | null> {
     const record = this.getLessonRecord(userId, lessonRecordId);
     if (!record) return null;
@@ -961,7 +737,6 @@ class Database {
       }
     });
 
-    // Append any remaining blocks not in the input list
     blockMap.forEach(blk => {
       blk.orderIndex = reordered.length + 1;
       blk.blockNumber = reordered.length + 1;
@@ -974,9 +749,6 @@ class Database {
     return record;
   }
 
-  /**
-   * Applies a template structure to an existing block without destroying existing field values if keys match.
-   */
   public async applyTemplateToBlock(userId: string, lessonRecordId: string, blockId: string, templateId: string): Promise<LessonRecord | null> {
     const record = this.getLessonRecord(userId, lessonRecordId);
     if (!record) return null;
@@ -1016,11 +788,11 @@ class Database {
   // --- Templates Operations ---
 
   public listTemplates(userId: string): BlockTemplate[] {
-    return this.data.templates.filter(t => t.userId === userId || t.userId === 'usr_sarah_parker');
+    return this.data.templates.filter(t => t.userId === userId || t.userId === 'usr_default');
   }
 
   public getTemplate(userId: string, id: string): BlockTemplate | undefined {
-    return this.data.templates.find(t => t.id === id && (t.userId === userId || t.userId === 'usr_sarah_parker'));
+    return this.data.templates.find(t => t.id === id && (t.userId === userId || t.userId === 'usr_default'));
   }
 
   public async createTemplate(userId: string, templateData: Omit<BlockTemplate, 'id' | 'userId' | 'createdAt' | 'updatedAt'>): Promise<BlockTemplate> {
@@ -1044,7 +816,6 @@ class Database {
     };
 
     if (template.isDefault) {
-      // Unmark other defaults for this user
       this.data.templates.filter(t => t.userId === userId).forEach(t => (t.isDefault = false));
     }
 
@@ -1152,9 +923,6 @@ class Database {
     if (updates.plainText !== undefined) item.plainText = cleanPlainText(updates.plainText);
     if (updates.category !== undefined) item.category = updates.category;
     if (updates.orderIndex !== undefined) item.orderIndex = updates.orderIndex;
-    if (updates.className !== undefined) item.className = updates.className ? cleanPlainText(updates.className) : undefined;
-    if (updates.section !== undefined) item.section = updates.section ? cleanPlainText(updates.section) : undefined;
-    if (updates.day !== undefined) item.day = updates.day ? cleanPlainText(updates.day) : undefined;
 
     item.updatedAt = new Date().toISOString();
     await this.persist();
@@ -1170,9 +938,6 @@ class Database {
     return true;
   }
 
-  /**
-   * Helper that extracts structured fields from a LessonRecord into the clipboard gallery.
-   */
   public createClipboardItemFromRecord(record: LessonRecord, userId: string) {
     const now = new Date().toISOString();
     let order = 1;
@@ -1236,6 +1001,163 @@ class Database {
     });
   }
 
+  // --- Multi-Lesson PDF Import & History Operations (Requirements 7, 10, 24, 25, 26) ---
+
+  public listImportRecords(userId: string): ImportRecord[] {
+    return this.data.importRecords
+      .filter(i => i.userId === userId)
+      .sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+  }
+
+  public getImportRecord(userId: string, id: string): ImportRecord | null {
+    return this.data.importRecords.find(i => i.userId === userId && i.id === id) || null;
+  }
+
+  public async deleteImportRecord(userId: string, id: string): Promise<boolean> {
+    const index = this.data.importRecords.findIndex(i => i.userId === userId && i.id === id);
+    if (index === -1) return false;
+    this.data.importRecords.splice(index, 1);
+    await this.persist();
+    return true;
+  }
+
+  /**
+   * Commits an AI-parsed and teacher-reviewed weekly lesson plan into the database.
+   * Creates the Week and all structured LessonRecords and dynamic Blocks.
+   */
+  public async commitImportedWeek(userId: string, importData: ParsedWeeklyImport): Promise<{ week: Week; recordsCount: number }> {
+    const now = new Date().toISOString();
+    const importId = `imp_${crypto.randomUUID()}`;
+
+    // 1. Create the Week
+    const week: Week = {
+      id: `week_${crypto.randomUUID()}`,
+      userId,
+      weekNumber: cleanPlainText(importData.weekNumber) || 'Imported Week',
+      title: cleanPlainText(importData.weekTitle) || 'Weekly Lesson Plans',
+      startDate: importData.startDate || '',
+      endDate: importData.endDate || '',
+      status: 'in_progress',
+      createdAt: now,
+      updatedAt: now,
+    };
+    this.data.weeks.unshift(week);
+
+    // 2. Resolve default template for field schema
+    const defaultTemplate = this.data.templates.find(t => t.userId === userId && t.isDefault) || this.data.templates[0];
+
+    // 3. Create each individual lesson record
+    let recordsCount = 0;
+    for (const draft of importData.lessons) {
+      recordsCount++;
+      const recordId = `rec_${crypto.randomUUID()}`;
+
+      const blocks: Block[] = draft.blocks.map(bDraft => {
+        const blockId = `blk_${crypto.randomUUID()}`;
+
+        // Build fields using draft fields or template definitions
+        const fieldEntries = Object.entries(bDraft.fields);
+        const fields: BlockField[] = [];
+
+        if (fieldEntries.length > 0) {
+          fieldEntries.forEach(([key, val], fIdx) => {
+            const label = key
+              .split('_')
+              .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+              .join(' ');
+
+            fields.push({
+              id: `fld_${crypto.randomUUID()}`,
+              blockId,
+              fieldKey: key,
+              fieldLabel: label,
+              fieldValue: cleanPlainText(val),
+              fieldOrder: fIdx + 1,
+              fieldType: 'textarea',
+              isRequired: false,
+              createdAt: now,
+              updatedAt: now,
+            });
+          });
+        } else if (defaultTemplate) {
+          defaultTemplate.fields.forEach(f => {
+            fields.push({
+              id: `fld_${crypto.randomUUID()}`,
+              blockId,
+              fieldKey: f.key,
+              fieldLabel: f.label,
+              fieldValue: '',
+              fieldOrder: f.order,
+              fieldType: f.type,
+              isRequired: f.isRequired,
+              placeholder: f.placeholder,
+              createdAt: now,
+              updatedAt: now,
+            });
+          });
+        }
+
+        return {
+          id: blockId,
+          lessonRecordId: recordId,
+          blockNumber: bDraft.blockNumber,
+          templateId: defaultTemplate?.id,
+          orderIndex: bDraft.blockNumber,
+          fields,
+          createdAt: now,
+          updatedAt: now,
+        };
+      });
+
+      const lessonRecord: LessonRecord = {
+        id: recordId,
+        weekId: week.id,
+        userId,
+        className: cleanPlainText(draft.className) || 'Class',
+        section: cleanPlainText(draft.section) || '',
+        day: cleanPlainText(draft.day) || 'Monday',
+        date: draft.date || '',
+        target: cleanPlainText(draft.target) || '',
+        activities: cleanPlainText(draft.activities) || '',
+        status: draft.needsReview ? 'draft' : 'ready',
+        completed: false,
+        orderIndex: recordsCount,
+        blocks,
+        sourceImportId: importId,
+        sourceFileName: importData.fileName,
+        sourceUrl: importData.sourceUrl,
+        sourceType: importData.sourceType,
+        automationStatus: 'not_started',
+        createdAt: now,
+        updatedAt: now,
+      };
+
+      this.data.lessonRecords.push(lessonRecord);
+    }
+
+    // 4. Record the import history
+    this.data.importRecords.unshift({
+      id: importId,
+      userId,
+      fileName: importData.fileName || 'Lesson_Plan_Document',
+      sourceType: importData.sourceType || 'plain_text',
+      sourceUrl: importData.sourceUrl,
+      sourceTitle: importData.sourceTitle,
+      weekId: week.id,
+      weekNumber: week.weekNumber,
+      lessonCount: recordsCount,
+      metadata: {
+        sourceUrl: importData.sourceUrl,
+        sourceTitle: importData.sourceTitle,
+        extractedSummary: importData.extractedSummary,
+      },
+      createdAt: now,
+    });
+
+    await this.persist();
+    return { week, recordsCount };
+  }
+
   // --- Progress & Analytics ---
 
   public getWeeklyProgress(userId: string, weekId: string): WeeklyProgressDTO {
@@ -1253,7 +1175,6 @@ class Database {
     };
 
     records.forEach(r => {
-      // Day grouping
       if (!byDay[r.day]) {
         byDay[r.day] = { total: 0, completed: 0 };
       }
@@ -1261,8 +1182,6 @@ class Database {
       if (r.completed || r.status === 'completed') {
         byDay[r.day].completed += 1;
       }
-
-      // Status grouping
       byStatus[r.status] = (byStatus[r.status] || 0) + 1;
     });
 
@@ -1278,10 +1197,6 @@ class Database {
 
   // --- Chrome Extension DTO Contract ---
 
-  /**
-   * Builds the clean structured DTO that the Chrome Extension will consume
-   * to automatically fill the school website.
-   */
   public getExtensionRecordDTO(userId: string, recordId: string): ExtensionLessonRecordDTO | null {
     const record = this.getLessonRecord(userId, recordId);
     if (!record) return null;
@@ -1321,6 +1236,151 @@ class Database {
       })),
       copyQueue,
     };
+  }
+
+  // --- Isolated Demo Seeder (Only called if user explicitly clicks "Load Demo Data" in Settings) ---
+
+  public seedDemoWeek(userId: string) {
+    const now = new Date().toISOString();
+    const weekId = `week_sample_demo`;
+
+    this.data.weeks = this.data.weeks.filter(w => w.id !== weekId);
+    this.data.lessonRecords = this.data.lessonRecords.filter(r => r.weekId !== weekId);
+
+    const week: Week = {
+      id: weekId,
+      userId,
+      weekNumber: 'Sample Week 1',
+      title: 'Introductory Fractions & Estimation',
+      startDate: '2026-10-12',
+      endDate: '2026-10-16',
+      status: 'in_progress',
+      createdAt: now,
+      updatedAt: now,
+    };
+    this.data.weeks.unshift(week);
+
+    const defaultTmpl = this.data.templates.find(t => t.userId === userId && t.isDefault) || this.data.templates[0];
+
+    const recordsDef = [
+      {
+        day: 'Monday',
+        className: 'Grade 6',
+        section: 'Room 102',
+        target: 'Convert proper fractions to decimals using long division.',
+        activities: '1. Warmup drill 2. Direct modeling 3. Paired practice',
+        blockCount: 3,
+        blockData: [
+          {
+            objective: 'Divide numerator by denominator accurately.',
+            teacher_activity: 'Direct instruction showing 3/4 = 0.75 and 1/2 = 0.5.',
+            student_activity: 'Write decimal values on mini-whiteboards.',
+            resources: 'Notebooks, whiteboards.',
+            assessment: 'Exit ticket #1: Convert 5/8.',
+          },
+          {
+            objective: 'Classify decimals as terminating or repeating.',
+            teacher_activity: 'Demonstrate bar notation with 1/3 and 2/3.',
+            student_activity: 'Sort 6 fractions into T-chart.',
+            resources: 'Sorting handout.',
+            assessment: 'Thumbs up/down check.',
+          },
+          {
+            objective: 'Apply conversions in real-world recipe measurement.',
+            teacher_activity: 'Guide recipe scaling scenario.',
+            student_activity: 'Work in pairs on recipe calculations.',
+            resources: 'Task cards.',
+            assessment: 'Turn in group task solution.',
+          },
+        ],
+      },
+      {
+        day: 'Tuesday',
+        className: 'Grade 6',
+        section: 'Room 102',
+        target: 'Add and subtract decimals with unequal place values.',
+        activities: 'Place-value grid alignment exercise.',
+        blockCount: 3,
+        blockData: [
+          {
+            objective: 'Line up decimal points vertically before adding or subtracting.',
+            teacher_activity: 'Model vertical alignment with zeroes.',
+            student_activity: 'Align 4 problems on grid paper.',
+            resources: 'Grid sheets.',
+            assessment: 'Notebook check.',
+          },
+          {
+            objective: 'Perform regrouping across decimal places.',
+            teacher_activity: 'Model regrouping from hundredths to tenths.',
+            student_activity: 'Solve 3 practice problems.',
+            resources: 'Practice book.',
+            assessment: 'Problem 3 verification.',
+          },
+          {
+            objective: 'Calculate remaining budget balance.',
+            teacher_activity: 'Present $20 budget scenario.',
+            student_activity: 'Calculate subtotal and change.',
+            resources: 'Receipt simulation.',
+            assessment: 'Change calculation exit slip.',
+          },
+        ],
+      },
+    ];
+
+    recordsDef.forEach((def, rIdx) => {
+      const recordId = `rec_sample_${rIdx + 1}`;
+      const blocks: Block[] = [];
+
+      for (let b = 1; b <= def.blockCount; b++) {
+        const blockId = `blk_${recordId}_${b}`;
+        const bData = def.blockData[b - 1] || {};
+        const fields: BlockField[] = defaultTmpl.fields.map(f => ({
+          id: `fld_${blockId}_${f.key}`,
+          blockId,
+          fieldKey: f.key,
+          fieldLabel: f.label,
+          fieldValue: (bData as Record<string, string>)[f.key] || '',
+          fieldOrder: f.order,
+          fieldType: f.type,
+          isRequired: f.isRequired,
+          placeholder: f.placeholder,
+          createdAt: now,
+          updatedAt: now,
+        }));
+
+        blocks.push({
+          id: blockId,
+          lessonRecordId: recordId,
+          blockNumber: b,
+          templateId: defaultTmpl.id,
+          orderIndex: b,
+          fields,
+          createdAt: now,
+          updatedAt: now,
+        });
+      }
+
+      this.data.lessonRecords.push({
+        id: recordId,
+        weekId: week.id,
+        userId,
+        className: def.className,
+        section: def.section,
+        day: def.day,
+        target: def.target,
+        activities: def.activities,
+        status: 'ready',
+        completed: false,
+        orderIndex: rIdx + 1,
+        blocks,
+        automationStatus: 'not_started',
+        createdAt: now,
+        updatedAt: now,
+      });
+    });
+
+    this.persist();
+    return week;
   }
 }
 

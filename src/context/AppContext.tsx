@@ -1,14 +1,13 @@
 /**
  * LessonFlow Global Application Context
  * 
- * Manages state for:
- * - Active teacher & profile
- * - Selected week & weekly progress
- * - Selected lesson record & dynamic blocks
- * - Debounced autosave with visual status
- * - Clipboard gallery with 1-click clean copy
- * - Reusable block templates
- * - Toast notifications
+ * Simplified, teacher-focused state management for:
+ * - Active view navigation (Dashboard, Lesson Plans, Import, Clipboard, Templates, Settings)
+ * - Weekly lesson plans & lesson records
+ * - Multi-lesson PDF / Document import with review workflow
+ * - Dynamic block builder & configurable templates
+ * - Plain-text clipboard gallery
+ * - Debounced autosave with subtle indicator
  */
 
 import React, { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react';
@@ -19,11 +18,15 @@ import {
   LessonRecord,
   BlockTemplate,
   ClipboardItem,
+  ImportRecord,
+  ParsedWeeklyImport,
   WeeklyProgressDTO,
   RecordStatus,
 } from '../types/index.js';
 import { api } from '../services/api.js';
 import { cleanPlainText } from '../utils/textCleaner.js';
+
+export type ActiveNavView = 'dashboard' | 'lessons' | 'import' | 'clipboard' | 'templates' | 'history' | 'settings';
 
 export interface ToastMessage {
   id: string;
@@ -34,7 +37,6 @@ export interface ToastMessage {
 interface AppContextType {
   currentUser: User | null;
   teacherProfile: TeacherProfile | null;
-  allUsers: Array<{ id: string; name: string; email: string }>;
   weeks: Week[];
   selectedWeekId: string | null;
   selectedWeek: Week | null;
@@ -43,8 +45,11 @@ interface AppContextType {
   selectedRecord: LessonRecord | null;
   templates: BlockTemplate[];
   clipboardItems: ClipboardItem[];
+  importHistory: ImportRecord[];
+  importDraft: ParsedWeeklyImport | null;
   progress: WeeklyProgressDTO | null;
-  activeView: 'workspace' | 'templates' | 'clipboard' | 'extension-api';
+  activeView: ActiveNavView;
+  pendingImportUrl: string | null;
   filterDay: string;
   searchQuery: string;
   saveStatus: 'saved' | 'saving' | 'error';
@@ -52,11 +57,15 @@ interface AppContextType {
   toasts: ToastMessage[];
 
   // Navigation & View Setters
-  setActiveView: (view: 'workspace' | 'templates' | 'clipboard' | 'extension-api') => void;
+  setActiveView: (view: ActiveNavView) => void;
+  initiateImportFromUrl: (url: string) => void;
+  clearPendingImportUrl: () => void;
   setFilterDay: (day: string) => void;
   setSearchQuery: (query: string) => void;
+  setImportDraft: (draft: ParsedWeeklyImport | null) => void;
   selectWeek: (weekId: string) => Promise<void>;
   selectRecord: (recordId: string | null) => void;
+  openLessonEditor: (weekId: string, recordId: string) => Promise<void>;
   nextRecord: () => void;
   prevRecord: () => void;
 
@@ -65,6 +74,11 @@ interface AppContextType {
   duplicateWeek: (weekId: string, newWeekNumber?: string, newTitle?: string) => Promise<void>;
   updateWeekDetails: (weekId: string, updates: Partial<Week>) => Promise<void>;
   deleteWeek: (weekId: string) => Promise<void>;
+
+  // Import Actions
+  commitImportDraft: (draft: ParsedWeeklyImport) => Promise<Week>;
+  refreshImportHistory: () => Promise<void>;
+  deleteImportHistoryItem: (importId: string) => Promise<void>;
 
   // Lesson Record Actions
   createRecord: (data: {
@@ -100,11 +114,10 @@ interface AppContextType {
   updateTemplate: (id: string, updates: Partial<BlockTemplate>) => Promise<void>;
   deleteTemplate: (id: string) => Promise<void>;
 
-  // User & Demo
-  switchUser: (userId: string) => Promise<void>;
-  createUser: (name: string, email: string) => Promise<void>;
+  // Profile & Testing Demo
   updateTeacherProfile: (profile: Partial<TeacherProfile>) => Promise<void>;
-  resetDemoData: () => Promise<void>;
+  loadDemoData: () => Promise<void>;
+  clearAllData: () => Promise<void>;
   dismissToast: (id: string) => void;
   showToast: (text: string, type?: ToastMessage['type']) => void;
 }
@@ -114,23 +127,24 @@ const AppContext = createContext<AppContextType | null>(null);
 export function AppProvider({ children }: { children: React.ReactNode }) {
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [teacherProfile, setTeacherProfile] = useState<TeacherProfile | null>(null);
-  const [allUsers, setAllUsers] = useState<Array<{ id: string; name: string; email: string }>>([]);
   const [weeks, setWeeks] = useState<Week[]>([]);
   const [selectedWeekId, setSelectedWeekId] = useState<string | null>(null);
   const [records, setRecords] = useState<LessonRecord[]>([]);
   const [selectedRecordId, setSelectedRecordId] = useState<string | null>(null);
   const [templates, setTemplates] = useState<BlockTemplate[]>([]);
   const [clipboardItems, setClipboardItems] = useState<ClipboardItem[]>([]);
+  const [importHistory, setImportHistory] = useState<ImportRecord[]>([]);
+  const [importDraft, setImportDraft] = useState<ParsedWeeklyImport | null>(null);
   const [progress, setProgress] = useState<WeeklyProgressDTO | null>(null);
 
-  const [activeView, setActiveView] = useState<'workspace' | 'templates' | 'clipboard' | 'extension-api'>('workspace');
+  const [activeView, setActiveView] = useState<ActiveNavView>('dashboard');
+  const [pendingImportUrl, setPendingImportUrl] = useState<string | null>(null);
   const [filterDay, setFilterDay] = useState<string>('All');
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [saveStatus, setSaveStatus] = useState<'saved' | 'saving' | 'error'>('saved');
   const [loading, setLoading] = useState<boolean>(true);
   const [toasts, setToasts] = useState<ToastMessage[]>([]);
 
-  // Ref to track autosave debounce timer
   const autosaveTimerRef = useRef<NodeJS.Timeout | null>(null);
   const pendingUpdatesRef = useRef<Partial<LessonRecord> | null>(null);
 
@@ -146,41 +160,55 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     setToasts(prev => prev.filter(t => t.id !== id));
   }, []);
 
-  // Fetch initial profile, weeks, templates, clipboard
+  const initiateImportFromUrl = useCallback((url: string) => {
+    setPendingImportUrl(url);
+    setActiveView('import');
+  }, []);
+
+  const clearPendingImportUrl = useCallback(() => {
+    setPendingImportUrl(null);
+  }, []);
+
+  // Fetch initial profile, weeks, templates, clipboard, and import history
   const loadInitialData = useCallback(async () => {
     try {
       setLoading(true);
-      const [meRes, userList, weekList, tmplList, clipList] = await Promise.all([
+      const [meRes, weekList, tmplList, clipList, history] = await Promise.all([
         api.getMe(),
-        api.listUsers(),
         api.listWeeks(),
         api.listTemplates(),
         api.listClipboard(),
+        api.listImportHistory(),
       ]);
 
       setCurrentUser(meRes.user);
       setTeacherProfile(meRes.profile || null);
-      setAllUsers(userList);
       setWeeks(weekList);
       setTemplates(tmplList);
       setClipboardItems(clipList);
+      setImportHistory(history);
 
       if (weekList.length > 0) {
-        const defaultWeek = weekList[0];
-        setSelectedWeekId(defaultWeek.id);
+        const initialWeek = weekList[0];
+        setSelectedWeekId(initialWeek.id);
         const [recList, prog] = await Promise.all([
-          api.listLessonRecords(defaultWeek.id),
-          api.getWeeklyProgress(defaultWeek.id),
+          api.listLessonRecords(initialWeek.id),
+          api.getWeeklyProgress(initialWeek.id),
         ]);
         setRecords(recList);
         setProgress(prog);
         if (recList.length > 0) {
           setSelectedRecordId(recList[0].id);
         }
+      } else {
+        setSelectedWeekId(null);
+        setRecords([]);
+        setSelectedRecordId(null);
+        setProgress(null);
       }
     } catch (err: any) {
       console.error('Failed to load initial data:', err);
-      showToast('Error loading lesson plan data: ' + err.message, 'error');
+      showToast('Error loading lesson workspace: ' + err.message, 'error');
     } finally {
       setLoading(false);
     }
@@ -190,7 +218,6 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     loadInitialData();
   }, [loadInitialData]);
 
-  // Load records and progress when selectedWeekId changes
   const selectWeek = useCallback(async (weekId: string) => {
     try {
       setSelectedWeekId(weekId);
@@ -202,9 +229,15 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       setProgress(prog);
       setSelectedRecordId(recList.length > 0 ? recList[0].id : null);
     } catch (err: any) {
-      showToast('Failed to load week records: ' + err.message, 'error');
+      showToast('Failed to load week: ' + err.message, 'error');
     }
   }, [showToast]);
+
+  const openLessonEditor = useCallback(async (weekId: string, recordId: string) => {
+    await selectWeek(weekId);
+    setSelectedRecordId(recordId);
+    setActiveView('lessons');
+  }, [selectWeek]);
 
   const selectedWeek = weeks.find(w => w.id === selectedWeekId) || null;
   const selectedRecord = records.find(r => r.id === selectedRecordId) || null;
@@ -215,7 +248,8 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     if (filterDay !== 'All' && r.day.toLowerCase() !== filterDay.toLowerCase()) return false;
     if (searchQuery.trim()) {
       const q = searchQuery.toLowerCase();
-      const matchMeta = r.className.toLowerCase().includes(q) ||
+      const matchMeta =
+        r.className.toLowerCase().includes(q) ||
         r.section.toLowerCase().includes(q) ||
         r.day.toLowerCase().includes(q) ||
         r.target.toLowerCase().includes(q) ||
@@ -250,7 +284,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     const newWeek = await api.createWeek({ weekNumber, title, startDate, endDate });
     setWeeks(prev => [newWeek, ...prev]);
     await selectWeek(newWeek.id);
-    showToast(`Created ${newWeek.weekNumber}: ${newWeek.title}`, 'success');
+    showToast(`Created ${newWeek.weekNumber}`, 'success');
     return newWeek;
   }, [selectWeek, showToast]);
 
@@ -300,6 +334,49 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     }
   }, [weeks, selectedWeekId, selectWeek, showToast]);
 
+  // --- Import Actions ---
+
+  const commitImportDraft = useCallback(async (draft: ParsedWeeklyImport): Promise<Week> => {
+    setLoading(true);
+    try {
+      const res = await api.commitImport(draft);
+      const updatedWeeks = await api.listWeeks();
+      const updatedHistory = await api.listImportHistory();
+      setWeeks(updatedWeeks);
+      setImportHistory(updatedHistory);
+      setImportDraft(null);
+
+      await selectWeek(res.week.id);
+      setActiveView('lessons');
+      showToast(`Imported ${res.recordsCount} lessons into ${res.week.weekNumber}!`, 'success');
+      return res.week;
+    } catch (err: any) {
+      showToast('Failed to commit imported lesson plan: ' + err.message, 'error');
+      throw err;
+    } finally {
+      setLoading(false);
+    }
+  }, [selectWeek, showToast]);
+
+  const refreshImportHistory = useCallback(async () => {
+    try {
+      const history = await api.listImportHistory();
+      setImportHistory(history);
+    } catch (err: any) {
+      console.error('Failed to load import history:', err);
+    }
+  }, []);
+
+  const deleteImportHistoryItem = useCallback(async (importId: string) => {
+    try {
+      await api.deleteImportHistory(importId);
+      setImportHistory(prev => prev.filter(i => i.id !== importId));
+      showToast('Import history entry removed', 'info');
+    } catch (err: any) {
+      showToast('Failed to delete history item: ' + err.message, 'error');
+    }
+  }, [showToast]);
+
   // --- Lesson Record Operations & Autosave ---
 
   const createRecord = useCallback(async (data: {
@@ -311,13 +388,19 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     blockCount?: number;
     templateId?: string;
   }) => {
-    if (!selectedWeekId) throw new Error('No week selected.');
-    const newRecord = await api.createLessonRecord(selectedWeekId, data);
+    let weekId = selectedWeekId;
+    if (!weekId) {
+      const newWeek = await api.createWeek({ weekNumber: 'Week 1', title: 'Lesson Plans' });
+      setWeeks(prev => [newWeek, ...prev]);
+      weekId = newWeek.id;
+      setSelectedWeekId(newWeek.id);
+    }
+
+    const newRecord = await api.createLessonRecord(weekId, data);
     setRecords(prev => [...prev, newRecord]);
     setSelectedRecordId(newRecord.id);
-    
-    // Update progress
-    api.getWeeklyProgress(selectedWeekId).then(setProgress).catch(console.error);
+
+    api.getWeeklyProgress(weekId).then(setProgress).catch(console.error);
     showToast(`Created record for ${newRecord.day} (${newRecord.className})`, 'success');
     return newRecord;
   }, [selectedWeekId, showToast]);
@@ -355,11 +438,9 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     }
   }, [selectedRecordId, selectedWeekId, showToast]);
 
-  // Debounced Autosave for current selected record
   const updateRecord = useCallback((updates: Partial<LessonRecord>, immediate: boolean = false) => {
     if (!selectedRecordId) return;
 
-    // Optimistically update local state immediately so UI feels instant
     setRecords(prev =>
       prev.map(r => (r.id === selectedRecordId ? { ...r, ...updates } : r))
     );
@@ -414,7 +495,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         const prog = await api.getWeeklyProgress(selectedWeekId);
         setProgress(prog);
       }
-      showToast(newCompleted ? 'Marked complete' : 'Marked incomplete', 'info');
+      showToast(newCompleted ? 'Marked complete' : 'Marked draft', 'info');
     } catch (err: any) {
       showToast('Failed to update status: ' + err.message, 'error');
     }
@@ -471,7 +552,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       const updated = await api.deleteBlock(selectedRecordId, blockId);
       setRecords(prev => prev.map(r => (r.id === selectedRecordId ? updated : r)));
       setSaveStatus('saved');
-      showToast('Block removed', 'info');
+      showToast('Block deleted', 'info');
     } catch (err: any) {
       setSaveStatus('error');
       showToast('Failed to delete block: ' + err.message, 'error');
@@ -495,18 +576,15 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       const updated = await api.applyTemplateToBlock(selectedRecordId, blockId, templateId);
       setRecords(prev => prev.map(r => (r.id === selectedRecordId ? updated : r)));
       setSaveStatus('saved');
-      showToast('Template fields applied to block', 'success');
+      showToast('Applied template fields to block', 'success');
     } catch (err: any) {
       setSaveStatus('error');
       showToast('Failed to apply template: ' + err.message, 'error');
     }
   }, [selectedRecordId, showToast]);
 
-  // --- Clipboard System Actions ---
+  // --- Clipboard Actions ---
 
-  /**
-   * 1-Click Copy ONLY clean plain text to the system clipboard
-   */
   const copyToSystemClipboard = useCallback(async (text: string, label?: string) => {
     const cleanText = cleanPlainText(text);
     if (!cleanText) {
@@ -518,7 +596,6 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       if (navigator.clipboard && navigator.clipboard.writeText) {
         await navigator.clipboard.writeText(cleanText);
       } else {
-        // Fallback for older browsers
         const textarea = document.createElement('textarea');
         textarea.value = cleanText;
         textarea.style.position = 'fixed';
@@ -529,16 +606,16 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         document.execCommand('copy');
         document.body.removeChild(textarea);
       }
-      showToast(label ? `Copied: "${label}"` : 'Copied clean plain text to clipboard!', 'success');
+      showToast(label ? `Copied: "${label}"` : 'Copied plain text to clipboard', 'success');
     } catch (err: any) {
-      showToast('Clipboard permission denied or unavailable', 'error');
+      showToast('Clipboard permission denied', 'error');
     }
   }, [showToast]);
 
   const addClipboardItem = useCallback(async (text: string, label: string, category: ClipboardItem['category'] = 'general') => {
     const clean = cleanPlainText(text);
     if (!clean) {
-      showToast('Cannot add empty text to clipboard', 'info');
+      showToast('Cannot add empty text', 'info');
       return;
     }
     try {
@@ -553,7 +630,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         day: selectedRecord?.day,
       });
       setClipboardItems(prev => [item, ...prev]);
-      showToast(`Saved to Clipboard Gallery: ${label}`, 'success');
+      showToast(`Added to clipboard: ${label}`, 'success');
     } catch (err: any) {
       showToast('Failed to save clipboard item: ' + err.message, 'error');
     }
@@ -563,7 +640,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     try {
       await api.deleteClipboardItem(id);
       setClipboardItems(prev => prev.filter(c => c.id !== id));
-      showToast('Removed from clipboard gallery', 'info');
+      showToast('Removed from clipboard', 'info');
     } catch (err: any) {
       showToast('Failed to delete clipboard item: ' + err.message, 'error');
     }
@@ -573,7 +650,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     try {
       const items = await api.extractRecordToClipboard(recordId);
       setClipboardItems(prev => [...items, ...prev]);
-      showToast(`Extracted ${items.length} clean items to clipboard gallery`, 'success');
+      showToast(`Extracted ${items.length} items to clipboard gallery`, 'success');
     } catch (err: any) {
       showToast('Failed to extract items: ' + err.message, 'error');
     }
@@ -611,43 +688,45 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     }
   }, [showToast]);
 
-  // --- User & Profile Actions ---
-
-  const switchUser = useCallback(async (userId: string) => {
-    api.setActiveUserId(userId);
-    await loadInitialData();
-    showToast('Switched user', 'info');
-  }, [loadInitialData, showToast]);
-
-  const createUser = useCallback(async (name: string, email: string) => {
-    try {
-      const user = await api.createUser(name, email);
-      setAllUsers(prev => [...prev, { id: user.id, name: user.name, email: user.email }]);
-      await switchUser(user.id);
-      showToast(`Created and switched to teacher: ${name}`, 'success');
-    } catch (err: any) {
-      showToast('Failed to create user: ' + err.message, 'error');
-    }
-  }, [switchUser, showToast]);
+  // --- Profile & Testing Demo ---
 
   const updateTeacherProfile = useCallback(async (profile: Partial<TeacherProfile>) => {
     try {
       const updated = await api.updateProfile(profile);
       setTeacherProfile(updated);
-      showToast('Profile defaults updated', 'success');
+      showToast('Preferences updated', 'success');
     } catch (err: any) {
-      showToast('Failed to update profile: ' + err.message, 'error');
+      showToast('Failed to update preferences: ' + err.message, 'error');
     }
   }, [showToast]);
 
-  const resetDemoData = useCallback(async () => {
+  const loadDemoData = useCallback(async () => {
     try {
       setLoading(true);
       await api.seedDemoData();
       await loadInitialData();
-      showToast('Reset sample Week 8 demo data', 'success');
+      setActiveView('dashboard');
+      showToast('Loaded sample demo lesson week', 'success');
     } catch (err: any) {
-      showToast('Failed to reset demo data: ' + err.message, 'error');
+      showToast('Failed to load demo data: ' + err.message, 'error');
+    } finally {
+      setLoading(false);
+    }
+  }, [loadInitialData, showToast]);
+
+  const clearAllData = useCallback(async () => {
+    try {
+      setLoading(true);
+      // Delete all existing weeks for clean slate
+      const currentWeeks = await api.listWeeks();
+      for (const w of currentWeeks) {
+        await api.deleteWeek(w.id);
+      }
+      await loadInitialData();
+      setActiveView('dashboard');
+      showToast('Cleared all lesson plans', 'info');
+    } catch (err: any) {
+      showToast('Failed to clear data: ' + err.message, 'error');
     } finally {
       setLoading(false);
     }
@@ -658,7 +737,6 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       value={{
         currentUser,
         teacherProfile,
-        allUsers,
         weeks,
         selectedWeekId,
         selectedWeek,
@@ -667,24 +745,34 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         selectedRecord,
         templates,
         clipboardItems,
+        importHistory,
+        importDraft,
         progress,
         activeView,
+        pendingImportUrl,
         filterDay,
         searchQuery,
         saveStatus,
         loading,
         toasts,
         setActiveView,
+        initiateImportFromUrl,
+        clearPendingImportUrl,
         setFilterDay,
         setSearchQuery,
+        setImportDraft,
         selectWeek,
         selectRecord: setSelectedRecordId,
+        openLessonEditor,
         nextRecord,
         prevRecord,
         createWeek,
         duplicateWeek,
         updateWeekDetails,
         deleteWeek,
+        commitImportDraft,
+        refreshImportHistory,
+        deleteImportHistoryItem,
         createRecord,
         duplicateRecord,
         updateRecord,
@@ -703,10 +791,9 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         createTemplate,
         updateTemplate,
         deleteTemplate,
-        switchUser,
-        createUser,
         updateTeacherProfile,
-        resetDemoData,
+        loadDemoData,
+        clearAllData,
         dismissToast,
         showToast,
       }}

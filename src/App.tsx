@@ -1,22 +1,23 @@
 /**
- * LessonFlow Main Application Entry
+ * LessonFlow - Teacher Workflow & Data-Entry Assistant
  * 
- * Functional, clean teacher workflow assistant for weekly lesson planning,
- * dynamic block building, plain-text clipboard, and Chrome Extension automation.
+ * Bento Grid UI/UX Redesign
+ * Desktop-first responsive layout with compact sidebar and Bento system.
  */
 
 import React, { useState, useEffect } from 'react';
 import { AppProvider, useApp } from './context/AppContext.js';
-import { Header } from './components/Header.js';
-import { WeeklyWorkspace } from './components/WeeklyWorkspace.js';
-import { TemplatesManager } from './components/TemplatesManager.js';
+import { Sidebar } from './components/layout/Sidebar.js';
+import { AppHeader } from './components/layout/AppHeader.js';
+import { DashboardView } from './components/DashboardView.js';
+import { LessonPlansView } from './components/LessonPlansView.js';
+import { ImportView } from './components/ImportView.js';
 import { ClipboardGallery } from './components/ClipboardGallery.js';
-import { ExtensionApiView } from './components/ExtensionApiView.js';
+import { TemplatesManager } from './components/TemplatesManager.js';
+import { ImportHistoryView } from './components/ImportHistoryView.js';
+import { SettingsView } from './components/SettingsView.js';
 import { NewWeekModal } from './components/NewWeekModal.js';
 import { NewRecordModal } from './components/NewRecordModal.js';
-import { AiImportModal } from './components/AiImportModal.js';
-import { UserSwitcherModal } from './components/UserSwitcherModal.js';
-import { KeyboardShortcutsModal } from './components/KeyboardShortcutsModal.js';
 import { ToastContainer } from './components/Toast.js';
 
 function MainApp() {
@@ -29,42 +30,33 @@ function MainApp() {
     loading,
   } = useApp();
 
-  // Modals state
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [isNewWeekOpen, setIsNewWeekOpen] = useState(false);
   const [isNewRecordOpen, setIsNewRecordOpen] = useState(false);
-  const [isAiImportOpen, setIsAiImportOpen] = useState(false);
-  const [isUserModalOpen, setIsUserModalOpen] = useState(false);
-  const [isShortcutsOpen, setIsShortcutsOpen] = useState(false);
 
-  // Global Keyboard Shortcuts (Requirement 31)
+  // Global Keyboard Shortcuts
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      // Save shortcut: Ctrl+S or Cmd+S
       if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 's') {
         e.preventDefault();
         updateRecord({}, true);
-        showToast('Lesson record saved explicitly', 'success');
+        showToast('Saved', 'success');
       }
 
-      // Record navigation: Alt + ArrowRight
       if (e.altKey && e.key === 'ArrowRight') {
         e.preventDefault();
         nextRecord();
       }
 
-      // Record navigation: Alt + ArrowLeft
       if (e.altKey && e.key === 'ArrowLeft') {
         e.preventDefault();
         prevRecord();
       }
 
-      // Close modals on Escape
       if (e.key === 'Escape') {
         setIsNewWeekOpen(false);
         setIsNewRecordOpen(false);
-        setIsAiImportOpen(false);
-        setIsUserModalOpen(false);
-        setIsShortcutsOpen(false);
+        setMobileMenuOpen(false);
       }
     };
 
@@ -73,58 +65,69 @@ function MainApp() {
   }, [nextRecord, prevRecord, updateRecord, showToast]);
 
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col font-sans text-gray-900 selection:bg-indigo-100 selection:text-indigo-900">
-      
-      {/* Top Header */}
-      <Header
-        onOpenNewWeek={() => setIsNewWeekOpen(true)}
-        onOpenAiImport={() => setIsAiImportOpen(true)}
-        onOpenShortcuts={() => setIsShortcutsOpen(true)}
-        onOpenUserModal={() => setIsUserModalOpen(true)}
+    <div className="min-h-screen bg-slate-50/70 flex font-sans text-slate-900 antialiased selection:bg-indigo-100 selection:text-indigo-900">
+      {/* Left Sidebar */}
+      <Sidebar
+        mobileOpen={mobileMenuOpen}
+        onCloseMobile={() => setMobileMenuOpen(false)}
       />
 
-      {/* Main Container */}
-      <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-5">
-        {loading ? (
-          <div className="flex flex-col items-center justify-center py-20 text-gray-400 space-y-3">
-            <div className="w-8 h-8 border-3 border-indigo-600 border-t-transparent rounded-full animate-spin" />
-            <span className="text-xs font-semibold text-gray-600">Loading lesson workspace...</span>
+      {/* Main Content Area */}
+      <div className="flex-1 flex flex-col min-w-0">
+        <AppHeader
+          onOpenMobileMenu={() => setMobileMenuOpen(true)}
+          onOpenNewWeekModal={() => setIsNewWeekOpen(true)}
+        />
+
+        <main className="flex-1 p-4 sm:p-6 lg:p-8 overflow-y-auto">
+          {loading ? (
+            <div className="flex flex-col items-center justify-center py-28 text-slate-400 space-y-3">
+              <div className="w-7 h-7 border-2 border-indigo-600 border-t-transparent rounded-full animate-spin" />
+              <span className="text-xs text-slate-500 font-semibold tracking-wide">
+                Loading LessonFlow...
+              </span>
+            </div>
+          ) : (
+            <>
+              {activeView === 'dashboard' && (
+                <DashboardView onOpenNewWeekModal={() => setIsNewWeekOpen(true)} />
+              )}
+
+              {activeView === 'lessons' && (
+                <LessonPlansView
+                  onOpenNewRecordModal={() => setIsNewRecordOpen(true)}
+                  onOpenNewWeekModal={() => setIsNewWeekOpen(true)}
+                />
+              )}
+
+              {activeView === 'import' && <ImportView />}
+
+              {activeView === 'clipboard' && <ClipboardGallery />}
+
+              {activeView === 'templates' && <TemplatesManager />}
+
+              {activeView === 'history' && <ImportHistoryView />}
+
+              {activeView === 'settings' && <SettingsView />}
+            </>
+          )}
+        </main>
+
+        <footer className="border-t border-slate-200/80 bg-white py-3.5 px-6 text-xs text-slate-400">
+          <div className="max-w-6xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-2 text-2xs">
+            <span className="font-semibold text-slate-500">
+              LessonFlow &bull; Teacher Workflow & Automation
+            </span>
+            <span>Real teacher data &bull; Future Chrome Extension Layer</span>
           </div>
-        ) : (
-          <>
-            {activeView === 'workspace' && (
-              <WeeklyWorkspace onOpenNewRecord={() => setIsNewRecordOpen(true)} />
-            )}
+        </footer>
+      </div>
 
-            {activeView === 'templates' && <TemplatesManager />}
-
-            {activeView === 'clipboard' && <ClipboardGallery />}
-
-            {activeView === 'extension-api' && <ExtensionApiView />}
-          </>
-        )}
-      </main>
-
-      {/* Footer Info */}
-      <footer className="bg-white border-t border-gray-200 py-3 text-center text-xs text-gray-500">
-        <div className="max-w-7xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-2">
-          <span>
-            LessonFlow &mdash; Data Entry Automation Assistant for Teachers
-          </span>
-          <span className="text-2xs text-gray-400">
-            Prepares structured blocks for Chrome Extension automated entry
-          </span>
-        </div>
-      </footer>
-
-      {/* Modals */}
+      {/* Creation Modals */}
       <NewWeekModal isOpen={isNewWeekOpen} onClose={() => setIsNewWeekOpen(false)} />
       <NewRecordModal isOpen={isNewRecordOpen} onClose={() => setIsNewRecordOpen(false)} />
-      <AiImportModal isOpen={isAiImportOpen} onClose={() => setIsAiImportOpen(false)} />
-      <UserSwitcherModal isOpen={isUserModalOpen} onClose={() => setIsUserModalOpen(false)} />
-      <KeyboardShortcutsModal isOpen={isShortcutsOpen} onClose={() => setIsShortcutsOpen(false)} />
 
-      {/* Floating Notifications */}
+      {/* Toast Notifications */}
       <ToastContainer />
     </div>
   );

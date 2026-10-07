@@ -230,6 +230,153 @@ async function runTests() {
     'Extension DTO strictly satisfies contract requirements for school website automation'
   );
 
+  // Test 17: Multi-Lesson Import & History
+  console.log('\n[Test 17] Multi-Lesson Import & History');
+  const importResult = await db.commitImportedWeek(teacherA.id, {
+    weekNumber: 'Week 10',
+    weekTitle: 'Geometric Figures & Measurement',
+    fileName: 'Curriculum_Week_10.pdf',
+    sourceType: 'pdf',
+    lessons: [
+      {
+        id: 'draft_1',
+        day: 'Monday',
+        className: 'Grade 6',
+        section: 'Room 201',
+        target: 'Calculate polygon perimeter.',
+        activities: 'Ruler measurement exercise.',
+        blocks: [
+          {
+            blockNumber: 1,
+            fields: {
+              objective: 'Measure sides of regular triangles.',
+              teacher_activity: 'Direct instruction with digital board.',
+              student_activity: 'Measure worksheet polygons.',
+            },
+          },
+        ],
+      },
+      {
+        id: 'draft_2',
+        day: 'Tuesday',
+        className: 'Grade 6',
+        section: 'Room 201',
+        target: 'Calculate rectangle area.',
+        activities: 'Grid counting and multiplication.',
+        blocks: [
+          {
+            blockNumber: 1,
+            fields: {
+              objective: 'Apply length times width formula.',
+              teacher_activity: 'Demonstrate formula derivation.',
+              student_activity: 'Calculate area of 5 figures.',
+            },
+          },
+        ],
+      },
+    ],
+  });
+  assert(importResult.recordsCount === 2, 'Committed 2 lessons from imported document');
+  const importHistory = db.listImportRecords(teacherA.id);
+  assert(importHistory.some(i => i.fileName === 'Curriculum_Week_10.pdf'), 'Import record logged in history with original filename');
+
+  // Test 18: Google Docs URL Parsing & Validation
+  console.log('\n[Test 18] Google Docs URL Detection & Parsing');
+  const { parseGoogleDocUrl } = await import('../server/importers/googleDocImporter.js');
+  const standardDoc = parseGoogleDocUrl('https://docs.google.com/document/d/1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgvE2upms/edit?usp=sharing');
+  assert(standardDoc.isValid && standardDoc.docId === '1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgvE2upms', 'Accurately parses standard Google Docs URL and extracts Doc ID');
+
+  const pubDoc = parseGoogleDocUrl('https://docs.google.com/document/d/e/2PACX-1vR_sample_published_id/pub');
+  assert(pubDoc.isValid && pubDoc.isPublished === true && pubDoc.docId === '2PACX-1vR_sample_published_id', 'Accurately parses published Google Doc URL');
+
+  const invalidDoc = parseGoogleDocUrl('https://example.com/not-a-google-doc');
+  assert(!invalidDoc.isValid, 'Rejects non-Google-Doc URLs');
+
+  // Test 19: HTML Structure Extractor (Preserving tables, headings, lists)
+  console.log('\n[Test 19] HTML Structure Extractor for Google Docs Export');
+  const { extractStructuredContentFromHtml } = await import('../server/importers/htmlExtractor.js');
+  const sampleHtml = `
+    <html>
+      <head><title>Science Curriculum Plan - Google Docs</title></head>
+      <body>
+        <h1>Unit 4: Photosynthesis & Energy</h1>
+        <p>Overview of weekly science labs.</p>
+        <table>
+          <tr><th>Day</th><th>Target</th><th>Block 1</th></tr>
+          <tr><td>Monday</td><td>Students will identify chloroplast function.</td><td>Warmup slide 1-3</td></tr>
+          <tr><td>Wednesday</td><td>Students will observe stomata under microscope.</td><td>Lab station 1</td></tr>
+        </table>
+        <ul>
+          <li>Microscopes</li>
+          <li>Plant leaf samples</li>
+        </ul>
+      </body>
+    </html>
+  `;
+  const extracted = extractStructuredContentFromHtml(sampleHtml);
+  assert(extracted.title === 'Science Curriculum Plan', 'Cleans document title');
+  assert(extracted.stats.tablesCount === 1, 'Detects table in HTML');
+  assert(extracted.stats.headingsCount === 1, 'Detects headings in HTML');
+  assert(extracted.structuredText.includes('| Monday | Students will identify chloroplast function.') && extracted.structuredText.includes('| Warmup slide 1-3 |'), 'Preserves table rows and columns as structured table markdown');
+  assert(extracted.structuredText.includes('# Unit 4: Photosynthesis & Energy'), 'Converts H1 to markdown header');
+  assert(extracted.structuredText.includes('- Microscopes'), 'Converts list items to markdown bullets');
+
+  // Test 20: Source-Agnostic Importer Registry
+  console.log('\n[Test 20] Importer Registry & Source Auto-Detection');
+  const { importerRegistry } = await import('../server/importers/importerRegistry.js');
+  assert(importerRegistry.detectSourceType('https://docs.google.com/document/d/123/edit') === 'google_doc', 'Detects google_doc source type');
+  assert(importerRegistry.detectSourceType('https://docs.google.com/spreadsheets/d/abc') === 'spreadsheet', 'Detects spreadsheet source type');
+  assert(importerRegistry.detectSourceType('Curriculum_Plan.pdf') === 'pdf', 'Detects pdf source type');
+  assert(importerRegistry.detectSourceType('Weekly notes pasted text') === 'pasted_text', 'Detects pasted_text source type');
+
+  // Test 21: Extracting & Parsing Sample Google Doc
+  console.log('\n[Test 21] Google Doc Fetch & Structured Extraction');
+  const gDocResult = await importerRegistry.extractDocument({
+    url: 'https://docs.google.com/document/d/sample-math-week-8/edit',
+  });
+  assert(gDocResult.sourceType === 'google_doc', 'Extracted document identified as google_doc');
+  assert(gDocResult.title.includes('Grade 7 Mathematics'), 'Extracted title from sample Google Doc');
+  assert(gDocResult.stats?.tablesCount! >= 2, 'Preserved multiple curriculum tables from Google Doc');
+
+  // Test 22: Committing Google Doc Import & Verifying Source URL Traceability
+  console.log('\n[Test 22] Committing Google Doc Import with Source URL Traceability');
+  const gDocCommit = await db.commitImportedWeek(teacherA.id, {
+    weekNumber: 'Week 8',
+    weekTitle: 'Grade 7 Linear Equations (Google Doc)',
+    sourceType: 'google_doc',
+    sourceUrl: 'https://docs.google.com/document/d/sample-math-week-8/edit',
+    sourceTitle: 'Grade 7 Mathematics - Week 8 Curriculum Plan',
+    lessons: [
+      {
+        id: 'draft_gdoc_1',
+        day: 'Monday',
+        className: '7A',
+        section: 'Blue',
+        target: 'Solve one-step equations.',
+        activities: 'Balance scale interactive.',
+        blocks: [
+          {
+            blockNumber: 1,
+            fields: {
+              objective: 'Inverse operations warmup.',
+              teacher_activity: 'Direct modeling.',
+              student_activity: 'Pairs practice.',
+            },
+          },
+        ],
+      },
+    ],
+  });
+  assert(gDocCommit.recordsCount === 1, 'Committed 1 lesson from Google Doc');
+  const teacherARecords = db.listLessonRecords(teacherA.id, gDocCommit.week.id);
+  assert(teacherARecords.length === 1, 'Lesson record created in week');
+  assert(teacherARecords[0].sourceType === 'google_doc', 'Lesson record stores sourceType: google_doc');
+  assert(teacherARecords[0].sourceUrl === 'https://docs.google.com/document/d/sample-math-week-8/edit', 'Lesson record stores original sourceUrl');
+
+  const gDocHistory = db.listImportRecords(teacherA.id);
+  const foundGDocImport = gDocHistory.find(i => i.sourceType === 'google_doc');
+  assert(Boolean(foundGDocImport && foundGDocImport.sourceUrl), 'Import history contains record with sourceUrl for re-importing');
+
   console.log(`\n========================================`);
   console.log(`Tests Finished: ${passed} Passed, ${failed} Failed`);
   console.log(`========================================\n`);
