@@ -82,17 +82,17 @@ export const BlockBuilder: React.FC<BlockBuilderProps> = ({ blocks, onBlocksChan
 
   if (blocks.length === 0) {
     return (
-      <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center bg-gray-50 my-4">
-        <Layers className="w-10 h-10 text-gray-400 mx-auto mb-2" />
-        <h4 className="text-sm font-semibold text-gray-800">No Blocks in This Lesson Plan</h4>
-        <p className="text-xs text-gray-500 max-w-sm mx-auto mt-1 mb-4">
+      <div className="border-2 border-dashed border-[#18181B] rounded-[20px] p-8 text-center bg-white my-4 shadow-[2px_2px_0px_#18181B]">
+        <Layers className="w-10 h-10 text-[#18181B] mx-auto mb-2 stroke-[2.5]" />
+        <h4 className="text-sm font-black text-[#18181B]">No Blocks in This Lesson Plan</h4>
+        <p className="text-xs text-[#52525B] max-w-sm mx-auto mt-1 mb-4 font-bold">
           Click &quot;Create 5 Blocks&quot; above or click below to start building dynamic lesson plan blocks.
         </p>
         <button
           onClick={() => createBlocks(3)}
-          className="inline-flex items-center px-3.5 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold rounded-md shadow-xs"
+          className="inline-flex items-center px-4 py-2 bg-[#18181B] hover:bg-neutral-800 text-white text-xs font-black rounded-xl border-2 border-[#18181B] shadow-[2px_2px_0px_#18181B] cursor-pointer"
         >
-          <Plus className="w-4 h-4 mr-1.5" />
+          <Plus className="w-4 h-4 mr-1.5 stroke-[3]" />
           Create 3 Standard Blocks
         </button>
       </div>
@@ -108,26 +108,26 @@ export const BlockBuilder: React.FC<BlockBuilderProps> = ({ blocks, onBlocksChan
         return (
           <div
             key={block.id}
-            className="border border-slate-300 rounded-2xl bg-white shadow-xs overflow-hidden transition-all hover:border-slate-400"
+            className="border-2 border-[#18181B] rounded-[20px] bg-white shadow-[2px_2px_0px_#18181B] overflow-hidden transition-all"
           >
-            {/* Block Header bar */}
-            <div className="bg-slate-50/80 px-4 py-3 border-b border-slate-200 flex flex-wrap items-center justify-between gap-2">
-              <div className="flex items-center space-x-2">
-                <span className="w-6 h-6 rounded-full bg-indigo-100 text-indigo-700 font-bold text-xs flex items-center justify-center">
+            {/* Block Header bar with warm pastel yellow header */}
+            <div className="bg-[#FEF08A] px-4 py-3 border-b-2 border-[#18181B] flex flex-wrap items-center justify-between gap-2">
+              <div className="flex items-center space-x-2.5">
+                <span className="w-7 h-7 rounded-lg bg-white border-2 border-[#18181B] text-[#18181B] font-black text-xs flex items-center justify-center shadow-[1px_1px_0px_#18181B]">
                   {block.blockNumber}
                 </span>
-                <h4 className="text-sm font-bold text-slate-900">
+                <h4 className="text-sm font-black text-[#18181B]">
                   Block {block.blockNumber}
                 </h4>
                 {block.templateId && (
-                  <span className="text-2xs text-slate-500 bg-slate-200/70 px-1.5 py-0.5 rounded font-mono">
+                  <span className="text-[10px] text-[#18181B] bg-white border-2 border-[#18181B] px-2 py-0.5 rounded-md font-mono font-bold">
                     {templates.find(t => t.id === block.templateId)?.name || 'Custom'}
                   </span>
                 )}
               </div>
 
               {/* Block Actions Toolbar */}
-              <div className="flex items-center space-x-1">
+              <div className="flex items-center space-x-1.5">
                 {/* Apply Template dropdown */}
                 <select
                   value={block.templateId || ''}
@@ -136,7 +136,7 @@ export const BlockBuilder: React.FC<BlockBuilderProps> = ({ blocks, onBlocksChan
                       applyTemplateToBlock(block.id, e.target.value);
                     }
                   }}
-                  className="text-xs bg-white border border-gray-300 rounded px-1.5 py-1 text-gray-700 focus:outline-hidden"
+                  className="text-xs bg-white border-2 border-[#18181B] rounded-lg px-2 py-1 text-[#18181B] font-black focus:outline-hidden cursor-pointer"
                   title="Switch template for this block"
                 >
                   <option value="">Change Template...</option>
@@ -153,9 +153,9 @@ export const BlockBuilder: React.FC<BlockBuilderProps> = ({ blocks, onBlocksChan
                   onClick={() => handleMoveUp(index)}
                   disabled={isFirst}
                   title="Move block up"
-                  className="p-1 rounded text-gray-500 hover:text-gray-900 hover:bg-gray-200 disabled:opacity-30 disabled:hover:bg-transparent"
+                  className="p-1.5 rounded-lg border-2 border-[#18181B] bg-white text-[#18181B] hover:bg-[#FAF7EE] disabled:opacity-30 disabled:hover:bg-white cursor-pointer"
                 >
-                  <ArrowUp className="w-3.5 h-3.5" />
+                  <ArrowUp className="w-3.5 h-3.5 stroke-[2.5]" />
                 </button>
 
                 {/* Move Down */}
@@ -164,9 +164,9 @@ export const BlockBuilder: React.FC<BlockBuilderProps> = ({ blocks, onBlocksChan
                   onClick={() => handleMoveDown(index)}
                   disabled={isLast}
                   title="Move block down"
-                  className="p-1 rounded text-gray-500 hover:text-gray-900 hover:bg-gray-200 disabled:opacity-30 disabled:hover:bg-transparent"
+                  className="p-1.5 rounded-lg border-2 border-[#18181B] bg-white text-[#18181B] hover:bg-[#FAF7EE] disabled:opacity-30 disabled:hover:bg-white cursor-pointer"
                 >
-                  <ArrowDown className="w-3.5 h-3.5" />
+                  <ArrowDown className="w-3.5 h-3.5 stroke-[2.5]" />
                 </button>
 
                 {/* Copy Entire Block Content */}
@@ -174,9 +174,9 @@ export const BlockBuilder: React.FC<BlockBuilderProps> = ({ blocks, onBlocksChan
                   type="button"
                   onClick={() => handleCopyBlock(block)}
                   title="Copy entire block text to clipboard"
-                  className="p-1 rounded text-gray-500 hover:text-indigo-600 hover:bg-gray-200"
+                  className="p-1.5 rounded-lg border-2 border-[#18181B] bg-white text-[#18181B] hover:bg-[#FAF7EE] cursor-pointer"
                 >
-                  <Copy className="w-3.5 h-3.5" />
+                  <Copy className="w-3.5 h-3.5 stroke-[2.5]" />
                 </button>
 
                 {/* Duplicate Block */}
@@ -184,9 +184,9 @@ export const BlockBuilder: React.FC<BlockBuilderProps> = ({ blocks, onBlocksChan
                   type="button"
                   onClick={() => duplicateBlock(block.id)}
                   title="Duplicate this block"
-                  className="inline-flex items-center px-2 py-1 text-xs text-gray-700 bg-white border border-gray-300 rounded hover:bg-gray-100"
+                  className="inline-flex items-center px-2.5 py-1 text-xs text-[#18181B] font-black bg-white border-2 border-[#18181B] rounded-lg hover:bg-[#FAF7EE] shadow-[1px_1px_0px_#18181B] cursor-pointer"
                 >
-                  <Copy className="w-3 h-3 mr-1 text-gray-500" />
+                  <Copy className="w-3 h-3 mr-1 stroke-[2.5]" />
                   Duplicate
                 </button>
 
@@ -199,19 +199,19 @@ export const BlockBuilder: React.FC<BlockBuilderProps> = ({ blocks, onBlocksChan
                     }
                   }}
                   title="Delete this block"
-                  className="p-1 rounded text-gray-400 hover:text-rose-600 hover:bg-rose-50"
+                  className="p-1.5 rounded-lg border-2 border-[#18181B] text-[#18181B] hover:bg-rose-50 hover:text-rose-600 bg-white cursor-pointer"
                 >
-                  <Trash2 className="w-3.5 h-3.5" />
+                  <Trash2 className="w-3.5 h-3.5 stroke-[2.5]" />
                 </button>
               </div>
             </div>
 
             {/* Block Fields Form */}
-            <div className="p-4 sm:p-5 space-y-3.5">
+            <div className="p-4 sm:p-5 space-y-4">
               {block.fields.map(field => (
-                <div key={field.id} className="space-y-1">
+                <div key={field.id} className="space-y-1.5">
                   <div className="flex items-center justify-between">
-                    <label className="block text-xs font-bold text-slate-700">
+                    <label className="block text-xs font-black text-[#18181B]">
                       {field.fieldLabel}
                       {field.isRequired && <span className="text-rose-500 ml-0.5">*</span>}
                     </label>
@@ -226,9 +226,9 @@ export const BlockBuilder: React.FC<BlockBuilderProps> = ({ blocks, onBlocksChan
                         )
                       }
                       title={`Copy ${field.fieldLabel} to clipboard`}
-                      className="inline-flex items-center text-3xs font-semibold text-slate-500 hover:text-indigo-600 bg-slate-100 hover:bg-indigo-50 px-2 py-0.5 rounded-md transition-colors"
+                      className="inline-flex items-center text-[10px] font-black text-[#18181B] hover:bg-[#FAF7EE] bg-white border-2 border-[#18181B] px-2 py-0.5 rounded-md shadow-[1px_1px_0px_#18181B] transition-all cursor-pointer"
                     >
-                      <Copy className="w-2.5 h-2.5 mr-1" />
+                      <Copy className="w-2.5 h-2.5 mr-1 stroke-[2.5]" />
                       Copy Text
                     </button>
                   </div>
@@ -239,7 +239,7 @@ export const BlockBuilder: React.FC<BlockBuilderProps> = ({ blocks, onBlocksChan
                       value={field.fieldValue}
                       onChange={e => handleFieldChange(block.id, field.id, e.target.value)}
                       placeholder={field.placeholder || `Enter ${field.fieldLabel}...`}
-                      className="w-full text-xs text-slate-900 border border-slate-300 rounded-xl p-2.5 focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 resize-y"
+                      className="w-full text-xs font-medium text-[#18181B] border-2 border-[#18181B] rounded-xl p-2.5 focus:outline-hidden bg-white shadow-[1px_1px_0px_#18181B]/20 resize-y"
                     />
                   ) : (
                     <input
@@ -247,7 +247,7 @@ export const BlockBuilder: React.FC<BlockBuilderProps> = ({ blocks, onBlocksChan
                       value={field.fieldValue}
                       onChange={e => handleFieldChange(block.id, field.id, e.target.value)}
                       placeholder={field.placeholder || `Enter ${field.fieldLabel}...`}
-                      className="w-full text-xs text-slate-900 border border-slate-300 rounded-xl p-2.5 focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500"
+                      className="w-full text-xs font-medium text-[#18181B] border-2 border-[#18181B] rounded-xl p-2.5 focus:outline-hidden bg-white shadow-[1px_1px_0px_#18181B]/20"
                     />
                   )}
                 </div>
@@ -262,9 +262,9 @@ export const BlockBuilder: React.FC<BlockBuilderProps> = ({ blocks, onBlocksChan
         <button
           type="button"
           onClick={() => createBlocks(1)}
-          className="inline-flex items-center px-4 py-2 border border-gray-300 shadow-2xs text-xs font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50"
+          className="inline-flex items-center px-4 py-2 border-2 border-[#18181B] shadow-[2px_2px_0px_#18181B] text-xs font-black rounded-xl text-[#18181B] bg-white hover:bg-[#FAF7EE] cursor-pointer"
         >
-          <Plus className="w-3.5 h-3.5 mr-1.5 text-gray-500" />
+          <Plus className="w-3.5 h-3.5 mr-1.5 stroke-[3]" />
           Add Another Block (Block {blocks.length + 1})
         </button>
       </div>

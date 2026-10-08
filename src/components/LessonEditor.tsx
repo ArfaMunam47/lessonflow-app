@@ -94,10 +94,10 @@ export const LessonEditor: React.FC<LessonEditorProps> = ({ record }) => {
   };
 
   return (
-    <div className="bg-white border border-slate-300 rounded-2xl shadow-xs overflow-hidden">
+    <div className="bg-white border-2 border-[#18181B] rounded-[22px] shadow-[2px_2px_0px_#18181B] overflow-hidden">
       
       {/* Top Navigation & Status Bar */}
-      <div className="bg-slate-50 border-b border-slate-200 px-5 py-3 flex flex-wrap items-center justify-between gap-3">
+      <div className="bg-[#FAF7EE] border-b-2 border-[#18181B] px-5 py-3.5 flex flex-wrap items-center justify-between gap-3">
         {/* Record index and Fast Navigation */}
         <div className="flex items-center space-x-2">
           <button
@@ -105,9 +105,9 @@ export const LessonEditor: React.FC<LessonEditorProps> = ({ record }) => {
             onClick={prevRecord}
             disabled={isFirst}
             title="Previous record (Alt + Left)"
-            className="p-1.5 rounded-xl border border-slate-300 bg-white text-slate-700 hover:bg-slate-100 disabled:opacity-30 disabled:hover:bg-white transition-colors"
+            className="p-1.5 rounded-xl border-2 border-[#18181B] bg-white text-[#18181B] hover:bg-[#FAF7EE] disabled:opacity-30 disabled:hover:bg-white shadow-[1px_1px_0px_#18181B] transition-colors cursor-pointer"
           >
-            <ChevronLeft className="w-4 h-4" />
+            <ChevronLeft className="w-4 h-4 stroke-[2.5]" />
           </button>
 
           <button
@@ -115,16 +115,16 @@ export const LessonEditor: React.FC<LessonEditorProps> = ({ record }) => {
             onClick={nextRecord}
             disabled={isLast}
             title="Next record (Alt + Right)"
-            className="p-1.5 rounded-xl border border-slate-300 bg-white text-slate-700 hover:bg-slate-100 disabled:opacity-30 disabled:hover:bg-white transition-colors"
+            className="p-1.5 rounded-xl border-2 border-[#18181B] bg-white text-[#18181B] hover:bg-[#FAF7EE] disabled:opacity-30 disabled:hover:bg-white shadow-[1px_1px_0px_#18181B] transition-colors cursor-pointer"
           >
-            <ChevronRight className="w-4 h-4" />
+            <ChevronRight className="w-4 h-4 stroke-[2.5]" />
           </button>
 
           {/* Jump To Record dropdown */}
           <select
             value={record.id}
             onChange={e => selectRecord(e.target.value)}
-            className="text-xs font-semibold bg-white border border-slate-300 rounded-xl py-1.5 px-3 text-slate-900 focus:outline-hidden"
+            className="text-xs font-black bg-white border-2 border-[#18181B] rounded-xl py-1.5 px-3 text-[#18181B] focus:outline-hidden shadow-[1px_1px_0px_#18181B] cursor-pointer"
           >
             {records.map((r, idx) => (
               <option key={r.id} value={r.id}>
@@ -133,7 +133,7 @@ export const LessonEditor: React.FC<LessonEditorProps> = ({ record }) => {
             ))}
           </select>
 
-          <span className="text-2xs text-slate-500 hidden sm:inline">
+          <span className="text-[11px] font-bold text-[#52525B] hidden sm:inline">
             Record {currentIndex + 1} of {records.length}
           </span>
         </div>
@@ -141,7 +141,7 @@ export const LessonEditor: React.FC<LessonEditorProps> = ({ record }) => {
         {/* Record Status and Actions */}
         <div className="flex items-center space-x-2">
           {/* Quick Mark Complete Checkbox */}
-          <label className="flex items-center space-x-1.5 cursor-pointer text-xs font-semibold text-slate-700 bg-white border border-slate-300 px-3 py-1.5 rounded-xl hover:bg-slate-50 transition-colors">
+          <label className="flex items-center space-x-1.5 cursor-pointer text-xs font-black text-[#18181B] bg-white border-2 border-[#18181B] px-3 py-1.5 rounded-xl hover:bg-[#FAF7EE] shadow-[1px_1px_0px_#18181B] transition-all">
             <input
               type="checkbox"
               checked={record.completed}
@@ -152,9 +152,9 @@ export const LessonEditor: React.FC<LessonEditorProps> = ({ record }) => {
                   status: comp ? 'completed' : 'draft',
                 }, true);
               }}
-              className="w-3.5 h-3.5 text-indigo-600 rounded focus:ring-0 cursor-pointer"
+              className="w-3.5 h-3.5 text-[#18181B] rounded cursor-pointer accent-[#18181B]"
             />
-            <span className={record.completed ? 'text-emerald-700 font-bold' : ''}>
+            <span className={record.completed ? 'text-emerald-700 font-black' : ''}>
               {record.completed ? 'Completed' : 'Mark Done'}
             </span>
           </label>
@@ -169,14 +169,14 @@ export const LessonEditor: React.FC<LessonEditorProps> = ({ record }) => {
                 completed: newStatus === 'completed',
               }, true);
             }}
-            className={`text-xs font-bold rounded-md py-1 px-2 border focus:outline-hidden ${
+            className={`text-xs font-black rounded-xl py-1.5 px-2.5 border-2 border-[#18181B] shadow-[1px_1px_0px_#18181B] focus:outline-hidden cursor-pointer ${
               record.status === 'completed'
-                ? 'bg-emerald-50 text-emerald-800 border-emerald-300'
+                ? 'bg-[#D1FAE5] text-[#18181B]'
                 : record.status === 'ready'
-                ? 'bg-sky-50 text-sky-800 border-sky-300'
+                ? 'bg-[#DBEAFE] text-[#18181B]'
                 : record.status === 'in_progress'
-                ? 'bg-amber-50 text-amber-800 border-amber-300'
-                : 'bg-gray-100 text-gray-800 border-gray-300'
+                ? 'bg-[#FEF08A] text-[#18181B]'
+                : 'bg-white text-[#18181B]'
             }`}
           >
             <option value="draft">Draft</option>
@@ -194,9 +194,9 @@ export const LessonEditor: React.FC<LessonEditorProps> = ({ record }) => {
               setShowDuplicateModal(true);
             }}
             title="Duplicate this lesson record"
-            className="inline-flex items-center px-2 py-1.5 border border-gray-300 text-xs font-medium rounded-md text-gray-700 bg-white hover:bg-gray-100"
+            className="inline-flex items-center px-2.5 py-1.5 border-2 border-[#18181B] text-xs font-black rounded-xl text-[#18181B] bg-white hover:bg-[#FAF7EE] shadow-[1px_1px_0px_#18181B] cursor-pointer"
           >
-            <Copy className="w-3.5 h-3.5 mr-1 text-gray-500" />
+            <Copy className="w-3.5 h-3.5 mr-1" />
             <span className="hidden sm:inline">Duplicate</span>
           </button>
 
@@ -209,18 +209,18 @@ export const LessonEditor: React.FC<LessonEditorProps> = ({ record }) => {
               }
             }}
             title="Delete this lesson record"
-            className="p-1.5 border border-gray-300 text-gray-400 hover:text-rose-600 hover:bg-rose-50 rounded-md"
+            className="p-1.5 border-2 border-[#18181B] text-[#18181B] hover:text-rose-600 hover:bg-rose-50 rounded-xl bg-white shadow-[1px_1px_0px_#18181B] cursor-pointer"
           >
-            <Trash2 className="w-3.5 h-3.5" />
+            <Trash2 className="w-3.5 h-3.5 stroke-[2.5]" />
           </button>
         </div>
       </div>
 
-      <div className="p-5 space-y-6">
+      <div className="p-6 space-y-6">
         {/* Metadata Section: Class, Section, Day, Date */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 bg-gray-50/60 p-3.5 rounded-lg border border-gray-200">
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3.5 bg-[#FAF7EE] p-4 rounded-2xl border-2 border-[#18181B] shadow-[1px_1px_0px_#18181B]">
           <div>
-            <label className="block text-2xs font-bold text-gray-600 uppercase tracking-wider mb-1">
+            <label className="block text-[10px] font-black text-[#52525B] uppercase tracking-wider mb-1">
               Class <span className="text-rose-500">*</span>
             </label>
             <input
@@ -228,12 +228,12 @@ export const LessonEditor: React.FC<LessonEditorProps> = ({ record }) => {
               value={record.className}
               onChange={e => handleFieldChange('className', e.target.value)}
               placeholder="e.g. 6A"
-              className="w-full text-xs font-semibold text-gray-900 bg-white border border-gray-300 rounded px-2.5 py-1.5 focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500"
+              className="w-full text-xs font-bold text-[#18181B] bg-white border-2 border-[#18181B] rounded-xl px-3 py-1.5 focus:outline-hidden"
             />
           </div>
 
           <div>
-            <label className="block text-2xs font-bold text-gray-600 uppercase tracking-wider mb-1">
+            <label className="block text-[10px] font-black text-[#52525B] uppercase tracking-wider mb-1">
               Section
             </label>
             <input
@@ -241,18 +241,18 @@ export const LessonEditor: React.FC<LessonEditorProps> = ({ record }) => {
               value={record.section}
               onChange={e => handleFieldChange('section', e.target.value)}
               placeholder="e.g. Blue"
-              className="w-full text-xs font-semibold text-gray-900 bg-white border border-gray-300 rounded px-2.5 py-1.5 focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500"
+              className="w-full text-xs font-bold text-[#18181B] bg-white border-2 border-[#18181B] rounded-xl px-3 py-1.5 focus:outline-hidden"
             />
           </div>
 
           <div>
-            <label className="block text-2xs font-bold text-gray-600 uppercase tracking-wider mb-1">
+            <label className="block text-[10px] font-black text-[#52525B] uppercase tracking-wider mb-1">
               Day <span className="text-rose-500">*</span>
             </label>
             <select
               value={record.day}
               onChange={e => handleFieldChange('day', e.target.value)}
-              className="w-full text-xs font-semibold text-gray-900 bg-white border border-gray-300 rounded px-2 py-1.5 focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500"
+              className="w-full text-xs font-bold text-[#18181B] bg-white border-2 border-[#18181B] rounded-xl px-2.5 py-1.5 focus:outline-hidden cursor-pointer"
             >
               {DAYS_OF_WEEK.map(d => (
                 <option key={d} value={d}>
@@ -263,29 +263,29 @@ export const LessonEditor: React.FC<LessonEditorProps> = ({ record }) => {
           </div>
 
           <div>
-            <label className="block text-2xs font-bold text-gray-600 uppercase tracking-wider mb-1">
+            <label className="block text-[10px] font-black text-[#52525B] uppercase tracking-wider mb-1">
               Date (Optional)
             </label>
             <input
               type="date"
               value={record.date || ''}
               onChange={e => handleFieldChange('date', e.target.value)}
-              className="w-full text-xs text-gray-900 bg-white border border-gray-300 rounded px-2 py-1.5 focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500"
+              className="w-full text-xs font-bold text-[#18181B] bg-white border-2 border-[#18181B] rounded-xl px-2.5 py-1.5 focus:outline-hidden cursor-pointer"
             />
           </div>
         </div>
 
         {/* Source Document Traceability (Google Doc / PDF origin) */}
         {(record.sourceUrl || record.sourceFileName) && (
-          <div className="flex flex-wrap items-center justify-between gap-2 px-3.5 py-2 bg-blue-50/60 border border-blue-200/80 rounded-xl text-2xs text-blue-900">
+          <div className="flex flex-wrap items-center justify-between gap-2 px-4 py-2.5 bg-[#DBEAFE] border-2 border-[#18181B] rounded-xl text-xs text-[#18181B] font-bold shadow-[1px_1px_0px_#18181B]">
             <div className="flex items-center space-x-2 min-w-0">
               {record.sourceType === 'google_doc' ? (
-                <BookOpen className="w-3.5 h-3.5 text-blue-600 shrink-0" />
+                <BookOpen className="w-4 h-4 stroke-[2.5] shrink-0" />
               ) : (
-                <FileText className="w-3.5 h-3.5 text-slate-600 shrink-0" />
+                <FileText className="w-4 h-4 stroke-[2.5] shrink-0" />
               )}
-              <span className="font-semibold text-slate-600">Imported from:</span>
-              <span className="font-bold text-blue-950 truncate max-w-xs">
+              <span>Imported from:</span>
+              <span className="font-black truncate max-w-xs">
                 {record.sourceFileName || (record.sourceType === 'google_doc' ? 'Google Document' : 'Document')}
               </span>
             </div>
@@ -297,18 +297,18 @@ export const LessonEditor: React.FC<LessonEditorProps> = ({ record }) => {
                     href={record.sourceUrl}
                     target="_blank"
                     rel="noreferrer"
-                    className="inline-flex items-center font-bold text-blue-700 hover:text-blue-900 hover:underline"
+                    className="inline-flex items-center font-black hover:underline"
                   >
                     Open Source Doc
-                    <ExternalLink className="w-2.5 h-2.5 ml-1" />
+                    <ExternalLink className="w-3 h-3 ml-1" />
                   </a>
-                  <span className="text-blue-300">&bull;</span>
+                  <span>&bull;</span>
                   <button
                     type="button"
                     onClick={() => initiateImportFromUrl(record.sourceUrl!)}
-                    className="inline-flex items-center font-bold text-indigo-700 hover:text-indigo-900 hover:underline"
+                    className="inline-flex items-center font-black hover:underline cursor-pointer"
                   >
-                    <RefreshCw className="w-2.5 h-2.5 mr-1" />
+                    <RefreshCw className="w-3 h-3 mr-1" />
                     Re-import
                   </button>
                 </>
@@ -322,7 +322,7 @@ export const LessonEditor: React.FC<LessonEditorProps> = ({ record }) => {
           {/* Target */}
           <div className="space-y-1.5">
             <div className="flex items-center justify-between">
-              <label className="block text-xs font-bold text-gray-800">
+              <label className="block text-xs font-black text-[#18181B]">
                 Weekly / Lesson Target
               </label>
               <div className="flex items-center space-x-1.5">
@@ -332,7 +332,7 @@ export const LessonEditor: React.FC<LessonEditorProps> = ({ record }) => {
                     copyToSystemClipboard(record.target, `${record.day} ${record.className} Target`)
                   }
                   title="Copy clean target text"
-                  className="inline-flex items-center text-3xs font-medium text-gray-600 hover:text-indigo-600 bg-gray-100 hover:bg-indigo-50 px-1.5 py-0.5 rounded"
+                  className="inline-flex items-center text-[10px] font-black text-[#18181B] bg-white border-2 border-[#18181B] hover:bg-[#FAF7EE] px-2 py-0.5 rounded-md shadow-[1px_1px_0px_#18181B] cursor-pointer"
                 >
                   <Copy className="w-2.5 h-2.5 mr-1" />
                   Copy
@@ -347,7 +347,7 @@ export const LessonEditor: React.FC<LessonEditorProps> = ({ record }) => {
                     )
                   }
                   title="Save target to clipboard gallery"
-                  className="inline-flex items-center text-3xs font-medium text-gray-600 hover:text-indigo-600 bg-gray-100 hover:bg-indigo-50 px-1.5 py-0.5 rounded"
+                  className="inline-flex items-center text-[10px] font-black text-[#18181B] bg-white border-2 border-[#18181B] hover:bg-[#FAF7EE] px-2 py-0.5 rounded-md shadow-[1px_1px_0px_#18181B] cursor-pointer"
                 >
                   <ClipboardPlus className="w-2.5 h-2.5 mr-1" />
                   + Gallery
@@ -359,14 +359,14 @@ export const LessonEditor: React.FC<LessonEditorProps> = ({ record }) => {
               value={record.target}
               onChange={e => handleFieldChange('target', e.target.value)}
               placeholder="e.g. Students will understand how to convert proper fractions to decimals..."
-              className="w-full text-xs text-gray-900 border border-gray-300 rounded-md p-2.5 focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 resize-y"
+              className="w-full text-xs font-medium text-[#18181B] border-2 border-[#18181B] rounded-xl p-2.5 bg-white shadow-[1px_1px_0px_#18181B]/30 focus:outline-hidden resize-y"
             />
           </div>
 
           {/* Activities */}
           <div className="space-y-1.5">
             <div className="flex items-center justify-between">
-              <label className="block text-xs font-bold text-gray-800">
+              <label className="block text-xs font-black text-[#18181B]">
                 Activities & Procedures
               </label>
               <div className="flex items-center space-x-1.5">
@@ -376,7 +376,7 @@ export const LessonEditor: React.FC<LessonEditorProps> = ({ record }) => {
                     copyToSystemClipboard(record.activities, `${record.day} ${record.className} Activities`)
                   }
                   title="Copy clean activities text"
-                  className="inline-flex items-center text-3xs font-medium text-gray-600 hover:text-indigo-600 bg-gray-100 hover:bg-indigo-50 px-1.5 py-0.5 rounded"
+                  className="inline-flex items-center text-[10px] font-black text-[#18181B] bg-white border-2 border-[#18181B] hover:bg-[#FAF7EE] px-2 py-0.5 rounded-md shadow-[1px_1px_0px_#18181B] cursor-pointer"
                 >
                   <Copy className="w-2.5 h-2.5 mr-1" />
                   Copy
@@ -391,7 +391,7 @@ export const LessonEditor: React.FC<LessonEditorProps> = ({ record }) => {
                     )
                   }
                   title="Save activities to clipboard gallery"
-                  className="inline-flex items-center text-3xs font-medium text-gray-600 hover:text-indigo-600 bg-gray-100 hover:bg-indigo-50 px-1.5 py-0.5 rounded"
+                  className="inline-flex items-center text-[10px] font-black text-[#18181B] bg-white border-2 border-[#18181B] hover:bg-[#FAF7EE] px-2 py-0.5 rounded-md shadow-[1px_1px_0px_#18181B] cursor-pointer"
                 >
                   <ClipboardPlus className="w-2.5 h-2.5 mr-1" />
                   + Gallery
@@ -403,18 +403,18 @@ export const LessonEditor: React.FC<LessonEditorProps> = ({ record }) => {
               value={record.activities}
               onChange={e => handleFieldChange('activities', e.target.value)}
               placeholder="e.g. 1. Fractions warm-up 2. Whiteboard exercises 3. Exit ticket evaluation..."
-              className="w-full text-xs text-gray-900 border border-gray-300 rounded-md p-2.5 focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 resize-y"
+              className="w-full text-xs font-medium text-[#18181B] border-2 border-[#18181B] rounded-xl p-2.5 bg-white shadow-[1px_1px_0px_#18181B]/30 focus:outline-hidden resize-y"
             />
           </div>
         </div>
 
         {/* Block Builder Controls Header */}
-        <div className="pt-4 border-t border-gray-200">
-          <div className="bg-indigo-50/50 border border-indigo-100 rounded-lg p-3.5 flex flex-wrap items-center justify-between gap-3">
+        <div className="pt-4 border-t-2 border-[#18181B]/15">
+          <div className="bg-[#EDE9FE] border-2 border-[#18181B] rounded-2xl p-4 flex flex-wrap items-center justify-between gap-3 shadow-[1px_1px_0px_#18181B]">
             
-            {/* Quick Create N Blocks Feature (Requirement 7) */}
+            {/* Quick Create N Blocks Feature */}
             <div className="flex items-center space-x-2">
-              <span className="text-xs font-bold text-gray-800">
+              <span className="text-xs font-black text-[#18181B]">
                 Number of blocks:
               </span>
               <input
@@ -423,12 +423,12 @@ export const LessonEditor: React.FC<LessonEditorProps> = ({ record }) => {
                 max="15"
                 value={blocksToCreateCount}
                 onChange={e => setBlocksToCreateCount(Math.max(1, parseInt(e.target.value) || 1))}
-                className="w-14 text-center font-bold text-xs bg-white border border-gray-300 rounded py-1 px-1 text-gray-900"
+                className="w-14 text-center font-black text-xs bg-white border-2 border-[#18181B] rounded-lg py-1 px-1 text-[#18181B]"
               />
               <select
                 value={selectedTemplateId}
                 onChange={e => setSelectedTemplateId(e.target.value)}
-                className="text-xs bg-white border border-gray-300 rounded py-1 px-2 text-gray-700"
+                className="text-xs font-bold bg-white border-2 border-[#18181B] rounded-lg py-1 px-2 text-[#18181B] cursor-pointer"
               >
                 {templates.map(t => (
                   <option key={t.id} value={t.id}>
@@ -439,9 +439,9 @@ export const LessonEditor: React.FC<LessonEditorProps> = ({ record }) => {
               <button
                 type="button"
                 onClick={handleBatchCreateBlocks}
-                className="inline-flex items-center px-3 py-1 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold rounded shadow-2xs"
+                className="inline-flex items-center px-3.5 py-1.5 bg-[#18181B] hover:bg-neutral-800 text-white text-xs font-black rounded-lg border-2 border-[#18181B] shadow-[1px_1px_0px_#18181B] cursor-pointer"
               >
-                <Plus className="w-3.5 h-3.5 mr-1" />
+                <Plus className="w-3.5 h-3.5 mr-1 stroke-[3]" />
                 Create {blocksToCreateCount} Block{blocksToCreateCount > 1 ? 's' : ''}
               </button>
             </div>

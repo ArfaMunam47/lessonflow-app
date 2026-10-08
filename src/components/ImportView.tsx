@@ -367,22 +367,22 @@ export const ImportView: React.FC = () => {
     switch (type) {
       case 'google_doc':
         return (
-          <span className="inline-flex items-center px-2 py-0.5 rounded text-2xs font-semibold bg-blue-50 text-blue-700 border border-blue-200">
-            <BookOpen className="w-3 h-3 mr-1" />
+          <span className="inline-flex items-center px-2.5 py-0.5 rounded-lg text-xs font-black bg-[#DBEAFE] text-[#18181B] border-2 border-[#18181B] shadow-[1px_1px_0px_#18181B]">
+            <BookOpen className="w-3.5 h-3.5 mr-1" />
             Google Docs
           </span>
         );
       case 'pdf':
         return (
-          <span className="inline-flex items-center px-2 py-0.5 rounded text-2xs font-semibold bg-rose-50 text-rose-700 border border-rose-200">
-            <FileText className="w-3 h-3 mr-1" />
+          <span className="inline-flex items-center px-2.5 py-0.5 rounded-lg text-xs font-black bg-[#FCE7F3] text-[#18181B] border-2 border-[#18181B] shadow-[1px_1px_0px_#18181B]">
+            <FileText className="w-3.5 h-3.5 mr-1" />
             PDF File
           </span>
         );
       default:
         return (
-          <span className="inline-flex items-center px-2 py-0.5 rounded text-2xs font-semibold bg-gray-100 text-gray-700 border border-gray-200">
-            <FileText className="w-3 h-3 mr-1" />
+          <span className="inline-flex items-center px-2.5 py-0.5 rounded-lg text-xs font-black bg-[#FEF08A] text-[#18181B] border-2 border-[#18181B] shadow-[1px_1px_0px_#18181B]">
+            <FileText className="w-3.5 h-3.5 mr-1" />
             Pasted Text
           </span>
         );
@@ -390,15 +390,15 @@ export const ImportView: React.FC = () => {
   };
 
   return (
-    <div className="max-w-4xl mx-auto space-y-8 py-2">
+    <div className="max-w-4xl mx-auto space-y-7 py-2">
       {/* View Header */}
-      <div className="border-b border-gray-200 pb-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+      <div className="border-b-2 border-[#18181B]/15 pb-5 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
-          <h1 className="text-xl font-bold text-gray-900 tracking-tight">
+          <h1 className="text-2xl sm:text-3xl font-black text-[#18181B] tracking-tight">
             Import Lesson Plan
           </h1>
-          <p className="text-xs text-gray-500 mt-1">
-            Import from Google Docs, PDF, or text. LessonFlow extracts the weekly structure and presents it for your review.
+          <p className="text-xs sm:text-sm text-[#52525B] font-bold mt-1 max-w-xl">
+            Import from Google Docs, PDF, or text. LessonFlow extracts the weekly curriculum and presents it for your review.
           </p>
         </div>
 
@@ -406,9 +406,9 @@ export const ImportView: React.FC = () => {
           <button
             type="button"
             onClick={resetImport}
-            className="text-xs font-semibold text-gray-600 hover:text-gray-900 self-start sm:self-auto"
+            className="text-xs font-black text-[#18181B] hover:underline self-start sm:self-auto cursor-pointer"
           >
-            &larr; Choose Different Source
+            ← Choose Different Source
           </button>
         )}
       </div>
@@ -416,43 +416,43 @@ export const ImportView: React.FC = () => {
       {/* STAGE: IDLE - Source Selection Tabs & Inputs */}
       {stage === 'idle' && (
         <div className="space-y-6">
-          <div className="bg-white border border-slate-300 rounded-2xl p-6 sm:p-8 shadow-xs">
+          <div className="bg-white border-2 border-[#18181B] rounded-[24px] p-6 sm:p-8 shadow-[3px_3px_0px_#18181B]">
             {/* Format Selection Tabs */}
-            <div className="flex border-b border-slate-200 mb-6 text-xs font-semibold space-x-2">
+            <div className="flex flex-wrap gap-2 border-b-2 border-[#18181B]/15 pb-5 mb-6 text-xs font-black">
               <button
                 type="button"
                 onClick={() => setActiveTab('link')}
-                className={`pb-2.5 px-4 flex items-center space-x-1.5 transition-colors ${
+                className={`py-2 px-4 rounded-xl border-2 transition-all flex items-center space-x-2 cursor-pointer ${
                   activeTab === 'link'
-                    ? 'border-b-2 border-indigo-600 text-indigo-700 font-bold'
-                    : 'text-gray-500 hover:text-gray-800'
+                    ? 'bg-[#DBEAFE] text-[#18181B] border-[#18181B] shadow-[2px_2px_0px_#18181B]'
+                    : 'bg-white text-[#52525B] border-transparent hover:border-[#18181B]/30'
                 }`}
               >
-                <LinkIcon className="w-3.5 h-3.5" />
-                <span>Shared Document Link (Google Docs)</span>
+                <LinkIcon className="w-4 h-4 stroke-[2.5]" />
+                <span>Google Docs Link</span>
               </button>
               <button
                 type="button"
                 onClick={() => setActiveTab('pdf')}
-                className={`pb-2.5 px-4 flex items-center space-x-1.5 transition-colors ${
+                className={`py-2 px-4 rounded-xl border-2 transition-all flex items-center space-x-2 cursor-pointer ${
                   activeTab === 'pdf'
-                    ? 'border-b-2 border-indigo-600 text-indigo-700 font-bold'
-                    : 'text-gray-500 hover:text-gray-800'
+                    ? 'bg-[#FCE7F3] text-[#18181B] border-[#18181B] shadow-[2px_2px_0px_#18181B]'
+                    : 'bg-white text-[#52525B] border-transparent hover:border-[#18181B]/30'
                 }`}
               >
-                <Upload className="w-3.5 h-3.5" />
+                <Upload className="w-4 h-4 stroke-[2.5]" />
                 <span>Upload PDF</span>
               </button>
               <button
                 type="button"
                 onClick={() => setActiveTab('text')}
-                className={`pb-2.5 px-4 flex items-center space-x-1.5 transition-colors ${
+                className={`py-2 px-4 rounded-xl border-2 transition-all flex items-center space-x-2 cursor-pointer ${
                   activeTab === 'text'
-                    ? 'border-b-2 border-indigo-600 text-indigo-700 font-bold'
-                    : 'text-gray-500 hover:text-gray-800'
+                    ? 'bg-[#FEF08A] text-[#18181B] border-[#18181B] shadow-[2px_2px_0px_#18181B]'
+                    : 'bg-white text-[#52525B] border-transparent hover:border-[#18181B]/30'
                 }`}
               >
-                <FileText className="w-3.5 h-3.5" />
+                <FileText className="w-4 h-4 stroke-[2.5]" />
                 <span>Paste Text</span>
               </button>
             </div>
@@ -461,7 +461,7 @@ export const ImportView: React.FC = () => {
             {activeTab === 'link' && (
               <div className="space-y-4">
                 <div>
-                  <label className="block text-xs font-bold text-gray-700 mb-1">
+                  <label className="block text-xs font-black text-[#18181B] uppercase tracking-wider mb-2">
                     Paste Google Docs or supported document link
                   </label>
                   <div className="relative">
@@ -476,13 +476,13 @@ export const ImportView: React.FC = () => {
                         }
                       }}
                       placeholder="https://docs.google.com/document/d/..."
-                      className="w-full text-xs border border-gray-300 rounded-lg pl-3 pr-36 py-2.5 text-gray-900 focus:ring-1 focus:ring-indigo-500 font-mono"
+                      className="w-full text-xs border-2 border-[#18181B] rounded-xl pl-3.5 pr-40 py-3 text-[#18181B] bg-[#FAF7EE] focus:bg-white focus:outline-hidden font-mono shadow-[1px_1px_0px_#18181B]"
                     />
                     <button
                       type="button"
                       onClick={() => handleFetchFromUrl()}
                       disabled={!sharedUrl.trim()}
-                      className="absolute right-1.5 top-1.5 px-3.5 py-1.5 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-40 text-white font-semibold text-xs rounded-md shadow-xs transition-colors"
+                      className="absolute right-2 top-2 px-4 py-2 bg-[#18181B] hover:bg-neutral-800 disabled:opacity-40 text-white font-black text-xs rounded-lg border-2 border-[#18181B] shadow-[1px_1px_0px_#18181B] transition-all cursor-pointer"
                     >
                       Fetch Document
                     </button>
@@ -492,16 +492,16 @@ export const ImportView: React.FC = () => {
                 {/* Live URL inspection feedback */}
                 {urlInspection && (
                   <div
-                    className={`text-2xs p-2.5 rounded-lg border flex items-center space-x-2 ${
+                    className={`text-xs p-3 rounded-xl border-2 flex items-center space-x-2.5 font-bold ${
                       urlInspection.valid
-                        ? 'bg-blue-50/60 border-blue-200 text-blue-800'
-                        : 'bg-amber-50/60 border-amber-200 text-amber-800'
+                        ? 'bg-[#DBEAFE] border-[#18181B] text-[#18181B]'
+                        : 'bg-[#FEF08A] border-[#18181B] text-[#18181B]'
                     }`}
                   >
                     {urlInspection.valid ? (
-                      <CheckCircle2 className="w-3.5 h-3.5 text-blue-600 shrink-0" />
+                      <CheckCircle2 className="w-4 h-4 text-[#18181B] stroke-[2.5] shrink-0" />
                     ) : (
-                      <AlertCircle className="w-3.5 h-3.5 text-amber-600 shrink-0" />
+                      <AlertCircle className="w-4 h-4 text-[#18181B] stroke-[2.5] shrink-0" />
                     )}
                     <span>
                       {urlInspection.hint || urlInspection.error || 'Valid document link.'}
@@ -510,28 +510,28 @@ export const ImportView: React.FC = () => {
                 )}
 
                 {/* Helpful sharing instructions & sample button */}
-                <div className="bg-gray-50 border border-gray-200 rounded-lg p-3.5 space-y-2 text-2xs text-gray-600">
-                  <div className="flex items-center space-x-2 font-bold text-gray-700">
-                    <Info className="w-3.5 h-3.5 text-indigo-600" />
+                <div className="bg-[#FAF7EE] border-2 border-[#18181B] rounded-2xl p-4 space-y-2.5 text-xs text-[#52525B] font-bold shadow-[2px_2px_0px_#18181B]">
+                  <div className="flex items-center space-x-2 text-[#18181B] font-black">
+                    <Info className="w-4 h-4 stroke-[2.5]" />
                     <span>How to share your Google Doc:</span>
                   </div>
-                  <ol className="list-decimal list-inside space-y-1 pl-1 text-gray-600">
+                  <ol className="list-decimal list-inside space-y-1 pl-1 text-[#3F3F46]">
                     <li>In Google Docs, click the blue <strong>Share</strong> button in the upper right.</li>
                     <li>Under <em>General access</em>, set to <strong>Anyone with the link</strong> (Viewer).</li>
                     <li>Click <strong>Copy link</strong> and paste it above.</li>
                   </ol>
-                  <div className="pt-2 border-t border-gray-200 flex flex-wrap items-center justify-between gap-2">
-                    <span className="text-gray-500">Want to test right now?</span>
+                  <div className="pt-2 border-t-2 border-[#18181B]/15 flex flex-wrap items-center justify-between gap-2">
+                    <span className="text-[#52525B]">Want to test right now?</span>
                     <button
                       type="button"
                       onClick={() => {
                         setSharedUrl(SAMPLE_GOOGLE_DOC_URL);
                         handleFetchFromUrl(SAMPLE_GOOGLE_DOC_URL);
                       }}
-                      className="inline-flex items-center text-indigo-600 hover:text-indigo-800 font-bold hover:underline"
+                      className="inline-flex items-center text-[#18181B] bg-white border-2 border-[#18181B] px-3 py-1 rounded-lg shadow-[1px_1px_0px_#18181B] font-black hover:bg-[#FEF08A] transition-all cursor-pointer"
                     >
-                      <Sparkles className="w-3 h-3 mr-1" />
-                      Try with sample curriculum Google Doc
+                      <Sparkles className="w-3.5 h-3.5 mr-1.5 stroke-[2.5]" />
+                      Try sample curriculum Google Doc
                     </button>
                   </div>
                 </div>
@@ -562,13 +562,15 @@ export const ImportView: React.FC = () => {
                     }
                   }}
                   onClick={() => fileInputRef.current?.click()}
-                  className="border-2 border-dashed border-gray-300 hover:border-indigo-400 rounded-xl p-10 text-center cursor-pointer transition-colors bg-gray-50/50 hover:bg-indigo-50/20"
+                  className="border-2 border-dashed border-[#18181B] hover:bg-[#FAF7EE] rounded-2xl p-10 text-center cursor-pointer transition-all bg-[#FAF7EE]/50 shadow-[2px_2px_0px_#18181B]"
                 >
-                  <Upload className="w-10 h-10 text-indigo-600 mx-auto mb-3" />
-                  <p className="text-sm font-semibold text-gray-800">
+                  <div className="w-14 h-14 rounded-2xl bg-[#FCE7F3] border-2 border-[#18181B] flex items-center justify-center mx-auto mb-3 shadow-[1px_1px_0px_#18181B]">
+                    <Upload className="w-7 h-7 text-[#18181B] stroke-[2.5]" />
+                  </div>
+                  <p className="text-sm font-black text-[#18181B]">
                     Click to select or drag and drop your weekly lesson plan PDF
                   </p>
-                  <p className="text-xs text-gray-400 mt-1">
+                  <p className="text-xs text-[#52525B] font-bold mt-1">
                     Accepts standard PDF curriculum files containing single or multi-day lesson plans
                   </p>
                 </div>
@@ -577,8 +579,8 @@ export const ImportView: React.FC = () => {
 
             {/* TAB 3: PASTED TEXT */}
             {activeTab === 'text' && (
-              <div className="space-y-3">
-                <label className="block text-xs font-bold text-gray-700">
+              <div className="space-y-3.5">
+                <label className="block text-xs font-black text-[#18181B] uppercase tracking-wider">
                   Paste Lesson Plan Text or Markdown
                 </label>
                 <textarea
@@ -586,13 +588,13 @@ export const ImportView: React.FC = () => {
                   value={pastedText}
                   onChange={e => setPastedText(e.target.value)}
                   placeholder="Paste weekly lesson plan content, targets, activities, and blocks here..."
-                  className="w-full text-xs font-mono border border-gray-300 rounded-lg p-3 text-gray-900 focus:ring-1 focus:ring-indigo-500"
+                  className="w-full text-xs font-mono border-2 border-[#18181B] rounded-2xl p-4 text-[#18181B] bg-[#FAF7EE] focus:bg-white focus:outline-hidden shadow-[1px_1px_0px_#18181B]"
                 />
                 <button
                   type="button"
                   onClick={handleProcessPastedText}
                   disabled={!pastedText.trim()}
-                  className="px-5 py-2 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white font-semibold text-xs rounded-md shadow-xs transition-colors"
+                  className="px-6 py-2.5 bg-[#18181B] hover:bg-neutral-800 disabled:opacity-50 text-white font-black text-xs rounded-xl border-2 border-[#18181B] shadow-[2px_2px_0px_#18181B] transition-all cursor-pointer"
                 >
                   Analyze & Review Lesson Plan
                 </button>
@@ -604,44 +606,44 @@ export const ImportView: React.FC = () => {
           {importHistory.length > 0 && (
             <div className="space-y-3 pt-2">
               <div className="flex items-center justify-between">
-                <h2 className="text-xs font-bold text-gray-700 uppercase tracking-wider">
+                <h2 className="text-xs font-black text-[#18181B] uppercase tracking-wider">
                   Import History
                 </h2>
-                <span className="text-2xs text-gray-400">
-                  {importHistory.length} import{importHistory.length !== 1 ? 's' : ''} recorded
+                <span className="text-xs font-mono font-black text-[#18181B] bg-white border-2 border-[#18181B] px-2 py-0.5 rounded-lg shadow-[1px_1px_0px_#18181B]">
+                  {importHistory.length} import{importHistory.length !== 1 ? 's' : ''}
                 </span>
               </div>
 
-              <div className="bg-white border border-gray-200 rounded-xl divide-y divide-gray-100 overflow-hidden shadow-xs">
+              <div className="bg-white border-2 border-[#18181B] rounded-[22px] divide-y-2 divide-[#18181B]/15 overflow-hidden shadow-[2px_2px_0px_#18181B]">
                 {importHistory.map(item => (
-                  <div key={item.id} className="p-3.5 sm:px-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
+                  <div key={item.id} className="p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
                     <div className="flex items-start space-x-3">
                       <div className="mt-0.5">{getSourceBadge(item.sourceType)}</div>
                       <div className="space-y-0.5">
                         <div className="flex items-center space-x-2">
-                          <span className="font-semibold text-gray-800">
+                          <span className="font-black text-sm text-[#18181B]">
                             {item.fileName}
                           </span>
                           {item.weekNumber && (
-                            <span className="text-2xs font-bold px-1.5 py-0.5 rounded bg-gray-100 text-gray-700">
+                            <span className="text-[10px] font-black px-2 py-0.5 rounded-md bg-[#FEF08A] text-[#18181B] border-2 border-[#18181B]">
                               {item.weekNumber}
                             </span>
                           )}
                         </div>
-                        <div className="text-2xs text-gray-400 flex items-center space-x-2">
+                        <div className="text-[11px] text-[#52525B] font-bold flex items-center space-x-2">
                           <span>{new Date(item.createdAt).toLocaleDateString()}</span>
-                          <span>&bull;</span>
+                          <span>•</span>
                           <span>{item.lessonCount} lesson records</span>
                           {item.sourceUrl && (
                             <>
-                              <span>&bull;</span>
+                              <span>•</span>
                               <a
                                 href={item.sourceUrl}
                                 target="_blank"
                                 rel="noreferrer"
-                                className="text-indigo-600 hover:underline flex items-center"
+                                className="text-[#18181B] font-black hover:underline flex items-center"
                               >
-                                Source Doc <ExternalLink className="w-2.5 h-2.5 ml-0.5" />
+                                Source Doc <ExternalLink className="w-3 h-3 ml-1" />
                               </a>
                             </>
                           )}
@@ -659,7 +661,7 @@ export const ImportView: React.FC = () => {
                               setActiveView('lessons');
                             }
                           }}
-                          className="px-2.5 py-1 text-2xs font-semibold text-indigo-700 bg-indigo-50 hover:bg-indigo-100 rounded border border-indigo-200"
+                          className="px-3 py-1.5 text-xs font-black text-[#18181B] bg-[#D1FAE5] hover:bg-[#A7F3D0] rounded-xl border-2 border-[#18181B] shadow-[1px_1px_0px_#18181B] cursor-pointer"
                         >
                           View Lessons
                         </button>
@@ -669,7 +671,7 @@ export const ImportView: React.FC = () => {
                         <button
                           type="button"
                           onClick={() => handleReimportFromHistory(item.id)}
-                          className="px-2.5 py-1 text-2xs font-semibold text-gray-700 bg-gray-100 hover:bg-gray-200 rounded flex items-center"
+                          className="px-3 py-1.5 text-xs font-black text-[#18181B] bg-white hover:bg-[#FAF7EE] rounded-xl border-2 border-[#18181B] shadow-[1px_1px_0px_#18181B] flex items-center cursor-pointer"
                           title="Re-fetch latest content from this URL"
                         >
                           <RefreshCw className="w-3 h-3 mr-1" />
@@ -680,10 +682,10 @@ export const ImportView: React.FC = () => {
                       <button
                         type="button"
                         onClick={() => deleteImportHistoryItem(item.id)}
-                        className="p-1 text-gray-400 hover:text-rose-600 rounded"
+                        className="p-1.5 text-[#52525B] hover:text-rose-600 rounded-lg hover:bg-rose-50 border-2 border-transparent hover:border-[#18181B] transition-all cursor-pointer"
                         title="Delete from history"
                       >
-                        <Trash2 className="w-3.5 h-3.5" />
+                        <Trash2 className="w-4 h-4" />
                       </button>
                     </div>
                   </div>
@@ -696,27 +698,29 @@ export const ImportView: React.FC = () => {
 
       {/* STAGE: PROCESSING STATES */}
       {(stage === 'fetching' || stage === 'extracting' || stage === 'analyzing' || stage === 'organizing') && (
-        <div className="bg-white border border-gray-200 rounded-xl p-10 text-center space-y-4 shadow-xs">
-          <RefreshCw className="w-8 h-8 text-indigo-600 mx-auto animate-spin" />
-          <div className="space-y-1">
-            <h3 className="text-sm font-bold text-gray-900">
+        <div className="bg-white border-2 border-[#18181B] rounded-[24px] p-12 text-center space-y-4 shadow-[3px_3px_0px_#18181B]">
+          <div className="w-12 h-12 rounded-2xl bg-[#DBEAFE] border-2 border-[#18181B] flex items-center justify-center mx-auto shadow-[1px_1px_0px_#18181B]">
+            <RefreshCw className="w-6 h-6 text-[#18181B] animate-spin stroke-[2.5]" />
+          </div>
+          <div className="space-y-1.5">
+            <h3 className="text-base font-black text-[#18181B]">
               {stage === 'fetching' && 'Connecting to document source...'}
               {stage === 'extracting' && 'Extracting text, headings, and tables...'}
-              {stage === 'analyzing' && 'Interpreting lesson blocks with Gemini...'}
+              {stage === 'analyzing' && 'Interpreting lesson blocks with curriculum AI...'}
               {stage === 'organizing' && 'Structuring lessons across days & classes...'}
             </h3>
             {sharedUrl && activeTab === 'link' && (
-              <p className="text-xs text-gray-500 font-mono truncate max-w-md mx-auto">
+              <p className="text-xs text-[#52525B] font-mono truncate max-w-md mx-auto font-bold">
                 {sharedUrl}
               </p>
             )}
             {selectedFile && activeTab === 'pdf' && (
-              <p className="text-xs text-gray-500 font-mono">
+              <p className="text-xs text-[#52525B] font-mono font-bold">
                 {selectedFile.name}
               </p>
             )}
           </div>
-          <p className="text-2xs text-gray-400 max-w-sm mx-auto">
+          <p className="text-xs text-[#52525B] font-bold max-w-sm mx-auto">
             LessonFlow preserves exact teacher text and organizes targets, activities, and blocks for school website entry.
           </p>
         </div>
@@ -724,27 +728,31 @@ export const ImportView: React.FC = () => {
 
       {/* STAGE: ERROR WITH HELPFUL ADVICE */}
       {stage === 'error' && (
-        <div className="bg-white border border-gray-200 rounded-xl p-8 space-y-4 shadow-xs">
+        <div className="bg-white border-2 border-[#18181B] rounded-[24px] p-8 space-y-4 shadow-[3px_3px_0px_#18181B]">
           <div className="text-center space-y-2">
             {errorType === 'RESTRICTED_GOOGLE_DOC' ? (
-              <Lock className="w-10 h-10 text-amber-500 mx-auto" />
+              <div className="w-12 h-12 rounded-2xl bg-[#FEF08A] border-2 border-[#18181B] flex items-center justify-center mx-auto shadow-[1px_1px_0px_#18181B]">
+                <Lock className="w-6 h-6 text-[#18181B] stroke-[2.5]" />
+              </div>
             ) : (
-              <AlertCircle className="w-10 h-10 text-rose-600 mx-auto" />
+              <div className="w-12 h-12 rounded-2xl bg-[#FCE7F3] border-2 border-[#18181B] flex items-center justify-center mx-auto shadow-[1px_1px_0px_#18181B]">
+                <AlertCircle className="w-6 h-6 text-[#18181B] stroke-[2.5]" />
+              </div>
             )}
-            <h3 className="text-base font-bold text-gray-900">
+            <h3 className="text-lg font-black text-[#18181B]">
               {errorType === 'RESTRICTED_GOOGLE_DOC'
                 ? 'Google Doc Permission Needed'
                 : 'Unable to Process Document'}
             </h3>
-            <p className="text-xs text-gray-700 max-w-lg mx-auto">
+            <p className="text-xs text-[#52525B] font-bold max-w-lg mx-auto leading-relaxed">
               {errorMessage}
             </p>
           </div>
 
           {errorHint && (
-            <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 max-w-lg mx-auto text-xs text-amber-900 space-y-2">
-              <span className="font-bold block">How to resolve:</span>
-              <p>{errorHint}</p>
+            <div className="bg-[#FAF7EE] border-2 border-[#18181B] rounded-2xl p-4 max-w-lg mx-auto text-xs text-[#18181B] space-y-2.5 shadow-[2px_2px_0px_#18181B]">
+              <span className="font-black block uppercase tracking-wider text-[11px]">How to resolve:</span>
+              <p className="font-bold text-[#3F3F46] leading-relaxed">{errorHint}</p>
               <div className="pt-2 flex flex-wrap gap-2">
                 <button
                   type="button"
@@ -752,7 +760,7 @@ export const ImportView: React.FC = () => {
                     setActiveTab('text');
                     resetImport();
                   }}
-                  className="px-3 py-1.5 bg-amber-200 hover:bg-amber-300 text-amber-900 font-semibold rounded text-2xs"
+                  className="px-3.5 py-1.5 bg-[#FEF08A] hover:bg-[#FDE047] text-[#18181B] border-2 border-[#18181B] font-black rounded-xl text-xs shadow-[1px_1px_0px_#18181B] cursor-pointer"
                 >
                   Switch to Paste Text
                 </button>
@@ -762,7 +770,7 @@ export const ImportView: React.FC = () => {
                     setSharedUrl(SAMPLE_GOOGLE_DOC_URL);
                     handleFetchFromUrl(SAMPLE_GOOGLE_DOC_URL);
                   }}
-                  className="px-3 py-1.5 bg-white hover:bg-amber-100 text-amber-900 border border-amber-300 font-semibold rounded text-2xs"
+                  className="px-3.5 py-1.5 bg-white hover:bg-[#FAF7EE] text-[#18181B] border-2 border-[#18181B] font-black rounded-xl text-xs shadow-[1px_1px_0px_#18181B] cursor-pointer"
                 >
                   Test with Sample Google Doc
                 </button>
@@ -781,13 +789,13 @@ export const ImportView: React.FC = () => {
                   resetImport();
                 }
               }}
-              className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-xs rounded-md shadow-xs"
+              className="px-5 py-2.5 bg-[#18181B] hover:bg-neutral-800 text-white font-black text-xs rounded-xl border-2 border-[#18181B] shadow-[2px_2px_0px_#18181B] cursor-pointer"
             >
               Try Again
             </button>
             <button
               onClick={resetImport}
-              className="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 font-medium text-xs rounded-md"
+              className="px-5 py-2.5 bg-white hover:bg-[#FAF7EE] text-[#18181B] font-black text-xs rounded-xl border-2 border-[#18181B] shadow-[2px_2px_0px_#18181B] cursor-pointer"
             >
               Back to Import Options
             </button>
@@ -799,78 +807,78 @@ export const ImportView: React.FC = () => {
       {stage === 'review' && reviewDraft && (
         <div className="space-y-6">
           {/* Top Review Banner & Commit Bar */}
-          <div className="bg-white border border-slate-300 rounded-2xl p-6 shadow-xs flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+          <div className="bg-white border-2 border-[#18181B] rounded-[24px] p-6 shadow-[3px_3px_0px_#18181B] flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
             <div className="space-y-1.5">
               <div className="flex items-center space-x-2">
-                <span className="text-2xs uppercase font-extrabold text-indigo-700 bg-indigo-50 px-2 py-0.5 rounded-md border border-indigo-200">
+                <span className="text-[10px] uppercase font-black text-[#18181B] bg-[#DBEAFE] px-2.5 py-1 rounded-md border-2 border-[#18181B]">
                   Review Extracted Lessons
                 </span>
                 {getSourceBadge(reviewDraft.sourceType)}
               </div>
-              <h2 className="text-base font-bold text-slate-900">
+              <h2 className="text-lg font-black text-[#18181B]">
                 Found {reviewDraft.lessons.length} lesson record{reviewDraft.lessons.length !== 1 ? 's' : ''} in {reviewDraft.fileName}
               </h2>
-              <div className="text-2xs text-slate-500 flex flex-wrap items-center gap-x-3 gap-y-1">
+              <div className="text-xs text-[#52525B] font-bold flex flex-wrap items-center gap-x-3 gap-y-1">
                 <span>Verify and edit any fields below before saving.</span>
                 {reviewDraft.sourceUrl && (
                   <a
                     href={reviewDraft.sourceUrl}
                     target="_blank"
                     rel="noreferrer"
-                    className="text-indigo-600 hover:underline flex items-center font-semibold"
+                    className="text-[#18181B] hover:underline flex items-center font-black"
                   >
-                    Open original document <ExternalLink className="w-2.5 h-2.5 ml-0.5" />
+                    Open original document <ExternalLink className="w-3 h-3 ml-1" />
                   </a>
                 )}
                 {reviewDraft.extractedSummary && (
-                  <span className="text-slate-400">
+                  <span className="text-[#71717A]">
                     Preserved: {reviewDraft.extractedSummary.tablesCount || 0} tables, {reviewDraft.extractedSummary.headingsCount || 0} headings
                   </span>
                 )}
               </div>
             </div>
 
-            <div className="flex items-center space-x-2 shrink-0">
+            <div className="flex items-center space-x-3 shrink-0">
               <button
                 type="button"
                 onClick={resetImport}
-                className="px-4 py-2 text-xs font-semibold text-slate-600 hover:text-slate-900 bg-slate-100 hover:bg-slate-200 rounded-xl"
+                className="px-4 py-2.5 text-xs font-black text-[#18181B] hover:bg-[#FAF7EE] bg-white border-2 border-[#18181B] rounded-xl shadow-[1px_1px_0px_#18181B] cursor-pointer"
               >
                 Cancel
               </button>
               <button
                 type="button"
                 onClick={handleCommit}
-                className="inline-flex items-center px-5 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-xs rounded-xl shadow-xs transition-colors"
+                className="inline-flex items-center px-5 py-2.5 bg-[#18181B] hover:bg-neutral-800 text-white font-black text-xs rounded-xl border-2 border-[#18181B] shadow-[2px_2px_0px_#18181B] transition-all cursor-pointer"
               >
-                <CheckCircle2 className="w-4 h-4 mr-1.5" />
+                <CheckCircle2 className="w-4 h-4 mr-1.5 stroke-[2.5]" />
                 Import & Save ({reviewDraft.lessons.length} Lessons)
               </button>
             </div>
           </div>
 
           {/* Week Metadata Inputs */}
-          <div className="bg-white border border-slate-300 rounded-2xl p-5 shadow-xs grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
+          <div className="bg-white border-2 border-[#18181B] rounded-[22px] p-5 shadow-[2px_2px_0px_#18181B] grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
             <div>
-              <label className="block font-bold text-slate-700 mb-1">
+              <label className="block font-black text-[#18181B] uppercase tracking-wider mb-1">
                 Week Label <span className="text-rose-500">*</span>
               </label>
               <input
                 type="text"
                 value={reviewDraft.weekNumber}
                 onChange={e => handleUpdateDraftWeek('weekNumber', e.target.value)}
-                className="w-full border border-slate-300 rounded-xl p-2 font-bold text-slate-900 focus:ring-1 focus:ring-indigo-500"
+                className="w-full border-2 border-[#18181B] rounded-xl p-2.5 font-black text-[#18181B] bg-[#FAF7EE] focus:bg-white focus:outline-hidden"
               />
             </div>
             <div>
-              <label className="block font-bold text-slate-700 mb-1">
+              <label className="block font-black text-[#18181B] uppercase tracking-wider mb-1">
                 Curriculum Topic / Title
               </label>
               <input
                 type="text"
                 value={reviewDraft.weekTitle}
                 onChange={e => handleUpdateDraftWeek('weekTitle', e.target.value)}
-                className="w-full border border-slate-300 rounded-xl p-2 text-slate-900 focus:ring-1 focus:ring-indigo-500"
+                className="w-full border-2 border-[#18181B] rounded-xl p-2.5 font-bold text-[#18181B] bg-[#FAF7EE] focus:bg-white focus:outline-hidden"
               />
             </div>
           </div>
@@ -880,22 +888,22 @@ export const ImportView: React.FC = () => {
             {reviewDraft.lessons.map((lesson, lIdx) => (
               <div
                 key={lesson.id}
-                className={`bg-white border rounded-2xl p-5 shadow-xs space-y-4 ${
-                  lesson.needsReview ? 'border-amber-400 ring-1 ring-amber-400/30' : 'border-slate-300'
+                className={`bg-white border-2 border-[#18181B] rounded-[22px] p-5 shadow-[2px_2px_0px_#18181B] space-y-4 ${
+                  lesson.needsReview ? 'bg-[#FFFBEB]' : ''
                 }`}
               >
                 {/* Lesson Header */}
-                <div className="flex flex-wrap items-center justify-between gap-2 pb-3 border-b border-gray-100">
+                <div className="flex flex-wrap items-center justify-between gap-2 pb-3 border-b-2 border-[#18181B]/15">
                   <div className="flex items-center space-x-2">
-                    <span className="font-bold text-sm text-gray-900">
+                    <span className="font-black text-sm text-[#18181B]">
                       Lesson #{lIdx + 1}
                     </span>
-                    <span className="text-xs font-semibold text-gray-600">
+                    <span className="text-xs font-bold text-[#52525B]">
                       ({lesson.day} - {lesson.className} {lesson.section ? `[${lesson.section}]` : ''})
                     </span>
                     {lesson.needsReview && (
-                      <span className="text-2xs font-bold text-amber-800 bg-amber-100 px-2 py-0.5 rounded flex items-center">
-                        <AlertCircle className="w-3 h-3 mr-1" />
+                      <span className="text-[10px] font-black text-[#18181B] bg-[#FEF08A] px-2.5 py-0.5 rounded-md border-2 border-[#18181B] flex items-center shadow-[1px_1px_0px_#18181B]">
+                        <AlertCircle className="w-3 h-3 mr-1 stroke-[2.5]" />
                         Needs review
                       </span>
                     )}
@@ -905,15 +913,15 @@ export const ImportView: React.FC = () => {
                     <button
                       type="button"
                       onClick={() => handleAddBlock(lIdx)}
-                      className="inline-flex items-center px-2 py-1 text-2xs font-semibold text-indigo-700 bg-indigo-50 hover:bg-indigo-100 rounded"
+                      className="inline-flex items-center px-2.5 py-1 text-xs font-black text-[#18181B] bg-[#FAF7EE] hover:bg-[#FEF08A] rounded-xl border-2 border-[#18181B] shadow-[1px_1px_0px_#18181B] cursor-pointer"
                     >
-                      <Plus className="w-3 h-3 mr-1" />
+                      <Plus className="w-3 h-3 mr-1 stroke-[3]" />
                       Add Block
                     </button>
                     <button
                       type="button"
                       onClick={() => handleDeleteLesson(lIdx)}
-                      className="p-1 text-gray-400 hover:text-rose-600 rounded"
+                      className="p-1.5 text-[#52525B] hover:text-rose-600 rounded-lg hover:bg-rose-50 border-2 border-transparent hover:border-[#18181B] cursor-pointer"
                       title="Remove this lesson from import"
                     >
                       <Trash2 className="w-4 h-4" />
@@ -924,31 +932,31 @@ export const ImportView: React.FC = () => {
                 {/* Day, Class, Section */}
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
                   <div>
-                    <label className="block font-semibold text-gray-600 mb-1">Day</label>
+                    <label className="block font-black text-[#52525B] uppercase text-[10px] tracking-wider mb-1">Day</label>
                     <input
                       type="text"
                       value={lesson.day}
                       onChange={e => handleUpdateLesson(lIdx, 'day', e.target.value)}
-                      className="w-full border border-gray-300 rounded p-1.5 font-semibold text-gray-900"
+                      className="w-full border-2 border-[#18181B] rounded-xl p-2 font-black text-[#18181B] bg-[#FAF7EE] focus:bg-white focus:outline-hidden"
                     />
                   </div>
                   <div>
-                    <label className="block font-semibold text-gray-600 mb-1">Class</label>
+                    <label className="block font-black text-[#52525B] uppercase text-[10px] tracking-wider mb-1">Class</label>
                     <input
                       type="text"
                       value={lesson.className}
                       onChange={e => handleUpdateLesson(lIdx, 'className', e.target.value)}
-                      className="w-full border border-gray-300 rounded p-1.5 font-semibold text-gray-900"
+                      className="w-full border-2 border-[#18181B] rounded-xl p-2 font-black text-[#18181B] bg-[#FAF7EE] focus:bg-white focus:outline-hidden"
                     />
                   </div>
                   <div>
-                    <label className="block font-semibold text-gray-600 mb-1">Section</label>
+                    <label className="block font-black text-[#52525B] uppercase text-[10px] tracking-wider mb-1">Section</label>
                     <input
                       type="text"
                       value={lesson.section || ''}
                       onChange={e => handleUpdateLesson(lIdx, 'section', e.target.value)}
                       placeholder="Optional"
-                      className="w-full border border-gray-300 rounded p-1.5 text-gray-900"
+                      className="w-full border-2 border-[#18181B] rounded-xl p-2 font-bold text-[#18181B] bg-[#FAF7EE] focus:bg-white focus:outline-hidden"
                     />
                   </div>
                 </div>
@@ -956,38 +964,38 @@ export const ImportView: React.FC = () => {
                 {/* Target & Activities */}
                 <div className="space-y-3 text-xs">
                   <div>
-                    <label className="block font-semibold text-gray-700 mb-1">Learning Target</label>
+                    <label className="block font-black text-[#18181B] uppercase text-[10px] tracking-wider mb-1">Learning Target</label>
                     <textarea
                       rows={2}
                       value={lesson.target}
                       onChange={e => handleUpdateLesson(lIdx, 'target', e.target.value)}
-                      className="w-full border border-gray-300 rounded p-2 text-gray-900 resize-y font-sans"
+                      className="w-full border-2 border-[#18181B] rounded-xl p-2.5 text-[#18181B] font-bold bg-[#FAF7EE] focus:bg-white focus:outline-hidden resize-y font-sans"
                     />
                   </div>
 
                   <div>
-                    <label className="block font-semibold text-gray-700 mb-1">Activities & Procedures</label>
+                    <label className="block font-black text-[#18181B] uppercase text-[10px] tracking-wider mb-1">Activities & Procedures</label>
                     <textarea
                       rows={2}
                       value={lesson.activities}
                       onChange={e => handleUpdateLesson(lIdx, 'activities', e.target.value)}
-                      className="w-full border border-gray-300 rounded p-2 text-gray-900 resize-y font-sans"
+                      className="w-full border-2 border-[#18181B] rounded-xl p-2.5 text-[#18181B] font-bold bg-[#FAF7EE] focus:bg-white focus:outline-hidden resize-y font-sans"
                     />
                   </div>
                 </div>
 
                 {/* Dynamic Blocks in this lesson */}
-                <div className="space-y-2 pt-2 border-t border-gray-100">
+                <div className="space-y-2 pt-2 border-t-2 border-[#18181B]/15">
                   <div className="flex items-center justify-between">
-                    <span className="text-2xs uppercase font-bold text-gray-500">
+                    <span className="text-[10px] uppercase font-black text-[#52525B] tracking-wider">
                       Dynamic Blocks ({lesson.blocks.length})
                     </span>
                     <button
                       type="button"
                       onClick={() => handleAddBlock(lIdx)}
-                      className="text-2xs font-semibold text-indigo-600 hover:underline flex items-center"
+                      className="text-xs font-black text-[#18181B] hover:underline flex items-center cursor-pointer"
                     >
-                      <Plus className="w-2.5 h-2.5 mr-0.5" />
+                      <Plus className="w-3 h-3 mr-1 stroke-[3]" />
                       Add Block
                     </button>
                   </div>
@@ -996,33 +1004,33 @@ export const ImportView: React.FC = () => {
                     {lesson.blocks.map((block, bIdx) => (
                       <div
                         key={bIdx}
-                        className="bg-gray-50 border border-gray-200 rounded-lg p-3 space-y-2 text-xs relative group"
+                        className="bg-[#FAF7EE] border-2 border-[#18181B] rounded-xl p-3.5 space-y-2.5 text-xs relative group shadow-[1px_1px_0px_#18181B]"
                       >
                         <div className="flex items-center justify-between">
-                          <span className="font-bold text-indigo-700 text-xs">
+                          <span className="font-black text-[#18181B] text-xs">
                             Block {block.blockNumber}
                           </span>
                           <button
                             type="button"
                             onClick={() => handleDeleteBlock(lIdx, bIdx)}
-                            className="text-gray-400 hover:text-rose-600 p-0.5 rounded"
+                            className="text-[#52525B] hover:text-rose-600 p-0.5 rounded cursor-pointer"
                             title="Delete this block"
                           >
-                            <Trash2 className="w-3 h-3" />
+                            <Trash2 className="w-3.5 h-3.5" />
                           </button>
                         </div>
 
-                        <div className="space-y-1.5">
+                        <div className="space-y-2">
                           {Object.entries(block.fields).map(([k, val]) => (
                             <div key={k}>
-                              <label className="block text-3xs font-bold text-gray-500 uppercase">
+                              <label className="block text-[10px] font-black text-[#52525B] uppercase tracking-wider mb-0.5">
                                 {k.replace(/_/g, ' ')}
                               </label>
                               <textarea
                                 rows={2}
                                 value={val}
                                 onChange={e => handleUpdateBlockField(lIdx, bIdx, k, e.target.value)}
-                                className="w-full bg-white border border-gray-300 rounded p-1.5 text-2xs text-gray-900 resize-y font-sans"
+                                className="w-full bg-white border-2 border-[#18181B] rounded-lg p-2 text-xs font-bold text-[#18181B] focus:outline-hidden resize-y font-sans"
                               />
                             </div>
                           ))}
@@ -1040,16 +1048,16 @@ export const ImportView: React.FC = () => {
             <button
               type="button"
               onClick={resetImport}
-              className="px-4 py-2 text-xs font-semibold text-gray-600 hover:text-gray-900 bg-gray-100 hover:bg-gray-200 rounded-md"
+              className="px-5 py-2.5 text-xs font-black text-[#18181B] hover:bg-[#FAF7EE] bg-white border-2 border-[#18181B] rounded-xl shadow-[1px_1px_0px_#18181B] cursor-pointer"
             >
               Cancel
             </button>
             <button
               type="button"
               onClick={handleCommit}
-              className="inline-flex items-center px-6 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-xs rounded-md shadow-xs transition-colors"
+              className="inline-flex items-center px-6 py-2.5 bg-[#18181B] hover:bg-neutral-800 text-white font-black text-xs rounded-xl border-2 border-[#18181B] shadow-[2px_2px_0px_#18181B] transition-all cursor-pointer"
             >
-              <CheckCircle2 className="w-4 h-4 mr-1.5" />
+              <CheckCircle2 className="w-4 h-4 mr-1.5 stroke-[2.5]" />
               Import & Save All ({reviewDraft.lessons.length} Lessons)
             </button>
           </div>

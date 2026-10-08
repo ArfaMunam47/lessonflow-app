@@ -85,9 +85,9 @@ export const Sidebar: React.FC<SidebarProps> = ({ mobileOpen, onCloseMobile }) =
   const displayName = teacherProfile?.teacherName?.trim() || currentUser?.name?.trim() || 'Teacher';
 
   const sidebarContent = (
-    <div className="flex flex-col h-full bg-white border-r border-slate-200">
-      {/* Brand Header with Generous Breathing Room (Top: 28px, Left/Right: 28px) */}
-      <div className="pt-7 pb-6 px-7 border-b border-slate-200 flex items-center justify-between">
+    <div className="flex flex-col h-full bg-[#EBF3EE] border-r-2 border-[#18181B]">
+      {/* Brand Header with Generous Breathing Room (Top: 32px, Left/Right: 24px) */}
+      <div className="pt-8 pb-6 px-6 border-b-2 border-[#18181B]/15 flex items-center justify-between">
         <LessonFlowLogo
           size="md"
           showSubtitle={true}
@@ -98,7 +98,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ mobileOpen, onCloseMobile }) =
         <button
           type="button"
           onClick={onCloseMobile}
-          className="md:hidden p-2 rounded-xl text-slate-400 hover:text-slate-700 hover:bg-slate-100"
+          className="md:hidden p-2 rounded-xl text-[#18181B] hover:bg-black/10 border-2 border-[#18181B] bg-white shadow-[1px_1px_0px_#18181B]"
           aria-label="Close navigation"
         >
           <X className="w-5 h-5" />
@@ -106,32 +106,32 @@ export const Sidebar: React.FC<SidebarProps> = ({ mobileOpen, onCloseMobile }) =
       </div>
 
       {/* Navigation List */}
-      <nav className="flex-1 px-4 py-5 space-y-1.5 overflow-y-auto">
+      <nav className="flex-1 px-4 py-5 space-y-2 overflow-y-auto">
         {navItems.map(item => {
           const isActive = activeView === item.id;
           return (
             <button
               key={item.id}
               onClick={() => handleNavClick(item.id)}
-              className={`w-full flex items-center justify-between px-4 py-3 rounded-xl text-xs transition-all ${
+              className={`w-full flex items-center justify-between px-4 py-3 rounded-xl text-xs transition-all cursor-pointer ${
                 isActive
-                  ? 'bg-blue-50/90 text-blue-900 border border-blue-300 font-bold shadow-2xs'
-                  : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100/70 border border-transparent font-semibold'
+                  ? 'bg-[#18181B] text-white border-2 border-[#18181B] font-black shadow-[2px_2px_0px_#18181B]'
+                  : 'text-[#18181B] hover:bg-black/5 hover:border-[#18181B]/30 border-2 border-transparent font-bold'
               }`}
             >
               <div className="flex items-center space-x-3">
-                <span className={isActive ? 'text-blue-600' : 'text-slate-500'}>
+                <span className={isActive ? 'text-white' : 'text-[#18181B]'}>
                   {item.icon}
                 </span>
-                <span>{item.label}</span>
+                <span className="tracking-tight">{item.label}</span>
               </div>
 
               {item.count !== undefined && (
                 <span
-                  className={`text-3xs font-mono font-bold px-2 py-0.5 rounded-md ${
+                  className={`text-[10px] font-mono font-black px-2 py-0.5 rounded-md border ${
                     isActive
-                      ? 'bg-blue-100 text-blue-800'
-                      : 'bg-slate-100 text-slate-600'
+                      ? 'bg-white text-[#18181B] border-white'
+                      : 'bg-white text-[#18181B] border-[#18181B]'
                   }`}
                 >
                   {item.count}
@@ -143,24 +143,24 @@ export const Sidebar: React.FC<SidebarProps> = ({ mobileOpen, onCloseMobile }) =
       </nav>
 
       {/* Teacher Profile Footer (Real data only, fallback to 'Teacher') */}
-      <div className="p-4 border-t border-slate-200 bg-slate-50/60">
+      <div className="p-4 border-t-2 border-[#18181B]/15 bg-[#EBF3EE]">
         <button
           type="button"
           onClick={() => handleNavClick('settings')}
-          className="w-full flex items-center space-x-3 p-2 rounded-xl hover:bg-white hover:border-slate-300 border border-transparent transition-all text-left group"
+          className="w-full flex items-center space-x-3 p-2.5 rounded-xl bg-white hover:bg-[#FAF7EE] border-2 border-[#18181B] shadow-[2px_2px_0px_#18181B] transition-all text-left group cursor-pointer"
         >
-          <div className="w-8 h-8 rounded-xl bg-blue-100 text-blue-700 flex items-center justify-center font-bold text-xs shrink-0 group-hover:bg-blue-200 transition-colors">
+          <div className="w-8 h-8 rounded-lg bg-[#FEF08A] border-2 border-[#18181B] text-[#18181B] flex items-center justify-center font-black text-xs shrink-0 shadow-[1px_1px_0px_#18181B]">
             <UserIcon className="w-4 h-4" />
           </div>
           <div className="flex-1 min-w-0">
-            <span className="text-xs font-bold text-slate-900 block truncate group-hover:text-blue-700 transition-colors">
+            <span className="text-xs font-black text-[#18181B] block truncate group-hover:underline">
               {displayName}
             </span>
-            <span className="text-3xs text-slate-500 block truncate">
+            <span className="text-[10px] text-[#52525B] font-bold block truncate">
               {teacherProfile?.schoolName ? teacherProfile.schoolName : 'LessonFlow Workspace'}
             </span>
           </div>
-          <Settings className="w-3.5 h-3.5 text-slate-400 group-hover:text-slate-600 shrink-0" />
+          <Settings className="w-4 h-4 text-[#18181B] shrink-0" />
         </button>
       </div>
     </div>

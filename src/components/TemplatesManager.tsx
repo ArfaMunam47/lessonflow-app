@@ -155,17 +155,17 @@ export const TemplatesManager: React.FC = () => {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="max-w-5xl mx-auto space-y-6 py-2">
       {/* Top Banner */}
-      <div className="bg-white border border-gray-200 rounded-lg p-5 shadow-2xs flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+      <div className="bg-white border-2 border-[#18181B] rounded-[22px] p-6 shadow-[2px_2px_0px_#18181B] flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
           <div className="flex items-center space-x-2">
-            <Layers className="w-5 h-5 text-indigo-600" />
-            <h2 className="text-lg font-bold text-gray-900 tracking-tight">
+            <Layers className="w-5 h-5 text-[#18181B] stroke-[2.5]" />
+            <h2 className="text-xl font-black text-[#18181B] tracking-tight">
               Block Templates & Field Configuration
             </h2>
           </div>
-          <p className="text-xs text-gray-500 mt-1 max-w-2xl">
+          <p className="text-xs text-[#52525B] font-bold mt-1 max-w-2xl leading-relaxed">
             Configure reusable block structures to match any school website requirements.
             When you create blocks, LessonFlow automatically builds all configured fields.
           </p>
@@ -173,21 +173,21 @@ export const TemplatesManager: React.FC = () => {
 
         <button
           onClick={handleStartCreate}
-          className="inline-flex items-center px-3.5 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-xs rounded-md shadow-2xs"
+          className="inline-flex items-center px-4 py-2.5 bg-[#18181B] hover:bg-neutral-800 text-white font-black text-xs rounded-xl border-2 border-[#18181B] shadow-[2px_2px_0px_#18181B] transition-all cursor-pointer"
         >
-          <Plus className="w-4 h-4 mr-1.5" />
+          <Plus className="w-4 h-4 mr-1.5 stroke-[3]" />
           Create New Template
         </button>
       </div>
 
       {/* Template Editor Drawer / Form (when creating or editing) */}
       {(isCreatingNew || editingTemplate) && (
-        <div className="bg-white border-2 border-indigo-500 rounded-lg p-5 shadow-md space-y-4">
-          <div className="flex justify-between items-center border-b border-gray-200 pb-3">
-            <h3 className="text-sm font-bold text-gray-900">
+        <div className="bg-[#FAF7EE] border-2 border-[#18181B] rounded-[22px] p-6 shadow-[3px_3px_0px_#18181B] space-y-4">
+          <div className="flex justify-between items-center border-b-2 border-[#18181B]/15 pb-3">
+            <h3 className="text-base font-black text-[#18181B]">
               {isCreatingNew ? 'Create New Block Template' : `Edit Template: ${editingTemplate?.name}`}
             </h3>
-            <span className="text-xs text-indigo-700 font-semibold bg-indigo-50 px-2 py-0.5 rounded">
+            <span className="text-xs text-[#18181B] font-black bg-[#E9D5FF] px-2.5 py-1 rounded-lg border-2 border-[#18181B] shadow-[1px_1px_0px_#18181B]">
               Configuring Block Fields
             </span>
           </div>
@@ -195,7 +195,7 @@ export const TemplatesManager: React.FC = () => {
           <form onSubmit={handleSave} className="space-y-4">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
-                <label className="block text-xs font-bold text-gray-700 mb-1">
+                <label className="block text-xs font-black text-[#18181B] uppercase tracking-wider mb-1">
                   Template Name <span className="text-rose-500">*</span>
                 </label>
                 <input
@@ -203,12 +203,12 @@ export const TemplatesManager: React.FC = () => {
                   value={name}
                   onChange={e => setName(e.target.value)}
                   placeholder="e.g. Standard 5-Field Lesson Block"
-                  className="w-full text-xs border border-gray-300 rounded p-2 focus:ring-1 focus:ring-indigo-500"
+                  className="w-full text-xs border-2 border-[#18181B] rounded-xl p-2.5 font-bold text-[#18181B] bg-white focus:outline-hidden"
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-gray-700 mb-1">
+                <label className="block text-xs font-black text-[#18181B] uppercase tracking-wider mb-1">
                   Description
                 </label>
                 <input
@@ -216,35 +216,35 @@ export const TemplatesManager: React.FC = () => {
                   value={description}
                   onChange={e => setDescription(e.target.value)}
                   placeholder="e.g. Used for daily core instruction"
-                  className="w-full text-xs border border-gray-300 rounded p-2 focus:ring-1 focus:ring-indigo-500"
+                  className="w-full text-xs border-2 border-[#18181B] rounded-xl p-2.5 font-bold text-[#18181B] bg-white focus:outline-hidden"
                 />
               </div>
             </div>
 
             <div className="flex items-center">
-              <label className="flex items-center space-x-2 text-xs font-semibold text-gray-700 cursor-pointer">
+              <label className="flex items-center space-x-2 text-xs font-black text-[#18181B] cursor-pointer">
                 <input
                   type="checkbox"
                   checked={isDefault}
                   onChange={e => setIsDefault(e.target.checked)}
-                  className="w-4 h-4 text-indigo-600 rounded"
+                  className="w-4 h-4 accent-[#18181B] rounded"
                 />
                 <span>Set as Default Template for new blocks</span>
               </label>
             </div>
 
             {/* Configured Fields List */}
-            <div className="border border-gray-200 rounded-md p-3.5 bg-gray-50/50 space-y-2.5">
+            <div className="border-2 border-[#18181B] rounded-xl p-4 bg-white space-y-3 shadow-[1px_1px_0px_#18181B]">
               <div className="flex justify-between items-center">
-                <h4 className="text-xs font-bold text-gray-800 uppercase tracking-wider">
+                <h4 className="text-xs font-black text-[#18181B] uppercase tracking-wider">
                   Block Fields ({fields.length})
                 </h4>
                 <button
                   type="button"
                   onClick={handleAddField}
-                  className="inline-flex items-center text-xs font-semibold text-indigo-700 hover:text-indigo-800 bg-white border border-gray-300 px-2.5 py-1 rounded"
+                  className="inline-flex items-center text-xs font-black text-[#18181B] bg-[#FAF7EE] hover:bg-[#FEF08A] border-2 border-[#18181B] px-3 py-1.5 rounded-lg shadow-[1px_1px_0px_#18181B] cursor-pointer"
                 >
-                  <Plus className="w-3.5 h-3.5 mr-1" />
+                  <Plus className="w-3.5 h-3.5 mr-1 stroke-[3]" />
                   Add Field
                 </button>
               </div>
@@ -253,28 +253,28 @@ export const TemplatesManager: React.FC = () => {
                 {fields.map((field, idx) => (
                   <div
                     key={idx}
-                    className="flex flex-wrap sm:flex-nowrap items-center gap-2 bg-white border border-gray-300 rounded p-2 shadow-2xs"
+                    className="flex flex-wrap sm:flex-nowrap items-center gap-2 bg-[#FAF7EE] border-2 border-[#18181B] rounded-xl p-2.5 shadow-[1px_1px_0px_#18181B]"
                   >
                     <div className="flex items-center space-x-1 shrink-0">
                       <button
                         type="button"
                         onClick={() => handleMoveField(idx, 'up')}
                         disabled={idx === 0}
-                        className="text-gray-400 hover:text-gray-700 disabled:opacity-20"
+                        className="text-[#18181B] hover:text-black disabled:opacity-20 p-1 cursor-pointer"
                         title="Move field up"
                       >
-                        <ArrowUp className="w-3.5 h-3.5" />
+                        <ArrowUp className="w-3.5 h-3.5 stroke-[2.5]" />
                       </button>
                       <button
                         type="button"
                         onClick={() => handleMoveField(idx, 'down')}
                         disabled={idx === fields.length - 1}
-                        className="text-gray-400 hover:text-gray-700 disabled:opacity-20"
+                        className="text-[#18181B] hover:text-black disabled:opacity-20 p-1 cursor-pointer"
                         title="Move field down"
                       >
-                        <ArrowDown className="w-3.5 h-3.5" />
+                        <ArrowDown className="w-3.5 h-3.5 stroke-[2.5]" />
                       </button>
-                      <span className="text-2xs font-bold text-gray-500 w-4 text-center">
+                      <span className="text-xs font-black text-[#18181B] font-mono w-4 text-center">
                         {idx + 1}
                       </span>
                     </div>
@@ -285,7 +285,7 @@ export const TemplatesManager: React.FC = () => {
                         value={field.label}
                         onChange={e => handleFieldChange(idx, 'label', e.target.value)}
                         placeholder="Field Label (e.g. Objective)"
-                        className="w-full text-xs font-semibold border border-gray-300 rounded px-2 py-1 text-gray-900"
+                        className="w-full text-xs font-bold border-2 border-[#18181B] rounded-lg px-2.5 py-1 text-[#18181B] bg-white focus:outline-hidden"
                       />
                     </div>
 
@@ -295,15 +295,15 @@ export const TemplatesManager: React.FC = () => {
                         value={field.key}
                         onChange={e => handleFieldChange(idx, 'key', e.target.value)}
                         placeholder="key (e.g. objective)"
-                        className="w-full text-2xs font-mono border border-gray-300 rounded px-2 py-1 text-gray-600 bg-gray-50"
+                        className="w-full text-[11px] font-mono font-bold border-2 border-[#18181B] rounded-lg px-2 py-1 text-[#52525B] bg-white focus:outline-hidden"
                       />
                     </div>
 
-                    <div className="w-24 shrink-0">
+                    <div className="w-28 shrink-0">
                       <select
                         value={field.type}
                         onChange={e => handleFieldChange(idx, 'type', e.target.value as FieldType)}
-                        className="w-full text-xs border border-gray-300 rounded px-1.5 py-1 text-gray-700"
+                        className="w-full text-xs font-bold border-2 border-[#18181B] rounded-lg px-2 py-1 text-[#18181B] bg-white focus:outline-hidden cursor-pointer"
                       >
                         <option value="textarea">Textarea</option>
                         <option value="text">Single Text</option>
@@ -311,12 +311,12 @@ export const TemplatesManager: React.FC = () => {
                     </div>
 
                     <div className="flex items-center space-x-1 shrink-0">
-                      <label className="flex items-center space-x-1 text-2xs text-gray-600 cursor-pointer">
+                      <label className="flex items-center space-x-1 text-xs font-black text-[#18181B] cursor-pointer">
                         <input
                           type="checkbox"
                           checked={field.isRequired}
                           onChange={e => handleFieldChange(idx, 'isRequired', e.target.checked)}
-                          className="w-3 h-3 text-indigo-600 rounded"
+                          className="w-3.5 h-3.5 accent-[#18181B] rounded"
                         />
                         <span>Req</span>
                       </label>
@@ -325,27 +325,27 @@ export const TemplatesManager: React.FC = () => {
                     <button
                       type="button"
                       onClick={() => handleRemoveField(idx)}
-                      className="p-1 text-gray-400 hover:text-rose-600 rounded hover:bg-rose-50 shrink-0"
+                      className="p-1 text-[#52525B] hover:text-rose-600 rounded hover:bg-rose-50 shrink-0 cursor-pointer"
                       title="Remove field"
                     >
-                      <Trash2 className="w-3.5 h-3.5" />
+                      <Trash2 className="w-4 h-4" />
                     </button>
                   </div>
                 ))}
               </div>
             </div>
 
-            <div className="flex justify-end space-x-2 pt-2">
+            <div className="flex justify-end space-x-3 pt-2">
               <button
                 type="button"
                 onClick={handleCancel}
-                className="px-3.5 py-1.5 text-xs text-gray-700 bg-gray-100 hover:bg-gray-200 rounded"
+                className="px-4 py-2 text-xs font-black text-[#18181B] bg-white hover:bg-[#FAF7EE] rounded-xl border-2 border-[#18181B] shadow-[1px_1px_0px_#18181B] cursor-pointer"
               >
                 Cancel
               </button>
               <button
                 type="submit"
-                className="px-4 py-1.5 text-xs font-semibold text-white bg-indigo-600 hover:bg-indigo-700 rounded shadow-xs"
+                className="px-5 py-2 text-xs font-black text-white bg-[#18181B] hover:bg-neutral-800 rounded-xl border-2 border-[#18181B] shadow-[2px_2px_0px_#18181B] cursor-pointer"
               >
                 Save Template
               </button>
@@ -355,81 +355,85 @@ export const TemplatesManager: React.FC = () => {
       )}
 
       {/* Available Templates Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
         {templates.map(tmpl => (
           <div
             key={tmpl.id}
-            className="bg-white border border-gray-200 rounded-lg p-4 shadow-2xs space-y-3 hover:border-gray-300 transition-colors"
+            className="bg-white border-2 border-[#18181B] rounded-[22px] p-5 shadow-[2px_2px_0px_#18181B] hover:shadow-[3px_3px_0px_#18181B] transition-all space-y-3.5 flex flex-col justify-between"
           >
-            <div className="flex items-start justify-between">
-              <div>
-                <div className="flex items-center space-x-1.5">
-                  <h3 className="text-sm font-bold text-gray-900">
-                    {tmpl.name}
-                  </h3>
-                  {tmpl.isDefault && (
-                    <span className="text-3xs font-bold text-amber-700 bg-amber-100 px-1.5 py-0.5 rounded flex items-center">
-                      <Star className="w-2.5 h-2.5 mr-0.5 fill-amber-500 text-amber-500" />
-                      Default
-                    </span>
-                  )}
+            <div>
+              <div className="flex items-start justify-between gap-2">
+                <div>
+                  <div className="flex items-center space-x-2">
+                    <h3 className="text-base font-black text-[#18181B]">
+                      {tmpl.name}
+                    </h3>
+                    {tmpl.isDefault && (
+                      <span className="text-[10px] font-black text-[#18181B] bg-[#FEF08A] px-2 py-0.5 rounded-md border-2 border-[#18181B] flex items-center shadow-[1px_1px_0px_#18181B]">
+                        <Star className="w-3 h-3 mr-0.5 fill-[#18181B] text-[#18181B]" />
+                        Default
+                      </span>
+                    )}
+                  </div>
+                  <p className="text-xs text-[#52525B] font-bold mt-1 line-clamp-2">
+                    {tmpl.description || 'Configurable lesson block template'}
+                  </p>
                 </div>
-                <p className="text-xs text-gray-500 mt-0.5 line-clamp-2">
-                  {tmpl.description || 'Configurable lesson block template'}
-                </p>
-              </div>
 
-              <div className="flex items-center space-x-1">
-                <button
-                  type="button"
-                  onClick={() => handleStartEdit(tmpl)}
-                  title="Edit template"
-                  className="p-1 text-gray-500 hover:text-indigo-600 rounded hover:bg-gray-100"
-                >
-                  <Edit2 className="w-3.5 h-3.5" />
-                </button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    if (window.confirm(`Delete template "${tmpl.name}"?`)) {
-                      deleteTemplate(tmpl.id);
-                    }
-                  }}
-                  title="Delete template"
-                  className="p-1 text-gray-400 hover:text-rose-600 rounded hover:bg-rose-50"
-                >
-                  <Trash2 className="w-3.5 h-3.5" />
-                </button>
-              </div>
-            </div>
-
-            {/* Field badges preview */}
-            <div className="space-y-1.5 pt-2 border-t border-gray-100">
-              <span className="text-3xs font-bold text-gray-500 uppercase tracking-wider block">
-                Fields ({tmpl.fields.length}):
-              </span>
-              <div className="flex flex-wrap gap-1.5">
-                {tmpl.fields.map(f => (
-                  <span
-                    key={f.key}
-                    className="text-2xs bg-gray-100 text-gray-700 px-2 py-0.5 rounded border border-gray-200 font-medium"
+                <div className="flex items-center space-x-1 shrink-0">
+                  <button
+                    type="button"
+                    onClick={() => handleStartEdit(tmpl)}
+                    title="Edit template"
+                    className="p-1.5 text-[#18181B] hover:bg-[#FAF7EE] rounded-lg border-2 border-transparent hover:border-[#18181B] cursor-pointer"
                   >
-                    {f.label}
-                    {f.isRequired && <span className="text-rose-500 ml-0.5">*</span>}
-                  </span>
-                ))}
+                    <Edit2 className="w-3.5 h-3.5" />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (window.confirm(`Delete template "${tmpl.name}"?`)) {
+                        deleteTemplate(tmpl.id);
+                      }
+                    }}
+                    title="Delete template"
+                    className="p-1.5 text-[#52525B] hover:text-rose-600 rounded-lg hover:bg-rose-50 border-2 border-transparent hover:border-[#18181B] cursor-pointer"
+                  >
+                    <Trash2 className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+              </div>
+
+              {/* Field badges preview */}
+              <div className="space-y-2 pt-3 border-t-2 border-[#18181B]/15">
+                <span className="text-[10px] font-black text-[#52525B] uppercase tracking-wider block">
+                  Fields ({tmpl.fields.length}):
+                </span>
+                <div className="flex flex-wrap gap-1.5">
+                  {tmpl.fields.map(f => (
+                    <span
+                      key={f.key}
+                      className="text-xs bg-[#FAF7EE] text-[#18181B] px-2.5 py-1 rounded-lg border-2 border-[#18181B] font-black shadow-[1px_1px_0px_#18181B]"
+                    >
+                      {f.label}
+                      {f.isRequired && <span className="text-rose-500 ml-0.5">*</span>}
+                    </span>
+                  ))}
+                </div>
               </div>
             </div>
 
-            <div className="pt-2 flex justify-between items-center text-xs">
-              {!tmpl.isDefault && (
+            <div className="pt-2 flex justify-between items-center text-xs border-t-2 border-[#18181B]/15">
+              {!tmpl.isDefault ? (
                 <button
                   type="button"
                   onClick={() => updateTemplate(tmpl.id, { isDefault: true })}
-                  className="text-2xs text-gray-600 hover:text-indigo-600 underline font-medium"
+                  className="text-xs font-black text-[#18181B] hover:underline cursor-pointer"
                 >
                   Make Default
                 </button>
+              ) : (
+                <span className="text-[11px] font-bold text-[#52525B]">Default for new blocks</span>
               )}
             </div>
           </div>

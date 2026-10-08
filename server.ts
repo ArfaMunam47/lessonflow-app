@@ -22,7 +22,12 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const isProduction = process.env.NODE_ENV === 'production';
-const PORT = Number(process.env.PORT || 3000);
+// In AI Studio and Nginx proxy environments, the app must bind to port 3000.
+// Avoid colliding with process.env.PORT when NGINX is already listening on 8080.
+const PORT = Number(
+  process.env.DEFAULT_APP_PORT ||
+  (process.env.NGINX_PORT ? 3000 : (process.env.PORT || 3000))
+);
 
 async function startServer() {
   const app = express();

@@ -98,19 +98,19 @@ export const ClipboardGallery: React.FC = () => {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="max-w-5xl mx-auto space-y-6 py-2">
       
       {/* Title & Queue Mode Toggle */}
-      <div className="bg-white border border-gray-200 rounded-lg p-5 shadow-2xs">
+      <div className="bg-white border-2 border-[#18181B] rounded-[22px] p-6 shadow-[2px_2px_0px_#18181B]">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div>
             <div className="flex items-center space-x-2">
-              <Clipboard className="w-5 h-5 text-indigo-600" />
-              <h2 className="text-lg font-bold text-gray-900 tracking-tight">
+              <Clipboard className="w-5 h-5 text-[#18181B] stroke-[2.5]" />
+              <h2 className="text-xl font-black text-[#18181B] tracking-tight">
                 Plain-Text Clipboard Gallery
               </h2>
             </div>
-            <p className="text-xs text-gray-500 mt-1">
+            <p className="text-xs text-[#52525B] font-bold mt-1 max-w-xl leading-relaxed">
               Store and copy clean plain text without HTML, styles, or rich formatting.
               Use 1-click copy or the Sequential Copy Queue to paste into the school website.
             </p>
@@ -123,58 +123,58 @@ export const ClipboardGallery: React.FC = () => {
                 setQueueMode(!queueMode);
                 setQueueIndex(0);
               }}
-              className={`inline-flex items-center px-3 py-1.5 text-xs font-semibold rounded-md transition-colors ${
+              className={`inline-flex items-center px-4 py-2 text-xs font-black rounded-xl border-2 border-[#18181B] shadow-[2px_2px_0px_#18181B] transition-all cursor-pointer ${
                 queueMode
-                  ? 'bg-amber-100 text-amber-900 border border-amber-300'
-                  : 'bg-indigo-50 text-indigo-700 hover:bg-indigo-100 border border-indigo-200'
+                  ? 'bg-[#FEF08A] text-[#18181B]'
+                  : 'bg-white hover:bg-[#FAF7EE] text-[#18181B]'
               }`}
             >
-              <Play className="w-3.5 h-3.5 mr-1.5" />
+              <Play className="w-3.5 h-3.5 mr-1.5 stroke-[2.5]" />
               {queueMode ? 'Exit Queue Mode' : 'Start Ordered Copy Queue'}
             </button>
           </div>
         </div>
 
-        {/* Ordered Copy Queue Runner Banner (Requirement 14) */}
+        {/* Ordered Copy Queue Runner Banner */}
         {queueMode && queueItems.length > 0 && (
-          <div className="mt-4 bg-amber-50 border border-amber-200 rounded-lg p-4 space-y-3">
+          <div className="mt-4 bg-[#FEF08A] border-2 border-[#18181B] rounded-2xl p-5 space-y-3 shadow-[2px_2px_0px_#18181B]">
             <div className="flex items-center justify-between text-xs">
-              <span className="font-bold text-amber-900">
+              <span className="font-black text-[#18181B]">
                 Ordered Copy Queue: Step {queueIndex + 1} of {queueItems.length}
               </span>
               <button
                 onClick={() => setQueueIndex(0)}
-                className="text-amber-700 hover:text-amber-900 text-2xs flex items-center"
+                className="text-[#18181B] hover:underline text-xs font-black flex items-center cursor-pointer"
               >
-                <RotateCcw className="w-3 h-3 mr-1" />
+                <RotateCcw className="w-3 h-3 mr-1 stroke-[2.5]" />
                 Reset Queue
               </button>
             </div>
 
             {currentQueueItem && (
-              <div className="bg-white border border-amber-200 rounded p-3 space-y-2">
+              <div className="bg-white border-2 border-[#18181B] rounded-xl p-4 space-y-3 shadow-[1px_1px_0px_#18181B]">
                 <div className="flex items-center justify-between">
-                  <span className="text-xs font-bold text-gray-900">
+                  <span className="text-sm font-black text-[#18181B]">
                     {currentQueueItem.label}
                   </span>
-                  <span className="text-3xs uppercase bg-amber-100 text-amber-800 font-bold px-1.5 py-0.5 rounded">
+                  <span className="text-[10px] uppercase bg-[#FEF08A] text-[#18181B] font-black px-2 py-0.5 rounded-md border-2 border-[#18181B]">
                     {currentQueueItem.category}
                   </span>
                 </div>
-                <p className="text-xs text-gray-700 bg-gray-50 p-2 rounded border border-gray-200 font-mono whitespace-pre-wrap max-h-24 overflow-y-auto">
+                <p className="text-xs text-[#18181B] bg-[#FAF7EE] p-3 rounded-xl border-2 border-[#18181B] font-mono whitespace-pre-wrap max-h-24 overflow-y-auto font-bold">
                   {currentQueueItem.plainText}
                 </p>
 
                 <div className="flex items-center justify-between pt-1">
-                  <span className="text-2xs text-gray-500">
+                  <span className="text-[11px] text-[#52525B] font-bold">
                     Paste this field into the school website, then click Next Step.
                   </span>
                   <button
                     type="button"
                     onClick={handleCopyCurrentQueueItem}
-                    className="inline-flex items-center px-4 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs rounded shadow-xs"
+                    className="inline-flex items-center px-4 py-2 bg-[#18181B] hover:bg-neutral-800 text-white font-black text-xs rounded-xl border-2 border-[#18181B] shadow-[2px_2px_0px_#18181B] cursor-pointer"
                   >
-                    <Copy className="w-3.5 h-3.5 mr-1.5" />
+                    <Copy className="w-3.5 h-3.5 mr-1.5 stroke-[2.5]" />
                     Copy & Next Step ({queueIndex + 1}/{queueItems.length})
                   </button>
                 </div>
@@ -184,17 +184,17 @@ export const ClipboardGallery: React.FC = () => {
         )}
       </div>
 
-      {/* Quick Paste & Clean Input Box */}
-      <div className="bg-white border border-slate-300 rounded-2xl p-6 shadow-xs space-y-3">
-        <h3 className="text-xs font-bold text-slate-800 uppercase tracking-wider flex items-center space-x-1.5">
-          <Sparkles className="w-4 h-4 text-indigo-600" />
+      {/* Quick Paste & Clean Input Box (Pastel Yellow Accent for Clipboard) */}
+      <div className="bg-[#FEF08A] border-2 border-[#18181B] rounded-[22px] p-6 shadow-[2px_2px_0px_#18181B] space-y-3.5">
+        <h3 className="text-sm font-black text-[#18181B] uppercase tracking-wider flex items-center space-x-2">
+          <Sparkles className="w-4 h-4 text-[#18181B] stroke-[2.5]" />
           <span>Quick Clean & Save to Gallery</span>
         </h3>
-        <p className="text-xs text-slate-500">
+        <p className="text-xs text-[#3F3F46] font-bold leading-relaxed">
           Paste any formatted text, Word table cells, or HTML. It is automatically converted into clean plain text.
         </p>
 
-        <form onSubmit={handleAddSnippet} className="space-y-3">
+        <form onSubmit={handleAddSnippet} className="space-y-3.5 pt-1">
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
             <div className="sm:col-span-2">
               <input
@@ -202,14 +202,14 @@ export const ClipboardGallery: React.FC = () => {
                 value={labelInput}
                 onChange={e => setLabelInput(e.target.value)}
                 placeholder="Snippet Label (e.g., Monday Target, Station 1 Instructions)"
-                className="w-full text-xs text-slate-900 border border-slate-300 rounded-xl p-2.5 focus:ring-1 focus:ring-indigo-500 font-medium"
+                className="w-full text-xs text-[#18181B] bg-white border-2 border-[#18181B] rounded-xl p-2.5 font-bold focus:outline-hidden"
               />
             </div>
             <div>
               <select
                 value={categoryInput}
                 onChange={e => setCategoryInput(e.target.value as any)}
-                className="w-full text-xs text-slate-900 border border-slate-300 rounded-xl p-2.5 focus:ring-1 focus:ring-indigo-500 font-medium"
+                className="w-full text-xs text-[#18181B] bg-white border-2 border-[#18181B] rounded-xl p-2.5 font-bold focus:outline-hidden cursor-pointer"
               >
                 <option value="general">Category: General</option>
                 <option value="target">Category: Target</option>
@@ -226,17 +226,17 @@ export const ClipboardGallery: React.FC = () => {
               value={pasteInput}
               onChange={e => handlePasteChange(e.target.value)}
               placeholder="Paste rich text, HTML, or raw lesson content here..."
-              className="w-full text-xs text-slate-900 border border-slate-300 rounded-xl p-3 focus:ring-1 focus:ring-indigo-500 resize-y"
+              className="w-full text-xs text-[#18181B] bg-white border-2 border-[#18181B] rounded-xl p-3 focus:outline-hidden resize-y font-medium"
             />
           </div>
 
           {/* Clean Text Live Preview */}
           {cleanPreview && (
-            <div className="bg-slate-50 border border-slate-200 rounded-xl p-3 text-xs">
-              <span className="text-2xs font-bold text-slate-500 uppercase tracking-wider block mb-1">
+            <div className="bg-white border-2 border-[#18181B] rounded-xl p-3 text-xs shadow-[1px_1px_0px_#18181B]">
+              <span className="text-[10px] font-black text-[#52525B] uppercase tracking-wider block mb-1">
                 Sanitized Plain-Text Output:
               </span>
-              <p className="text-slate-800 font-mono text-2xs whitespace-pre-wrap">
+              <p className="text-[#18181B] font-mono text-xs whitespace-pre-wrap font-bold">
                 {cleanPreview}
               </p>
             </div>
@@ -246,9 +246,9 @@ export const ClipboardGallery: React.FC = () => {
             <button
               type="submit"
               disabled={!pasteInput.trim()}
-              className="inline-flex items-center px-4 py-2 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white font-semibold text-xs rounded-xl shadow-xs transition-colors"
+              className="inline-flex items-center px-4 py-2 bg-[#18181B] hover:bg-neutral-800 disabled:opacity-50 text-white font-black text-xs rounded-xl border-2 border-[#18181B] shadow-[2px_2px_0px_#18181B] transition-all cursor-pointer"
             >
-              <Plus className="w-3.5 h-3.5 mr-1" />
+              <Plus className="w-3.5 h-3.5 mr-1 stroke-[3]" />
               Save Clean Snippet
             </button>
           </div>
@@ -256,23 +256,23 @@ export const ClipboardGallery: React.FC = () => {
       </div>
 
       {/* Clipboard Gallery Search & Filters */}
-      <div className="flex flex-wrap items-center justify-between gap-3 bg-white border border-slate-300 rounded-2xl p-4 shadow-xs">
-        <div className="flex items-center space-x-2">
+      <div className="flex flex-wrap items-center justify-between gap-3 bg-white border-2 border-[#18181B] rounded-[20px] p-4 shadow-[1px_1px_0px_#18181B]">
+        <div className="flex items-center space-x-2.5">
           <div className="relative">
-            <Search className="w-3.5 h-3.5 absolute left-3 top-3 text-slate-400" />
+            <Search className="w-3.5 h-3.5 absolute left-3 top-3 text-[#18181B]" />
             <input
               type="text"
               value={search}
               onChange={e => setSearch(e.target.value)}
               placeholder="Search clipboard snippets..."
-              className="text-xs bg-slate-50 border border-slate-300 rounded-xl pl-8.5 pr-3 py-2 w-60 focus:ring-1 focus:ring-indigo-500"
+              className="text-xs bg-[#FAF7EE] border-2 border-[#18181B] rounded-xl pl-9 pr-3 py-2 w-60 text-[#18181B] font-bold focus:outline-hidden"
             />
           </div>
 
           <select
             value={selectedCategory}
             onChange={e => setSelectedCategory(e.target.value)}
-            className="text-xs bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 text-slate-700 font-medium"
+            className="text-xs bg-[#FAF7EE] border-2 border-[#18181B] rounded-xl px-3 py-2 text-[#18181B] font-black cursor-pointer"
           >
             <option value="all">All Categories ({clipboardItems.length})</option>
             <option value="target">Targets</option>
@@ -283,65 +283,67 @@ export const ClipboardGallery: React.FC = () => {
           </select>
         </div>
 
-        <span className="text-xs text-slate-500 font-medium">
+        <span className="text-xs text-[#18181B] font-black font-mono">
           Showing {filtered.length} snippet{filtered.length !== 1 ? 's' : ''}
         </span>
       </div>
 
       {/* Snippets Grid */}
       {filtered.length === 0 ? (
-        <div className="bg-white border border-dashed border-slate-300 rounded-2xl p-12 text-center text-xs text-slate-500 space-y-2">
-          <Clipboard className="w-8 h-8 text-slate-300 mx-auto" />
-          <p className="font-semibold text-slate-700">No clipboard snippets found</p>
-          <p className="text-2xs text-slate-400">Copy content from a lesson or use the Quick Clean box above.</p>
+        <div className="bg-white border-2 border-dashed border-[#18181B] rounded-[22px] p-12 text-center text-xs text-[#52525B] space-y-2 font-bold">
+          <Clipboard className="w-8 h-8 text-[#18181B] mx-auto stroke-[2.5]" />
+          <p className="font-black text-sm text-[#18181B]">No clipboard snippets found</p>
+          <p className="text-[11px] text-[#52525B]">Copy content from a lesson or use the Quick Clean box above.</p>
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {filtered.map(item => (
             <div
               key={item.id}
-              className="bg-white border border-slate-300 rounded-2xl p-5 shadow-xs space-y-3 hover:border-slate-400 transition-colors"
+              className="bg-white border-2 border-[#18181B] rounded-[20px] p-5 shadow-[2px_2px_0px_#18181B] hover:shadow-[3px_3px_0px_#18181B] space-y-3 transition-all flex flex-col justify-between"
             >
-              <div className="flex items-start justify-between gap-2">
-                <div>
-                  <h4 className="text-xs font-bold text-slate-900 leading-tight">
-                    {item.label}
-                  </h4>
-                  {(item.day || item.className) && (
-                    <span className="text-3xs font-semibold text-indigo-700 bg-indigo-50 px-2 py-0.5 rounded-md mt-1 inline-block border border-indigo-200">
-                      {item.day} {item.className ? `• ${item.className}` : ''}
+              <div>
+                <div className="flex items-start justify-between gap-2 border-b-2 border-[#18181B]/15 pb-2.5">
+                  <div>
+                    <h4 className="text-sm font-black text-[#18181B] leading-tight">
+                      {item.label}
+                    </h4>
+                    {(item.day || item.className) && (
+                      <span className="text-[10px] font-black text-[#18181B] bg-[#FEF08A] px-2 py-0.5 rounded-md mt-1 inline-block border-2 border-[#18181B]">
+                        {item.day} {item.className ? `• ${item.className}` : ''}
+                      </span>
+                    )}
+                  </div>
+
+                  <div className="flex items-center space-x-1.5">
+                    <span className="text-[10px] uppercase font-black text-[#18181B] bg-[#FAF7EE] px-2 py-0.5 rounded-md border-2 border-[#18181B]">
+                      {item.category}
                     </span>
-                  )}
+                    <button
+                      type="button"
+                      onClick={() => deleteClipboardItem(item.id)}
+                      title="Delete snippet"
+                      className="p-1 text-[#18181B] hover:text-rose-600 rounded-lg hover:bg-rose-50 cursor-pointer"
+                    >
+                      <Trash2 className="w-3.5 h-3.5 stroke-[2.5]" />
+                    </button>
+                  </div>
                 </div>
 
-                <div className="flex items-center space-x-1.5">
-                  <span className="text-3xs uppercase font-extrabold text-slate-500 bg-slate-100 px-2 py-0.5 rounded-md border border-slate-200">
-                    {item.category}
-                  </span>
-                  <button
-                    type="button"
-                    onClick={() => deleteClipboardItem(item.id)}
-                    title="Delete snippet"
-                    className="p-1 text-slate-400 hover:text-rose-600 rounded-lg hover:bg-rose-50"
-                  >
-                    <Trash2 className="w-3.5 h-3.5" />
-                  </button>
+                {/* Clean Plain-Text Display */}
+                <div className="mt-3 bg-[#FAF7EE] border-2 border-[#18181B] rounded-xl p-3 text-xs font-mono text-[#18181B] whitespace-pre-wrap max-h-32 overflow-y-auto font-bold">
+                  {item.plainText}
                 </div>
-              </div>
-
-              {/* Clean Plain-Text Display */}
-              <div className="bg-slate-50 border border-slate-200 rounded-xl p-3 text-xs font-mono text-slate-800 whitespace-pre-wrap max-h-32 overflow-y-auto">
-                {item.plainText}
               </div>
 
               {/* 1-Click Copy Button */}
-              <div className="flex justify-end pt-1">
+              <div className="flex justify-end pt-2">
                 <button
                   type="button"
                   onClick={() => copyToSystemClipboard(item.plainText, item.label)}
-                  className="inline-flex items-center px-3.5 py-1.5 bg-white hover:bg-slate-50 border border-slate-300 hover:border-indigo-400 text-xs font-bold text-slate-800 rounded-xl shadow-2xs transition-colors"
+                  className="inline-flex items-center px-4 py-2 bg-white hover:bg-[#FAF7EE] border-2 border-[#18181B] text-xs font-black text-[#18181B] rounded-xl shadow-[1px_1px_0px_#18181B] active:translate-x-[1px] active:translate-y-[1px] transition-all cursor-pointer"
                 >
-                  <Copy className="w-3.5 h-3.5 mr-1.5 text-indigo-600" />
+                  <Copy className="w-3.5 h-3.5 mr-1.5 stroke-[2.5]" />
                   Copy Plain Text
                 </button>
               </div>

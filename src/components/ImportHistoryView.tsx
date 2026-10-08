@@ -37,22 +37,22 @@ export const ImportHistoryView: React.FC = () => {
     switch (type) {
       case 'google_doc':
         return (
-          <span className="inline-flex items-center px-2 py-0.5 rounded-md text-2xs font-bold bg-blue-50 text-blue-700 border border-blue-200">
-            <BookOpen className="w-3 h-3 mr-1" />
+          <span className="inline-flex items-center px-2.5 py-0.5 rounded-lg text-xs font-black bg-[#DBEAFE] text-[#18181B] border-2 border-[#18181B] shadow-[1px_1px_0px_#18181B]">
+            <BookOpen className="w-3.5 h-3.5 mr-1" />
             Google Docs
           </span>
         );
       case 'pdf':
         return (
-          <span className="inline-flex items-center px-2 py-0.5 rounded-md text-2xs font-bold bg-rose-50 text-rose-700 border border-rose-200">
-            <FileText className="w-3 h-3 mr-1" />
+          <span className="inline-flex items-center px-2.5 py-0.5 rounded-lg text-xs font-black bg-[#FCE7F3] text-[#18181B] border-2 border-[#18181B] shadow-[1px_1px_0px_#18181B]">
+            <FileText className="w-3.5 h-3.5 mr-1" />
             PDF
           </span>
         );
       default:
         return (
-          <span className="inline-flex items-center px-2 py-0.5 rounded-md text-2xs font-bold bg-slate-100 text-slate-700 border border-slate-200">
-            <FileText className="w-3 h-3 mr-1" />
+          <span className="inline-flex items-center px-2.5 py-0.5 rounded-lg text-xs font-black bg-[#FEF08A] text-[#18181B] border-2 border-[#18181B] shadow-[1px_1px_0px_#18181B]">
+            <FileText className="w-3.5 h-3.5 mr-1" />
             Pasted Text
           </span>
         );
@@ -60,22 +60,22 @@ export const ImportHistoryView: React.FC = () => {
   };
 
   return (
-    <div className="max-w-5xl mx-auto space-y-6">
+    <div className="max-w-5xl mx-auto space-y-6 py-2">
       {/* Top Banner */}
-      <div className="bg-white border border-slate-300 rounded-2xl p-6 shadow-xs flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+      <div className="bg-white border-2 border-[#18181B] rounded-[22px] p-6 shadow-[2px_2px_0px_#18181B] flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div className="space-y-1">
           <div className="flex items-center space-x-2">
-            <span className="text-2xs uppercase font-extrabold text-indigo-700 bg-indigo-50 px-2 py-0.5 rounded-md border border-indigo-200">
+            <span className="text-[10px] uppercase font-black text-[#18181B] bg-[#FED7AA] px-2.5 py-0.5 rounded-md border-2 border-[#18181B]">
               Audit & Traceability
             </span>
-            <span className="text-xs text-slate-500">
+            <span className="text-xs font-mono font-black text-[#18181B]">
               {importHistory.length} import record{importHistory.length !== 1 ? 's' : ''}
             </span>
           </div>
-          <h2 className="text-lg font-bold text-slate-900 tracking-tight">
+          <h2 className="text-xl font-black text-[#18181B] tracking-tight">
             Import History
           </h2>
-          <p className="text-xs text-slate-500">
+          <p className="text-xs text-[#52525B] font-bold">
             Past curriculum documents parsed into LessonFlow. You can reopen lessons or re-fetch shared documents anytime.
           </p>
         </div>
@@ -83,22 +83,22 @@ export const ImportHistoryView: React.FC = () => {
         <button
           type="button"
           onClick={() => setActiveView('import')}
-          className="inline-flex items-center px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-xs rounded-xl shadow-xs transition-colors shrink-0"
+          className="inline-flex items-center px-4 py-2.5 bg-[#18181B] hover:bg-neutral-800 text-white font-black text-xs rounded-xl border-2 border-[#18181B] shadow-[2px_2px_0px_#18181B] transition-all cursor-pointer shrink-0"
         >
-          <Upload className="w-3.5 h-3.5 mr-1.5" />
+          <Upload className="w-4 h-4 mr-1.5 stroke-[2.5]" />
           New Import
         </button>
       </div>
 
       {/* History List or Empty State (Real data only) */}
       {importHistory.length === 0 ? (
-        <div className="bg-white border border-dashed border-slate-300 rounded-2xl p-12 text-center space-y-3">
-          <div className="w-12 h-12 rounded-2xl bg-slate-100 border border-slate-200 flex items-center justify-center text-slate-400 mx-auto">
-            <History className="w-6 h-6" />
+        <div className="bg-white border-2 border-dashed border-[#18181B] rounded-[22px] p-12 text-center space-y-3">
+          <div className="w-12 h-12 rounded-2xl bg-[#FED7AA] border-2 border-[#18181B] flex items-center justify-center text-[#18181B] mx-auto shadow-[1px_1px_0px_#18181B]">
+            <History className="w-6 h-6 stroke-[2.5]" />
           </div>
           <div className="space-y-1">
-            <h3 className="text-sm font-bold text-slate-900">No imports yet</h3>
-            <p className="text-xs text-slate-500 max-w-sm mx-auto leading-relaxed">
+            <h3 className="text-base font-black text-[#18181B]">No imports yet</h3>
+            <p className="text-xs text-[#52525B] font-bold max-w-sm mx-auto leading-relaxed">
               When you import lesson plans from a Google Doc, PDF, or text, your import records and source links will appear here.
             </p>
           </div>
@@ -106,55 +106,55 @@ export const ImportHistoryView: React.FC = () => {
             <button
               type="button"
               onClick={() => setActiveView('import')}
-              className="inline-flex items-center px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-xs rounded-xl shadow-xs transition-colors"
+              className="inline-flex items-center px-4 py-2.5 bg-[#18181B] hover:bg-neutral-800 text-white font-black text-xs rounded-xl border-2 border-[#18181B] shadow-[2px_2px_0px_#18181B] cursor-pointer"
             >
-              <Upload className="w-3.5 h-3.5 mr-1.5" />
+              <Upload className="w-4 h-4 mr-1.5 stroke-[2.5]" />
               Import Lesson Plan
             </button>
           </div>
         </div>
       ) : (
-        <div className="bg-white border border-slate-300 rounded-2xl divide-y divide-slate-100 overflow-hidden shadow-xs">
+        <div className="bg-white border-2 border-[#18181B] rounded-[22px] divide-y-2 divide-[#18181B]/15 overflow-hidden shadow-[2px_2px_0px_#18181B]">
           {importHistory.map(item => (
             <div
               key={item.id}
-              className="p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4 hover:bg-slate-50/70 transition-colors"
+              className="p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4 hover:bg-[#FAF7EE] transition-colors"
             >
               <div className="flex items-start space-x-3.5 min-w-0">
                 <div className="mt-0.5 shrink-0">{getSourceBadge(item.sourceType)}</div>
                 <div className="space-y-1 min-w-0">
                   <div className="flex items-center space-x-2">
-                    <span className="font-bold text-sm text-slate-900 truncate">
+                    <span className="font-black text-base text-[#18181B] truncate">
                       {item.fileName}
                     </span>
                     {item.weekNumber && (
-                      <span className="text-2xs font-mono font-bold px-2 py-0.5 rounded-md bg-slate-100 text-slate-700 border border-slate-200">
+                      <span className="text-[10px] font-mono font-black px-2 py-0.5 rounded-md bg-[#FEF08A] text-[#18181B] border-2 border-[#18181B]">
                         {item.weekNumber}
                       </span>
                     )}
                   </div>
 
-                  <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-2xs text-slate-400">
+                  <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-[#52525B] font-bold">
                     <span className="flex items-center">
-                      <Calendar className="w-3 h-3 mr-1 text-slate-400" />
+                      <Calendar className="w-3.5 h-3.5 mr-1 text-[#18181B]" />
                       {new Date(item.createdAt).toLocaleDateString()} at{' '}
                       {new Date(item.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                     </span>
-                    <span>&bull;</span>
-                    <span className="font-semibold text-slate-600">
+                    <span>•</span>
+                    <span className="font-black text-[#18181B]">
                       {item.lessonCount} lesson record{item.lessonCount !== 1 ? 's' : ''}
                     </span>
 
                     {item.sourceUrl && (
                       <>
-                        <span>&bull;</span>
+                        <span>•</span>
                         <a
                           href={item.sourceUrl}
                           target="_blank"
                           rel="noreferrer"
-                          className="text-indigo-600 hover:underline flex items-center font-semibold"
+                          className="text-[#18181B] hover:underline flex items-center font-black"
                         >
-                          Open Source Document <ExternalLink className="w-2.5 h-2.5 ml-1" />
+                          Open Source Document <ExternalLink className="w-3 h-3 ml-1" />
                         </a>
                       </>
                     )}
@@ -168,7 +168,7 @@ export const ImportHistoryView: React.FC = () => {
                   <button
                     type="button"
                     onClick={() => initiateImportFromUrl(item.sourceUrl!)}
-                    className="inline-flex items-center px-3 py-1.5 text-xs font-bold text-blue-700 bg-blue-50 hover:bg-blue-100 rounded-xl border border-blue-200 transition-colors"
+                    className="inline-flex items-center px-3 py-1.5 text-xs font-black text-[#18181B] bg-white hover:bg-[#FAF7EE] rounded-xl border-2 border-[#18181B] shadow-[1px_1px_0px_#18181B] cursor-pointer"
                     title="Re-fetch and re-extract document"
                   >
                     <RefreshCw className="w-3.5 h-3.5 mr-1" />
@@ -185,7 +185,7 @@ export const ImportHistoryView: React.FC = () => {
                         setActiveView('lessons');
                       }
                     }}
-                    className="inline-flex items-center px-3 py-1.5 text-xs font-bold text-indigo-700 bg-indigo-50 hover:bg-indigo-100 rounded-xl border border-indigo-200 transition-colors"
+                    className="inline-flex items-center px-3.5 py-1.5 text-xs font-black text-[#18181B] bg-[#D1FAE5] hover:bg-[#A7F3D0] rounded-xl border-2 border-[#18181B] shadow-[1px_1px_0px_#18181B] cursor-pointer"
                   >
                     View Lessons
                     <ArrowRight className="w-3.5 h-3.5 ml-1" />
@@ -195,7 +195,7 @@ export const ImportHistoryView: React.FC = () => {
                 <button
                   type="button"
                   onClick={() => deleteImportHistoryItem(item.id)}
-                  className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors"
+                  className="p-1.5 text-[#52525B] hover:text-rose-600 hover:bg-rose-50 rounded-lg border-2 border-transparent hover:border-[#18181B] cursor-pointer"
                   title="Remove from history"
                 >
                   <Trash2 className="w-4 h-4" />

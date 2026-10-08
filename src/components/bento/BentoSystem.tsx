@@ -10,7 +10,7 @@
 
 import React from 'react';
 
-export type BentoAccent = 'neutral' | 'blue' | 'emerald' | 'mint' | 'purple' | 'lavender' | 'amber' | 'yellow' | 'peach' | 'rose' | 'pink';
+export type BentoAccent = 'neutral' | 'blue' | 'emerald' | 'mint' | 'purple' | 'lavender' | 'amber' | 'yellow' | 'peach' | 'rose' | 'pink' | 'sage' | 'cream';
 
 interface BentoGridProps {
   children: React.ReactNode;
@@ -19,7 +19,7 @@ interface BentoGridProps {
 
 export const BentoGrid: React.FC<BentoGridProps> = ({ children, className = '' }) => {
   return (
-    <div className={`grid grid-cols-1 md:grid-cols-6 lg:grid-cols-12 gap-6 ${className}`}>
+    <div className={`grid grid-cols-1 md:grid-cols-6 lg:grid-cols-12 gap-5 sm:gap-6 ${className}`}>
       {children}
     </div>
   );
@@ -56,41 +56,45 @@ export const BentoCard: React.FC<BentoCardProps> = ({
     12: 'col-span-1 md:col-span-6 lg:col-span-12',
   };
 
-  // Clearly visible borders (1.5px solid) with soft pastel tinted surfaces
+  // Strong, intentional 2px dark charcoal borders matching visual reference
   const accentClasses: Record<BentoAccent, string> = {
     neutral:
-      'bg-white border-slate-300 text-slate-900 shadow-2xs hover:border-slate-400',
+      'bg-white border-[#18181B] text-[#18181B]',
+    cream:
+      'bg-white border-[#18181B] text-[#18181B]',
     blue:
-      'bg-[#EEF4FF] border-[#BFDBFE] text-slate-900 shadow-2xs hover:border-[#93C5FD]',
+      'bg-[#DBEAFE] border-[#18181B] text-[#18181B]',
     mint:
-      'bg-[#ECFDF5] border-[#A7F3D0] text-slate-900 shadow-2xs hover:border-[#6EE7B7]',
+      'bg-[#D1FAE5] border-[#18181B] text-[#18181B]',
     emerald:
-      'bg-[#ECFDF5] border-[#A7F3D0] text-slate-900 shadow-2xs hover:border-[#6EE7B7]',
+      'bg-[#D1FAE5] border-[#18181B] text-[#18181B]',
     lavender:
-      'bg-[#F5F3FF] border-[#DDD6FE] text-slate-900 shadow-2xs hover:border-[#C4B5FD]',
+      'bg-[#EDE9FE] border-[#18181B] text-[#18181B]',
     purple:
-      'bg-[#F5F3FF] border-[#DDD6FE] text-slate-900 shadow-2xs hover:border-[#C4B5FD]',
+      'bg-[#EDE9FE] border-[#18181B] text-[#18181B]',
     yellow:
-      'bg-[#FEFCE8] border-[#FDE047] text-slate-900 shadow-2xs hover:border-[#FACC15]',
+      'bg-[#FEF08A] border-[#18181B] text-[#18181B]',
     amber:
-      'bg-[#FEFCE8] border-[#FDE047] text-slate-900 shadow-2xs hover:border-[#FACC15]',
+      'bg-[#FEF08A] border-[#18181B] text-[#18181B]',
     peach:
-      'bg-[#FFF7ED] border-[#FED7AA] text-slate-900 shadow-2xs hover:border-[#FDBA74]',
+      'bg-[#FED7AA] border-[#18181B] text-[#18181B]',
     rose:
-      'bg-[#FFF7ED] border-[#FED7AA] text-slate-900 shadow-2xs hover:border-[#FDBA74]',
+      'bg-[#FED7AA] border-[#18181B] text-[#18181B]',
     pink:
-      'bg-[#FDF2F8] border-[#FBCFE8] text-slate-900 shadow-2xs hover:border-[#F472B6]',
+      'bg-[#FCE7F3] border-[#18181B] text-[#18181B]',
+    sage:
+      'bg-[#E2ECE5] border-[#18181B] text-[#18181B]',
   };
 
-  const radiusClass = radius === 'large' ? 'rounded-[24px]' : 'rounded-2xl';
+  const radiusClass = radius === 'large' ? 'rounded-[24px]' : 'rounded-[20px]';
 
   const interactiveClasses = isInteractive
-    ? 'transition-all duration-150 hover:-translate-y-0.5 hover:shadow-xs cursor-pointer'
-    : 'transition-colors duration-150';
+    ? 'transition-all duration-150 hover:-translate-y-0.5 hover:shadow-[3px_3px_0px_#18181B] cursor-pointer'
+    : 'transition-all duration-150';
 
   return (
     <div
-      className={`relative ${radiusClass} border-[1.5px] p-6 sm:p-8 flex flex-col justify-between ${colSpanClasses[colSpan] || 'col-span-12'} ${accentClasses[accent]} ${interactiveClasses} ${className}`}
+      className={`relative ${radiusClass} border-2 p-6 sm:p-7 flex flex-col justify-between shadow-[2px_2px_0px_#18181B] ${colSpanClasses[colSpan] || 'col-span-12'} ${accentClasses[accent]} ${interactiveClasses} ${className}`}
       {...props}
     >
       {children}
@@ -119,19 +123,19 @@ export const BentoCardHeader: React.FC<BentoCardHeaderProps> = ({
     <div className={`flex items-start justify-between gap-3 mb-4 ${className}`}>
       <div className="flex items-start space-x-3">
         {icon && (
-          <div className="p-2 rounded-xl bg-white border border-slate-200/80 shadow-2xs shrink-0 text-slate-700">
+          <div className="p-2 rounded-xl bg-white border-2 border-[#18181B] shadow-[1px_1px_0px_#18181B] shrink-0 text-[#18181B]">
             {icon}
           </div>
         )}
         <div className="space-y-0.5">
           <div className="flex items-center space-x-2">
-            <h3 className="text-sm font-bold text-slate-900 tracking-tight leading-snug">
+            <h3 className="text-base font-black text-[#18181B] tracking-tight leading-snug">
               {title}
             </h3>
             {badge && <div>{badge}</div>}
           </div>
           {subtitle && (
-            <p className="text-xs text-slate-500 leading-relaxed font-normal">
+            <p className="text-xs text-[#52525B] leading-relaxed font-medium">
               {subtitle}
             </p>
           )}
@@ -154,7 +158,7 @@ export const BentoCardFooter: React.FC<{ children: React.ReactNode; className?: 
   className = '',
 }) => {
   return (
-    <div className={`mt-5 pt-3.5 border-t border-slate-200/80 flex items-center justify-between text-xs text-slate-500 ${className}`}>
+    <div className={`mt-5 pt-3.5 border-t-2 border-[#18181B]/20 flex items-center justify-between text-xs text-[#52525B] ${className}`}>
       {children}
     </div>
   );
@@ -165,19 +169,33 @@ interface BentoStatProps {
   label: string;
   helper?: string;
   trend?: React.ReactNode;
+  isBadge?: boolean;
 }
 
-export const BentoStat: React.FC<BentoStatProps> = ({ value, label, helper, trend }) => {
+export const BentoStat: React.FC<BentoStatProps> = ({ value, label, helper, trend, isBadge = false }) => {
+  if (isBadge) {
+    return (
+      <div className="p-3 bg-white border-2 border-[#18181B] rounded-xl shadow-[1px_1px_0px_#18181B] text-center">
+        <span className="text-lg font-black text-[#18181B] block font-mono">
+          {value}
+        </span>
+        <span className="text-[10px] font-bold text-[#52525B] uppercase tracking-wide block mt-0.5">
+          {label}
+        </span>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-1">
       <div className="flex items-baseline space-x-2">
-        <span className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight font-mono">
+        <span className="text-2xl sm:text-3xl font-black text-[#18181B] tracking-tight font-mono">
           {value}
         </span>
         {trend && <span>{trend}</span>}
       </div>
-      <p className="text-xs font-semibold text-slate-600">{label}</p>
-      {helper && <p className="text-2xs text-slate-400">{helper}</p>}
+      <p className="text-xs font-bold text-[#18181B]">{label}</p>
+      {helper && <p className="text-[11px] text-[#52525B] font-medium">{helper}</p>}
     </div>
   );
 };
@@ -200,17 +218,21 @@ export const BentoEmptyState: React.FC<BentoEmptyStateProps> = ({
   className = '',
 }) => {
   return (
-    <div className={`text-center py-8 px-6 space-y-4 bg-white/70 border border-slate-300 rounded-2xl ${className}`}>
-      {icon && <div className="mx-auto text-slate-400 w-10 h-10 flex items-center justify-center bg-slate-50 border border-slate-200 rounded-xl">{icon}</div>}
+    <div className={`text-center py-7 px-5 space-y-3.5 bg-white border-2 border-[#18181B] rounded-2xl shadow-[1px_1px_0px_#18181B] ${className}`}>
+      {icon && (
+        <div className="mx-auto text-[#18181B] w-10 h-10 flex items-center justify-center bg-[#FAF7EE] border-2 border-[#18181B] rounded-xl shadow-[1px_1px_0px_#18181B]">
+          {icon}
+        </div>
+      )}
       <div className="space-y-1">
-        <p className="text-sm font-bold text-slate-900">{title}</p>
-        <p className="text-xs text-slate-500 max-w-sm mx-auto leading-relaxed">{description}</p>
+        <p className="text-sm font-black text-[#18181B]">{title}</p>
+        <p className="text-xs text-[#52525B] max-w-sm mx-auto leading-relaxed font-medium">{description}</p>
       </div>
       {actionText && onAction && (
         <button
           type="button"
           onClick={onAction}
-          className="inline-flex items-center text-xs font-bold text-blue-700 hover:text-blue-900 bg-blue-50 hover:bg-blue-100 px-4 py-2 rounded-xl transition-colors border border-blue-200 shadow-2xs"
+          className="inline-flex items-center text-xs font-black text-[#18181B] hover:bg-[#FAF7EE] bg-white px-4 py-2 rounded-xl transition-all border-2 border-[#18181B] shadow-[1px_1px_0px_#18181B] active:translate-x-[1px] active:translate-y-[1px]"
         >
           {actionText}
         </button>
@@ -232,16 +254,16 @@ export const BentoAction: React.FC<BentoActionProps> = ({
   className = '',
   ...props
 }) => {
-  const base = 'inline-flex items-center justify-center font-bold text-xs rounded-xl px-5 py-2.5 transition-all focus:outline-hidden cursor-pointer';
+  const base = 'inline-flex items-center justify-center font-black text-xs rounded-xl px-5 py-2.5 transition-all focus:outline-hidden cursor-pointer';
   const variants = {
     primary:
-      'bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white border border-blue-700 shadow-xs hover:shadow-blue-500/20 text-sm',
+      'bg-[#18181B] hover:bg-[#27272A] active:bg-black text-white border-2 border-[#18181B] shadow-[2px_2px_0px_#18181B] active:translate-x-[1px] active:translate-y-[1px] text-sm',
     secondary:
-      'bg-slate-900 hover:bg-slate-800 active:bg-slate-950 text-white border border-slate-900 shadow-xs',
+      'bg-white hover:bg-[#FAF7EE] active:bg-[#F4EEDC] text-[#18181B] border-2 border-[#18181B] shadow-[2px_2px_0px_#18181B] active:translate-x-[1px] active:translate-y-[1px]',
     outline:
-      'bg-white hover:bg-slate-50 active:bg-slate-100 text-slate-800 border border-slate-300 shadow-2xs',
+      'bg-white hover:bg-neutral-50 text-[#18181B] border-2 border-[#18181B] shadow-[1px_1px_0px_#18181B]',
     ghost:
-      'bg-transparent hover:bg-slate-100 text-slate-600 hover:text-slate-900 shadow-none border border-transparent',
+      'bg-transparent hover:bg-black/5 text-[#18181B] shadow-none border border-transparent',
   };
 
   return (

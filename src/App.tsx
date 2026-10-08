@@ -65,7 +65,7 @@ function MainApp() {
   }, [nextRecord, prevRecord, updateRecord, showToast]);
 
   return (
-    <div className="min-h-screen bg-slate-50/70 flex font-sans text-slate-900 antialiased selection:bg-indigo-100 selection:text-indigo-900">
+    <div className="min-h-screen bg-[#FAF7EE] flex font-sans text-[#18181B] antialiased selection:bg-[#FEF08A] selection:text-[#18181B]">
       {/* Left Sidebar */}
       <Sidebar
         mobileOpen={mobileMenuOpen}
@@ -73,7 +73,7 @@ function MainApp() {
       />
 
       {/* Main Content Area */}
-      <div className="flex-1 flex flex-col min-w-0">
+      <div className="flex-1 flex flex-col min-w-0 bg-[#FAF7EE]">
         <AppHeader
           onOpenMobileMenu={() => setMobileMenuOpen(true)}
           onOpenNewWeekModal={() => setIsNewWeekOpen(true)}
@@ -81,9 +81,9 @@ function MainApp() {
 
         <main className="flex-1 p-4 sm:p-6 lg:p-8 overflow-y-auto">
           {loading ? (
-            <div className="flex flex-col items-center justify-center py-28 text-slate-400 space-y-3">
-              <div className="w-7 h-7 border-2 border-indigo-600 border-t-transparent rounded-full animate-spin" />
-              <span className="text-xs text-slate-500 font-semibold tracking-wide">
+            <div className="flex flex-col items-center justify-center py-28 text-[#52525B] space-y-3">
+              <div className="w-8 h-8 border-3 border-[#18181B] border-t-transparent rounded-full animate-spin" />
+              <span className="text-xs text-[#18181B] font-black tracking-wide">
                 Loading LessonFlow...
               </span>
             </div>

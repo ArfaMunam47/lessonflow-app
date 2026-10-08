@@ -1,11 +1,51 @@
 @import "tailwindcss";
 
 @layer base {
+  :root {
+    --bg-cream: #FAF7EE;
+    --bg-cream-card: #FFFFFF;
+    --border-dark: #18181B;
+    --text-primary: #18181B;
+    --text-secondary: #52525B;
+    --pastel-blue: #DBEAFE;
+    --pastel-mint: #D1FAE5;
+    --pastel-yellow: #FEF08A;
+    --pastel-lavender: #EDE9FE;
+    --pastel-peach: #FED7AA;
+    --pastel-pink: #FCE7F3;
+    --pastel-sage: #E2ECE5;
+  }
+
   body {
     font-family: 'Plus Jakarta Sans', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-    color: #0f172a;
-    background-color: #f8fafc;
+    color: #18181B;
+    background-color: #FAF7EE;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+    min-height: 100vh;
   }
+
+  /* Headings typography: bold, high-contrast, editorial */
+  h1, h2, h3, h4, h5, h6 {
+    color: #18181B;
+    font-weight: 800;
+    letter-spacing: -0.025em;
+  }
+}
+
+/* Custom scrollbars that match the tactile cream aesthetic */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-track {
+  background: #FAF7EE;
+}
+::-webkit-scrollbar-thumb {
+  background: #D4D4D8;
+  border-radius: 4px;
+  border: 2px solid #FAF7EE;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #A1A1AA;
 }

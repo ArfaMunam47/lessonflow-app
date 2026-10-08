@@ -32,47 +32,45 @@ export const LessonFlowIcon: React.FC<{ size?: number; className?: string }> = (
       className={`shrink-0 ${className}`}
       aria-label="LessonFlow Logo Mark"
     >
-      {/* Outer rounded geometric container with soft gradient depth */}
+      {/* Outer rounded geometric container with crisp dark border */}
       <rect
-        x="1"
-        y="1"
-        width="38"
-        height="38"
+        x="2"
+        y="2"
+        width="36"
+        height="36"
         rx="10"
-        fill="#2563EB"
-        stroke="#1D4ED8"
-        strokeWidth="1.5"
+        fill="#FEF08A"
+        stroke="#18181B"
+        strokeWidth="2.5"
       />
       
-      {/* Left curriculum page */}
+      {/* Left curriculum notebook page (pastel mint) */}
       <path
-        d="M10 13C10 11.8954 10.8954 11 12 11H18C19.1046 11 20 11.8954 20 13V28C20 28.5523 19.5523 29 19 29H12C10.8954 29 10 28.1046 10 27V13Z"
-        fill="#93C5FD"
-        fillOpacity="0.45"
+        d="M10 12C10 11 11 10 12 10H18C19.1 10 20 10.9 20 12V28C20 28.6 19.5 29 19 29H12C10.9 29 10 28.1 10 27V12Z"
+        fill="#A7F3D0"
+        stroke="#18181B"
+        strokeWidth="1.75"
       />
       
-      {/* Right curriculum page / flow block */}
+      {/* Right curriculum notebook page (clean white) */}
       <path
-        d="M20 13C20 11.8954 20.8954 11 22 11H28C29.1046 11 30 11.8954 30 13V27C30 28.1046 29.1046 29 28 29H21C20.4477 29 20 28.5523 20 28V13Z"
+        d="M20 12C20 10.9 20.9 10 22 10H28C29 10 30 11 30 12V27C30 28.1 29.1 29 28 29H21C20.5 29 20 28.6 20 28V12Z"
         fill="#FFFFFF"
+        stroke="#18181B"
+        strokeWidth="1.75"
       />
       
-      {/* Structured workflow lines (representing lesson records & blocks) */}
-      <path
-        d="M13 16H17M13 20H17M13 24H16"
-        stroke="#FFFFFF"
-        strokeWidth="2"
-        strokeLinecap="round"
-      />
-      <path
-        d="M23 16H27M23 20H27M23 24H26"
-        stroke="#2563EB"
-        strokeWidth="2"
-        strokeLinecap="round"
-      />
+      {/* Structured workflow blocks / lines */}
+      <line x1="13" y1="15" x2="17" y2="15" stroke="#18181B" strokeWidth="2" strokeLinecap="round" />
+      <line x1="13" y1="19" x2="17" y2="19" stroke="#18181B" strokeWidth="2" strokeLinecap="round" />
+      <line x1="13" y1="23" x2="16" y2="23" stroke="#18181B" strokeWidth="2" strokeLinecap="round" />
+
+      <line x1="23" y1="15" x2="27" y2="15" stroke="#18181B" strokeWidth="2" strokeLinecap="round" />
+      <line x1="23" y1="19" x2="27" y2="19" stroke="#18181B" strokeWidth="2" strokeLinecap="round" />
+      <line x1="23" y1="23" x2="26" y2="23" stroke="#18181B" strokeWidth="2" strokeLinecap="round" />
       
-      {/* Flow forward chevron accent */}
-      <circle cx="20" cy="20" r="2.5" fill="#FBBF24" />
+      {/* Flow step node */}
+      <circle cx="20" cy="20" r="2.5" fill="#3B82F6" stroke="#18181B" strokeWidth="1.5" />
     </svg>
   );
 };
@@ -83,21 +81,21 @@ export const LessonFlowLogo: React.FC<LessonFlowLogoProps> = ({
   className = '',
   onClick,
 }) => {
-  const iconSize = size === 'sm' ? 28 : size === 'lg' ? 44 : 36;
+  const iconSize = size === 'sm' ? 30 : size === 'lg' ? 44 : 38;
   const textSize = size === 'sm' ? 'text-base' : size === 'lg' ? 'text-2xl' : 'text-xl';
-  const subtitleSize = size === 'sm' ? 'text-3xs' : 'text-2xs';
+  const subtitleSize = size === 'sm' ? 'text-[9px]' : 'text-[10px]';
 
   const content = (
     <div className={`flex items-center space-x-3 group ${className}`}>
-      <LessonFlowIcon size={iconSize} className="transition-transform group-hover:scale-105" />
+      <LessonFlowIcon size={iconSize} className="transition-transform group-hover:scale-105 drop-shadow-[1px_1px_0px_#18181B]" />
       <div className="flex flex-col justify-center">
         <div className="flex items-center space-x-1.5">
-          <span className={`${textSize} font-extrabold tracking-tight text-slate-900 group-hover:text-blue-700 transition-colors leading-none`}>
-            Lesson<span className="text-blue-600">Flow</span>
+          <span className={`${textSize} font-black tracking-tight text-[#18181B] leading-none`}>
+            Lesson<span className="text-[#18181B] underline decoration-4 decoration-[#FEF08A] underline-offset-4">Flow</span>
           </span>
         </div>
         {showSubtitle && (
-          <span className={`${subtitleSize} font-bold text-slate-400 uppercase tracking-widest mt-1 leading-none`}>
+          <span className={`${subtitleSize} font-bold text-[#52525B] uppercase tracking-wider mt-1.5 leading-none`}>
             Teacher Workspace
           </span>
         )}

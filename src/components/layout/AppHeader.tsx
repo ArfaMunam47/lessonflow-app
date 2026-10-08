@@ -81,13 +81,13 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
   const displayName = teacherProfile?.teacherName?.trim() || currentUser?.name?.trim() || 'Teacher';
 
   return (
-    <header className="h-20 px-6 sm:px-8 border-b border-slate-200 bg-white/95 backdrop-blur-xs sticky top-0 z-10 flex items-center justify-between">
+    <header className="h-20 px-6 sm:px-8 border-b-2 border-[#18181B] bg-[#FAF7EE] sticky top-0 z-10 flex items-center justify-between">
       {/* Left: Mobile Toggle & Page Title */}
       <div className="flex items-center space-x-3 sm:space-x-5 min-w-0">
         <button
           type="button"
           onClick={onOpenMobileMenu}
-          className="md:hidden p-2.5 rounded-xl text-slate-600 hover:text-slate-900 hover:bg-slate-100 border border-slate-200"
+          className="md:hidden p-2.5 rounded-xl text-[#18181B] hover:bg-black/5 border-2 border-[#18181B] bg-white shadow-[1px_1px_0px_#18181B]"
           aria-label="Open navigation menu"
         >
           <Menu className="w-5 h-5" />
@@ -98,46 +98,57 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
         </div>
 
         <div className="hidden md:block min-w-0">
-          <h1 className="text-lg font-extrabold text-slate-900 tracking-tight leading-tight truncate">
+          <h1 className="text-xl font-black text-[#18181B] tracking-tight leading-tight truncate">
             {currentMeta.title}
           </h1>
-          <p className="text-xs text-slate-500 truncate leading-normal font-medium">
+          <p className="text-xs text-[#52525B] truncate leading-normal font-semibold">
             {currentMeta.subtitle}
           </p>
         </div>
       </div>
 
-      {/* Right: Real status, Week selector, and Teacher profile button */}
-      <div className="flex items-center space-x-3 sm:space-x-4 shrink-0">
+      {/* Right: Actions, Search/Filter, Week selector, and Teacher profile */}
+      <div className="flex items-center space-x-2.5 sm:space-x-3.5 shrink-0">
+        {/* Quick New Action [+] Button (like reference image top left [+]) */}
+        <button
+          type="button"
+          onClick={onOpenNewWeekModal}
+          className="p-2 sm:px-3 sm:py-2 rounded-xl bg-white hover:bg-[#FAF7EE] border-2 border-[#18181B] shadow-[1px_1px_0px_#18181B] text-[#18181B] font-black text-xs inline-flex items-center space-x-1.5 transition-all active:translate-x-[1px] active:translate-y-[1px] cursor-pointer"
+          title="Create New Week Plan"
+        >
+          <Plus className="w-4 h-4 stroke-[3]" />
+          <span className="hidden sm:inline">New Week</span>
+        </button>
+
         {/* Autosave Status Badge */}
-        <div className="flex items-center text-xs space-x-1.5 px-3 py-1.5 rounded-xl bg-slate-50 border border-slate-200 text-slate-600 font-semibold">
+        <div className="hidden sm:flex items-center text-xs space-x-1.5 px-3 py-1.5 rounded-xl bg-white border-2 border-[#18181B] text-[#18181B] font-bold shadow-[1px_1px_0px_#18181B]">
           {saveStatus === 'saved' && (
             <>
-              <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
-              <span className="hidden sm:inline">Saved</span>
+              <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 stroke-[2.5] shrink-0" />
+              <span>Saved</span>
             </>
           )}
           {saveStatus === 'saving' && (
             <>
               <RefreshCw className="w-3.5 h-3.5 text-blue-600 animate-spin shrink-0" />
-              <span className="text-blue-700">Saving...</span>
+              <span>Saving...</span>
             </>
           )}
           {saveStatus === 'error' && (
             <>
               <AlertCircle className="w-3.5 h-3.5 text-rose-600 shrink-0" />
-              <span className="text-rose-700">Unsaved</span>
+              <span>Unsaved</span>
             </>
           )}
         </div>
 
         {/* Current Week Switcher (if weeks exist) */}
         {weeks.length > 0 && (
-          <div className="hidden sm:flex items-center space-x-1.5">
+          <div className="hidden lg:flex items-center">
             <select
               value={selectedWeek?.id || ''}
               onChange={e => e.target.value && selectWeek(e.target.value)}
-              className="text-xs font-bold bg-white border border-slate-300 rounded-xl pl-3 pr-8 py-2 text-slate-800 focus:outline-hidden focus:ring-2 focus:ring-blue-500 cursor-pointer shadow-2xs"
+              className="text-xs font-black bg-white border-2 border-[#18181B] rounded-xl pl-3 pr-8 py-2 text-[#18181B] focus:outline-hidden cursor-pointer shadow-[1px_1px_0px_#18181B]"
             >
               {weeks.map(w => (
                 <option key={w.id} value={w.id}>
@@ -152,16 +163,16 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
         <button
           type="button"
           onClick={() => setActiveView('settings')}
-          className="flex items-center space-x-2 py-1.5 px-3 rounded-xl border border-slate-200 hover:border-slate-300 hover:bg-slate-50 transition-all text-left"
+          className="flex items-center space-x-2 py-1.5 px-2.5 sm:px-3 rounded-xl bg-white hover:bg-[#FAF7EE] border-2 border-[#18181B] shadow-[1px_1px_0px_#18181B] transition-all text-left cursor-pointer"
           title="Account & Settings"
         >
-          <div className="w-7 h-7 rounded-lg bg-blue-100 text-blue-700 flex items-center justify-center font-bold text-xs shrink-0">
+          <div className="w-7 h-7 rounded-lg bg-[#FEF08A] border-2 border-[#18181B] text-[#18181B] flex items-center justify-center font-black text-xs shrink-0">
             <UserIcon className="w-3.5 h-3.5" />
           </div>
-          <span className="text-xs font-bold text-slate-800 hidden sm:inline">
+          <span className="text-xs font-black text-[#18181B] hidden sm:inline">
             {displayName}
           </span>
-          <Settings className="w-3.5 h-3.5 text-slate-400 hover:text-slate-600 ml-1 shrink-0" />
+          <Settings className="w-3.5 h-3.5 text-[#18181B] ml-0.5 shrink-0" />
         </button>
       </div>
     </header>
