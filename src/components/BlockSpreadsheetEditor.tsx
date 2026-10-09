@@ -29,8 +29,10 @@ export const BlockSpreadsheetEditor: React.FC<BlockSpreadsheetEditorProps> = ({
 
   if (blocks.length === 0) {
     return (
-      <div className="border border-dashed border-gray-300 rounded p-6 text-center text-sm text-gray-500 my-4">
-        No blocks to display in grid. Click &quot;Add Blocks&quot; above to begin.
+      <div className="border-2 border-dashed border-[#18181B] rounded-[20px] p-8 text-center bg-white my-4 shadow-[2px_2px_0px_#18181B]">
+        <p className="text-xs font-black text-[#52525B]">
+          No blocks to display in grid. Click &quot;Add Blocks&quot; above to begin.
+        </p>
       </div>
     );
   }
@@ -81,38 +83,38 @@ export const BlockSpreadsheetEditor: React.FC<BlockSpreadsheetEditorProps> = ({
   };
 
   return (
-    <div className="my-4 border border-gray-200 rounded-lg overflow-hidden bg-white shadow-2xs">
+    <div className="my-4 border-2 border-[#18181B] rounded-[20px] overflow-hidden bg-white shadow-[2px_2px_0px_#18181B]">
       <div className="overflow-x-auto">
-        <table className="min-w-full divide-y divide-gray-200 text-xs">
-          <thead className="bg-gray-50">
+        <table className="min-w-full divide-y-2 divide-[#18181B] text-xs">
+          <thead className="bg-[#FAF7EE] border-b-2 border-[#18181B]">
             <tr>
-              <th scope="col" className="w-16 px-3 py-2.5 text-left font-bold text-gray-700 uppercase tracking-wider sticky left-0 bg-gray-50 z-10 border-r border-gray-200">
+              <th scope="col" className="w-16 px-3 py-3 text-left font-black text-[#18181B] uppercase tracking-wider sticky left-0 bg-[#FAF7EE] z-10 border-r-2 border-[#18181B]">
                 Block
               </th>
               {fieldColumns.map(col => (
                 <th
                   key={col.key}
                   scope="col"
-                  className="px-3 py-2.5 text-left font-semibold text-gray-700 min-w-[220px]"
+                  className="px-3.5 py-3 text-left font-black text-[#18181B] min-w-[220px]"
                 >
                   {col.label}
                 </th>
               ))}
-              <th scope="col" className="w-24 px-3 py-2.5 text-center font-semibold text-gray-700">
+              <th scope="col" className="w-24 px-3 py-3 text-center font-black text-[#18181B]">
                 Actions
               </th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-gray-200 bg-white">
+          <tbody className="divide-y-2 divide-[#18181B]/15 bg-white">
             {blocks.map((block, index) => {
               const fieldMap = new Map(block.fields.map(f => [f.fieldKey, f]));
 
               return (
-                <tr key={block.id} className="hover:bg-gray-50/60 transition-colors">
+                <tr key={block.id} className="hover:bg-[#FAF7EE]/50 transition-colors">
                   {/* Sticky Block Number Cell */}
-                  <td className="px-3 py-2 font-bold text-gray-800 text-center sticky left-0 bg-white border-r border-gray-200 z-10">
+                  <td className="px-3 py-2 font-black text-[#18181B] text-center sticky left-0 bg-white border-r-2 border-[#18181B] z-10">
                     <div className="flex flex-col items-center">
-                      <span className="w-6 h-6 rounded bg-indigo-50 text-indigo-700 flex items-center justify-center font-bold text-xs mb-1">
+                      <span className="w-6 h-6 rounded-lg bg-[#FEF08A] border-2 border-[#18181B] text-[#18181B] flex items-center justify-center font-black text-xs mb-1 shadow-[1px_1px_0px_#18181B]">
                         #{block.blockNumber}
                       </span>
                       <div className="flex space-x-1">
@@ -120,19 +122,19 @@ export const BlockSpreadsheetEditor: React.FC<BlockSpreadsheetEditorProps> = ({
                           type="button"
                           onClick={() => handleMoveUp(index)}
                           disabled={index === 0}
-                          className="text-gray-400 hover:text-gray-700 disabled:opacity-20"
+                          className="p-0.5 rounded border border-[#18181B] bg-white text-[#18181B] hover:bg-[#FAF7EE] disabled:opacity-20 cursor-pointer"
                           title="Move Up"
                         >
-                          <ArrowUp className="w-3 h-3" />
+                          <ArrowUp className="w-3 h-3 stroke-[2.5]" />
                         </button>
                         <button
                           type="button"
                           onClick={() => handleMoveDown(index)}
                           disabled={index === blocks.length - 1}
-                          className="text-gray-400 hover:text-gray-700 disabled:opacity-20"
+                          className="p-0.5 rounded border border-[#18181B] bg-white text-[#18181B] hover:bg-[#FAF7EE] disabled:opacity-20 cursor-pointer"
                           title="Move Down"
                         >
-                          <ArrowDown className="w-3 h-3" />
+                          <ArrowDown className="w-3 h-3 stroke-[2.5]" />
                         </button>
                       </div>
                     </div>
@@ -150,7 +152,7 @@ export const BlockSpreadsheetEditor: React.FC<BlockSpreadsheetEditorProps> = ({
                           value={val}
                           onChange={e => handleCellChange(block.id, col.key, e.target.value)}
                           placeholder={`Enter ${col.label.toLowerCase()}...`}
-                          className="w-full text-xs text-gray-900 border border-gray-300 rounded p-1.5 focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 resize-y"
+                          className="w-full text-xs font-bold text-[#18181B] border-2 border-[#18181B] rounded-xl p-2 bg-white focus:outline-hidden resize-y shadow-[1px_1px_0px_#18181B]"
                         />
                       </td>
                     );
@@ -163,17 +165,17 @@ export const BlockSpreadsheetEditor: React.FC<BlockSpreadsheetEditorProps> = ({
                         type="button"
                         onClick={() => duplicateBlock(block.id)}
                         title="Duplicate block"
-                        className="p-1 text-gray-500 hover:text-indigo-600 hover:bg-gray-100 rounded"
+                        className="p-1.5 text-[#18181B] hover:bg-[#FAF7EE] rounded-lg border-2 border-[#18181B] shadow-[1px_1px_0px_#18181B] bg-white cursor-pointer"
                       >
-                        <Copy className="w-3.5 h-3.5" />
+                        <Copy className="w-3.5 h-3.5 stroke-[2.5]" />
                       </button>
                       <button
                         type="button"
                         onClick={() => deleteBlock(block.id)}
                         title="Delete block"
-                        className="p-1 text-gray-400 hover:text-rose-600 hover:bg-rose-50 rounded"
+                        className="p-1.5 text-[#18181B] hover:text-rose-600 hover:bg-rose-50 rounded-lg border-2 border-[#18181B] shadow-[1px_1px_0px_#18181B] bg-white cursor-pointer"
                       >
-                        <Trash2 className="w-3.5 h-3.5" />
+                        <Trash2 className="w-3.5 h-3.5 stroke-[2.5]" />
                       </button>
                     </div>
                   </td>
@@ -185,16 +187,16 @@ export const BlockSpreadsheetEditor: React.FC<BlockSpreadsheetEditorProps> = ({
       </div>
 
       {/* Quick Add Row footer */}
-      <div className="bg-gray-50 px-4 py-2 border-t border-gray-200 flex justify-between items-center text-xs">
-        <span className="text-gray-500 font-medium">
+      <div className="bg-[#FAF7EE] px-4 py-3 border-t-2 border-[#18181B] flex justify-between items-center text-xs">
+        <span className="text-[#52525B] font-black">
           Total: {blocks.length} blocks
         </span>
         <button
           type="button"
           onClick={() => createBlocks(1)}
-          className="inline-flex items-center text-xs font-semibold text-indigo-700 hover:text-indigo-800 bg-white border border-gray-300 hover:bg-gray-50 px-2.5 py-1 rounded"
+          className="inline-flex items-center text-xs font-black text-[#18181B] hover:bg-white bg-[#FAF7EE] border-2 border-[#18181B] px-3 py-1.5 rounded-xl shadow-[1px_1px_0px_#18181B] cursor-pointer"
         >
-          <Plus className="w-3.5 h-3.5 mr-1" />
+          <Plus className="w-3.5 h-3.5 mr-1 stroke-[3]" />
           Add Row (Block {blocks.length + 1})
         </button>
       </div>

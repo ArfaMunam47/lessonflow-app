@@ -452,38 +452,38 @@ export const LessonEditor: React.FC<LessonEditorProps> = ({ record }) => {
                 type="button"
                 onClick={() => extractRecordToClipboard(record.id)}
                 title="Extract all blocks and fields into the persistent clipboard gallery"
-                className="inline-flex items-center px-2.5 py-1 text-xs font-medium text-gray-700 bg-white border border-gray-300 hover:bg-gray-50 rounded"
+                className="inline-flex items-center px-3 py-1.5 text-xs font-black text-[#18181B] bg-white border-2 border-[#18181B] hover:bg-[#FAF7EE] rounded-xl shadow-[1px_1px_0px_#18181B] cursor-pointer"
               >
-                <ClipboardPlus className="w-3.5 h-3.5 mr-1 text-indigo-600" />
+                <ClipboardPlus className="w-3.5 h-3.5 mr-1.5 stroke-[2.5]" />
                 Extract All to Gallery
               </button>
 
-              <div className="inline-flex rounded-md shadow-2xs border border-gray-300 bg-white p-0.5">
+              <div className="inline-flex rounded-xl shadow-[1px_1px_0px_#18181B] border-2 border-[#18181B] bg-white p-0.5">
                 <button
                   type="button"
                   onClick={() => setViewMode('card')}
                   title="Card view"
-                  className={`p-1 rounded text-xs flex items-center space-x-1 ${
+                  className={`px-2 py-1 rounded-lg text-xs font-black flex items-center space-x-1 cursor-pointer transition-colors ${
                     viewMode === 'card'
-                      ? 'bg-indigo-100 text-indigo-800 font-semibold'
-                      : 'text-gray-600 hover:text-gray-900'
+                      ? 'bg-[#FEF08A] text-[#18181B]'
+                      : 'text-[#52525B] hover:text-[#18181B]'
                   }`}
                 >
-                  <LayoutGrid className="w-3.5 h-3.5" />
-                  <span className="text-2xs hidden sm:inline">Cards</span>
+                  <LayoutGrid className="w-3.5 h-3.5 stroke-[2.5]" />
+                  <span className="text-[11px] hidden sm:inline">Cards</span>
                 </button>
                 <button
                   type="button"
                   onClick={() => setViewMode('table')}
                   title="Spreadsheet table view"
-                  className={`p-1 rounded text-xs flex items-center space-x-1 ${
+                  className={`px-2 py-1 rounded-lg text-xs font-black flex items-center space-x-1 cursor-pointer transition-colors ${
                     viewMode === 'table'
-                      ? 'bg-indigo-100 text-indigo-800 font-semibold'
-                      : 'text-gray-600 hover:text-gray-900'
+                      ? 'bg-[#FEF08A] text-[#18181B]'
+                      : 'text-[#52525B] hover:text-[#18181B]'
                   }`}
                 >
-                  <Table className="w-3.5 h-3.5" />
-                  <span className="text-2xs hidden sm:inline">Spreadsheet</span>
+                  <Table className="w-3.5 h-3.5 stroke-[2.5]" />
+                  <span className="text-[11px] hidden sm:inline">Spreadsheet</span>
                 </button>
               </div>
             </div>
@@ -500,22 +500,22 @@ export const LessonEditor: React.FC<LessonEditorProps> = ({ record }) => {
 
       {/* Duplicate Record Modal */}
       {showDuplicateModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
-          <div className="bg-white rounded-lg max-w-sm w-full p-5 space-y-4 shadow-xl border border-gray-200">
-            <h3 className="text-base font-bold text-gray-900">Duplicate Lesson Record</h3>
-            <p className="text-xs text-gray-600 leading-normal">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-xs p-4">
+          <div className="bg-white rounded-[24px] max-w-sm w-full p-6 space-y-4 shadow-[4px_4px_0px_#18181B] border-2 border-[#18181B]">
+            <h3 className="text-base font-black text-[#18181B]">Duplicate Lesson Record</h3>
+            <p className="text-xs text-[#52525B] font-bold leading-normal">
               Copy this lesson plan ({record.day} — {record.className}) with all its blocks and fields into a new editable record.
             </p>
 
             <div className="space-y-3">
               <div>
-                <label className="block text-xs font-semibold text-gray-700 mb-1">
+                <label className="block text-xs font-black text-[#18181B] mb-1">
                   Target Day
                 </label>
                 <select
                   value={duplicateTargetDay}
                   onChange={e => setDuplicateTargetDay(e.target.value)}
-                  className="w-full text-xs border border-gray-300 rounded p-2 text-gray-900"
+                  className="w-full text-xs font-bold border-2 border-[#18181B] rounded-xl p-2 text-[#18181B] bg-[#FAF7EE] cursor-pointer"
                 >
                   {DAYS_OF_WEEK.map(d => (
                     <option key={d} value={d}>
@@ -526,30 +526,30 @@ export const LessonEditor: React.FC<LessonEditorProps> = ({ record }) => {
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-gray-700 mb-1">
+                <label className="block text-xs font-black text-[#18181B] mb-1">
                   Class Name
                 </label>
                 <input
                   type="text"
                   value={duplicateTargetClass}
                   onChange={e => setDuplicateTargetClass(e.target.value)}
-                  className="w-full text-xs border border-gray-300 rounded p-2 text-gray-900"
+                  className="w-full text-xs font-bold border-2 border-[#18181B] rounded-xl p-2 text-[#18181B] bg-[#FAF7EE]"
                 />
               </div>
             </div>
 
-            <div className="flex justify-end space-x-2 pt-2 border-t border-gray-100">
+            <div className="flex justify-end space-x-2 pt-2 border-t-2 border-[#18181B]/15">
               <button
                 type="button"
                 onClick={() => setShowDuplicateModal(false)}
-                className="px-3 py-1.5 text-xs text-gray-600 hover:text-gray-900 bg-gray-100 rounded"
+                className="px-3.5 py-2 text-xs font-black text-[#18181B] hover:bg-[#FAF7EE] bg-white border-2 border-[#18181B] rounded-xl shadow-[1px_1px_0px_#18181B] cursor-pointer"
               >
                 Cancel
               </button>
               <button
                 type="button"
                 onClick={handleDuplicateConfirm}
-                className="px-3.5 py-1.5 text-xs font-semibold text-white bg-indigo-600 hover:bg-indigo-700 rounded shadow-xs"
+                className="px-4 py-2 text-xs font-black text-white bg-[#18181B] hover:bg-neutral-800 rounded-xl border-2 border-[#18181B] shadow-[2px_2px_0px_#18181B] cursor-pointer"
               >
                 Duplicate Record
               </button>
