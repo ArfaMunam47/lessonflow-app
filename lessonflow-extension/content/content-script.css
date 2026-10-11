@@ -1,0 +1,67 @@
+/* LessonFlow Chrome Extension — Content Script Overlay Styles */
+
+/* Inspection Hover Outline */
+.lessonflow-inspect-highlight {
+  outline: 3px solid #FEF08A !important;
+  outline-offset: 2px !important;
+  box-shadow: 0 0 0 4px #18181B, 0 4px 12px rgba(0, 0, 0, 0.25) !important;
+  cursor: crosshair !important;
+  transition: outline 0.1s ease !important;
+}
+
+/* Floating Inspector Badge */
+#lessonflow-inspect-tooltip {
+  position: fixed !important;
+  z-index: 2147483647 !important;
+  pointer-events: none !important;
+  background: #18181B !important;
+  color: #FFFFFF !important;
+  border: 2px solid #FEF08A !important;
+  border-radius: 10px !important;
+  padding: 6px 12px !important;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif !important;
+  font-size: 12px !important;
+  font-weight: 700 !important;
+  line-height: 1.3 !important;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35) !important;
+  max-width: 340px !important;
+  word-break: break-all !important;
+  display: none;
+}
+
+#lessonflow-inspect-tooltip .lf-tag {
+  color: #FEF08A !important;
+  font-family: monospace !important;
+}
+
+#lessonflow-inspect-tooltip .lf-sel {
+  color: #93C5FD !important;
+  font-size: 11px !important;
+  font-family: monospace !important;
+  display: block !important;
+  margin-top: 2px !important;
+}
+
+#lessonflow-inspect-tooltip .lf-hint {
+  color: #D1D5DB !important;
+  font-size: 10px !important;
+  font-weight: 500 !important;
+  margin-top: 4px !important;
+}
+
+/* Field Verified Flash Animation */
+@keyframes lfVerifiedPulse {
+  0% {
+    box-shadow: 0 0 0 4px #10B981, 0 0 12px #10B981;
+  }
+  50% {
+    box-shadow: 0 0 0 6px #10B981, 0 0 18px #10B981;
+  }
+  100% {
+    box-shadow: 0 0 0 0 transparent;
+  }
+}
+
+.lessonflow-field-verified {
+  animation: lfVerifiedPulse 1.2s ease-out !important;
+}

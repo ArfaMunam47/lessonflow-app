@@ -1,0 +1,349 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Lincoln School District — Teacher Curriculum Portal (Demo Simulator)</title>
+  <style>
+    :root {
+      --primary: #1E3A8A;
+      --border: #CBD5E1;
+      --bg: #F8FAFC;
+    }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background: var(--bg);
+      color: #0F172A;
+      margin: 0;
+      padding: 24px;
+    }
+    .portal-container {
+      max-width: 820px;
+      margin: 0 auto;
+      background: #FFFFFF;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 30px;
+      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+    }
+    .portal-header {
+      border-bottom: 2px solid #E2E8F0;
+      padding-bottom: 16px;
+      margin-bottom: 24px;
+    }
+    .portal-header h1 {
+      font-size: 20px;
+      color: var(--primary);
+      margin: 0 0 6px 0;
+    }
+    .portal-header p {
+      font-size: 13px;
+      color: #64748B;
+      margin: 0;
+    }
+    .alert-banner {
+      background: #EFF6FF;
+      border-left: 4px solid #3B82F6;
+      padding: 12px 16px;
+      font-size: 12px;
+      color: #1E40AF;
+      border-radius: 4px;
+      margin-bottom: 24px;
+    }
+    .form-section {
+      margin-bottom: 24px;
+    }
+    .form-section h2 {
+      font-size: 15px;
+      font-weight: 700;
+      color: #334155;
+      margin-bottom: 12px;
+      border-bottom: 1px solid #E2E8F0;
+      padding-bottom: 6px;
+    }
+    .grid-2 {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+    }
+    .grid-3 {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 16px;
+    }
+    .form-group {
+      margin-bottom: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    label {
+      font-size: 12px;
+      font-weight: 600;
+      color: #334155;
+    }
+    .required {
+      color: #DC2626;
+    }
+    input[type="text"], input[type="date"], select, textarea {
+      font-size: 13px;
+      padding: 9px 12px;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      background: #FFFFFF;
+      color: #0F172A;
+      outline: none;
+      transition: border-color 0.15s ease, box-shadow 0.15s ease;
+    }
+    input:focus, select:focus, textarea:focus {
+      border-color: #3B82F6;
+      box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
+    }
+    input:disabled, textarea:disabled {
+      background: #F1F5F9;
+      cursor: not-allowed;
+      color: #94A3B8;
+    }
+    .lesson-block {
+      background: #F8FAFC;
+      border: 1px solid #E2E8F0;
+      border-radius: 8px;
+      padding: 18px;
+      margin-bottom: 16px;
+      position: relative;
+    }
+    .block-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 12px;
+      font-size: 13px;
+      font-weight: 700;
+      color: #1E293B;
+    }
+    .block-badge {
+      background: #E2E8F0;
+      color: #475569;
+      font-size: 11px;
+      padding: 2px 8px;
+      border-radius: 12px;
+    }
+    .btn-add-block {
+      background: #FFFFFF;
+      border: 1px dashed #3B82F6;
+      color: #2563EB;
+      font-weight: 600;
+      font-size: 13px;
+      padding: 10px 18px;
+      border-radius: 6px;
+      cursor: pointer;
+      width: 100%;
+      text-align: center;
+      transition: background 0.15s ease;
+      margin-bottom: 24px;
+    }
+    .btn-add-block:hover {
+      background: #EFF6FF;
+    }
+    .portal-footer {
+      border-top: 1px solid #E2E8F0;
+      padding-top: 20px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .btn-submit {
+      background: var(--primary);
+      color: #FFFFFF;
+      border: none;
+      font-size: 14px;
+      font-weight: 700;
+      padding: 11px 24px;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+    .btn-submit:hover {
+      background: #172554;
+    }
+    .status-summary {
+      font-size: 12px;
+      color: #64748B;
+    }
+  </style>
+</head>
+<body>
+  <div class="portal-container">
+    
+    <div class="portal-header">
+      <h1>Lincoln School District — Teacher Lesson Plan Form</h1>
+      <p>Weekly Curriculum Submission System • Term 2</p>
+    </div>
+
+    <div class="alert-banner">
+      <strong>Safe Simulator Mode:</strong> This page mimics an existing school website form for testing the LessonFlow Chrome Extension. Open the LessonFlow Side Panel on this tab, inspect the fields below, map them, and test guided filling.
+    </div>
+
+    <form id="school-curriculum-form" onsubmit="event.preventDefault(); handleSchoolSubmit();">
+      
+      <!-- Section 1: Header Metadata -->
+      <div class="form-section">
+        <h2>1. Lesson Metadata</h2>
+        
+        <div class="grid-3">
+          <div class="form-group">
+            <label for="school-class-input">Class <span class="required">*</span></label>
+            <input type="text" id="school-class-input" name="className" placeholder="e.g. 7A or Math 6" required />
+          </div>
+
+          <div class="form-group">
+            <label for="school-section-select">Section</label>
+            <select id="school-section-select" name="section">
+              <option value="">-- Choose Section --</option>
+              <option value="Blue">Blue Section</option>
+              <option value="Gold">Gold Section</option>
+              <option value="Red">Red Section</option>
+              <option value="1">Period 1</option>
+              <option value="2">Period 2</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label for="school-day-select">Day of Week <span class="required">*</span></label>
+            <select id="school-day-select" name="day" required>
+              <option value="">-- Select Day --</option>
+              <option value="Monday">Monday</option>
+              <option value="Tuesday">Tuesday</option>
+              <option value="Wednesday">Wednesday</option>
+              <option value="Thursday">Thursday</option>
+              <option value="Friday">Friday</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="grid-2">
+          <div class="form-group">
+            <label for="school-date-input">Lesson Date (Optional)</label>
+            <input type="date" id="school-date-input" name="lessonDate" />
+          </div>
+
+          <div class="form-group">
+            <label for="school-disabled-input">Teacher Employee ID (Read-only)</label>
+            <input type="text" id="school-disabled-input" value="EMP-84920 (Auto-filled)" disabled />
+          </div>
+        </div>
+      </div>
+
+      <!-- Section 2: Core Lesson Details -->
+      <div class="form-section">
+        <h2>2. Curriculum Target & Procedures</h2>
+        
+        <div class="form-group">
+          <label for="school-target-textarea">Learning Target / Educational Standard <span class="required">*</span></label>
+          <textarea id="school-target-textarea" name="target" rows="3" placeholder="Enter lesson learning objective..." required></textarea>
+        </div>
+
+        <div class="form-group">
+          <label for="school-activities-textarea">Lesson Procedures & Activities <span class="required">*</span></label>
+          <textarea id="school-activities-textarea" name="activities" rows="3" placeholder="Enter sequence of activities..." required></textarea>
+        </div>
+      </div>
+
+      <!-- Section 3: Dynamic Lesson Blocks -->
+      <div class="form-section">
+        <h2>3. Instructional Blocks</h2>
+        
+        <div id="blocks-container">
+          <!-- Block 1 (initial default) -->
+          <div class="lesson-block" data-block="1">
+            <div class="block-header">
+              <span>Instructional Block 1</span>
+              <span class="block-badge">Block #1</span>
+            </div>
+            
+            <div class="form-group">
+              <label for="block-1-objective">Block Objective / Task</label>
+              <input type="text" id="block-1-objective" name="block_1_objective" placeholder="e.g. Warm-up problem solving..." />
+            </div>
+
+            <div class="form-group">
+              <label for="block-1-activity">Instructional Activity</label>
+              <textarea id="block-1-activity" name="block_1_activity" rows="2" placeholder="e.g. Direct modeling on whiteboard..."></textarea>
+            </div>
+
+            <div class="form-group">
+              <label for="block-1-assessment">Assessment & Evaluation</label>
+              <input type="text" id="block-1-assessment" name="block_1_assessment" placeholder="e.g. Exit ticket check..." />
+            </div>
+          </div>
+        </div>
+
+        <!-- Add Block Button -->
+        <button type="button" id="btn-add-school-block" class="btn-add-block" onclick="addNewBlockDynamic()">
+          ➕ Add Lesson Block
+        </button>
+      </div>
+
+      <div class="portal-footer">
+        <div class="status-summary" id="submission-status">
+          Form status: Ready for teacher manual review.
+        </div>
+        <button type="submit" id="btn-school-submit" class="btn-submit">
+          Save Lesson Plan (Teacher Manual Submit)
+        </button>
+      </div>
+
+    </form>
+  </div>
+
+  <script>
+    let blockCount = 1;
+
+    function addNewBlockDynamic() {
+      blockCount++;
+      const container = document.getElementById('blocks-container');
+      
+      const newBlock = document.createElement('div');
+      newBlock.className = 'lesson-block';
+      newBlock.setAttribute('data-block', String(blockCount));
+      newBlock.innerHTML = `
+        <div class="block-header">
+          <span>Instructional Block ${blockCount}</span>
+          <span class="block-badge">Block #${blockCount}</span>
+        </div>
+        
+        <div class="form-group">
+          <label for="block-${blockCount}-objective">Block Objective / Task</label>
+          <input type="text" id="block-${blockCount}-objective" name="block_${blockCount}_objective" placeholder="Enter Block ${blockCount} objective..." />
+        </div>
+
+        <div class="form-group">
+          <label for="block-${blockCount}-activity">Instructional Activity</label>
+          <textarea id="block-${blockCount}-activity" name="block_${blockCount}_activity" rows="2" placeholder="Enter Block ${blockCount} activity..."></textarea>
+        </div>
+
+        <div class="form-group">
+          <label for="block-${blockCount}-assessment">Assessment & Evaluation</label>
+          <input type="text" id="block-${blockCount}-assessment" name="block_${blockCount}_assessment" placeholder="Enter Block ${blockCount} assessment..." />
+        </div>
+      `;
+
+      container.appendChild(newBlock);
+      console.log(`[Simulator] Dynamically created Block #${blockCount}`);
+    }
+
+    function handleSchoolSubmit() {
+      const cls = document.getElementById('school-class-input').value;
+      const day = document.getElementById('school-day-select').value;
+      const target = document.getElementById('school-target-textarea').value;
+
+      if (!cls || !day || !target) {
+        alert('Please fill out all required fields (Class, Day, Target).');
+        return;
+      }
+
+      alert(`✓ SUCCESSFUL SUBMISSION!\n\nLesson for ${day} (${cls}) has been reviewed and saved on the school website.\n\nNotice: This submission was triggered by YOUR manual click, ensuring teacher supervision!`);
+      document.getElementById('submission-status').textContent = `Submitted successfully at ${new Date().toLocaleTimeString()}`;
+    }
+  </script>
+</body>
+</html>

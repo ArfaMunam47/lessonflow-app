@@ -9,6 +9,7 @@
     "preview": "vite preview",
     "start": "tsx server.ts",
     "test": "tsx test/run-tests.ts",
+    "test:extension": "node lessonflow-extension/tests/extension-tests.js",
     "clean": "rm -rf dist server.js",
     "lint": "tsc --noEmit"
   },

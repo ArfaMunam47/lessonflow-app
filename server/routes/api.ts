@@ -343,7 +343,7 @@ apiRouter.get('/lesson-records', (req, res) => {
 apiRouter.post('/weeks/:weekId/lesson-records', async (req, res) => {
   try {
     const user = req.user!;
-    const { className, section, day, date, target, activities, blockCount, templateId } = req.body;
+    const { className, section, day, date, target, learningOutcomes, activities, blockCount, templateId } = req.body;
 
     if (!className || !day) {
       res.status(400).json({ error: 'Class and Day are required.' });
@@ -356,6 +356,7 @@ apiRouter.post('/weeks/:weekId/lesson-records', async (req, res) => {
       day,
       date,
       target,
+      learningOutcomes,
       activities,
       blockCount: blockCount !== undefined ? Number(blockCount) : 3,
       templateId,
@@ -661,6 +662,56 @@ apiRouter.post('/lesson-records/:id/extract-clipboard', async (req, res) => {
 // ==========================================
 // 8. Chrome Extension Integration API
 // ==========================================
+
+/**
+ * Returns available lesson records for the extension to display in its selection list.
+ */
+apiRouter.get('/extension/lessons', (req, res) => {
+  const user = req.user!;
+  const { weekId } = req.query;
+  const weeks = db.listWeeks(user.id);
+  const records = db.listLessonRecords(user.id, weekId as string);
+
+  const weekMap = new Map(weeks.map(w => [w.id, w]));
+
+  const lessons = records.map(r => {
+    const week = weekMap.get(r.weekId);
+    return {
+      id: r.id,
+      weekId: r.weekId,
+      weekNumber: week?.weekNumber || 'Week',
+      weekTitle: week?.title || '',
+      className: r.className,
+      section: r.section,
+      day: r.day,
+      date: r.date,
+      teacherName: r.teacherName,
+      subject: r.subject,
+      topic: r.topic,
+      dayNumber: r.dayNumber,
+      duration: r.duration,
+      sourceLessonId: r.sourceLessonId,
+      target: r.target,
+      learningOutcomes: r.learningOutcomes,
+      blockCount: r.blocks.length,
+      status: r.status,
+      completed: r.completed,
+      automationStatus: r.automationStatus || 'not_started',
+      updatedAt: r.updatedAt,
+    };
+  });
+
+  res.json({
+    user: {
+      id: user.id,
+      name: user.name,
+      email: user.email,
+      apiToken: user.apiToken,
+    },
+    weeks: weeks.map(w => ({ id: w.id, weekNumber: w.weekNumber, title: w.title })),
+    lessons,
+  });
+});
 
 apiRouter.get('/extension/records/:id', (req, res) => {
   const user = req.user!;

@@ -82,6 +82,7 @@ const SAMPLE_DOCS: Record<string, { title: string; html: string }> = {
             <tr>
               <th>Day</th>
               <th>Learning Target</th>
+              <th>Learning Outcomes</th>
               <th>Activities & Procedures</th>
               <th>Block 1 (Warmup & Hook)</th>
               <th>Block 2 (Direct Instruction)</th>
@@ -90,26 +91,29 @@ const SAMPLE_DOCS: Record<string, { title: string; html: string }> = {
             <tr>
               <td>Monday</td>
               <td>Students will isolate variables using inverse addition and subtraction properties.</td>
+              <td>SWBAT isolate x in one-step linear equations with 100% computational accuracy.</td>
               <td>1. Bellringer balance scale puzzles. 2. Guided notes on equation balance. 3. Partner practice worksheet problems 1-10.</td>
-              <td>Warmup: Solve 5 mental math balance puzzles on board. Target: 5 minutes.</td>
-              <td>Instruction: Model two-step inverse operations on smartboard. Emphasize showing balance steps.</td>
-              <td>Practice: Students complete textbook page 142 items 1-12 in pairs.</td>
+              <td>Teacher Activity: Present 5 balance scale puzzles on smartboard. Student Activity: Solve mental math balance puzzles in pairs. Time: 5 minutes. Resources: Smartboard, interactive balance scale. Assessment: Whiteboard response check.</td>
+              <td>Teacher Activity: Model two-step inverse operations step by step. Student Activity: Follow teacher demonstration and fill out guided notes. Time: 15 minutes. Resources: Guided notes sheet, document camera. Assessment: Cold call checks for understanding.</td>
+              <td>Teacher Activity: Circulate classroom and provide tiered scaffolding. Student Activity: Complete textbook page 142 items 1-12 in partner pairs. Time: 20 minutes. Resources: Textbook, notebook, graph paper. Assessment: Spot-check student work against answer rubric.</td>
             </tr>
             <tr>
               <td>Wednesday</td>
               <td>Students will solve equations involving distributive property with parentheses.</td>
+              <td>SWBAT apply the distributive property to simplify expressions and solve multi-step equations.</td>
               <td>Review homework. Guided demo with distributive rainbow method. Small group station rotation.</td>
-              <td>Warmup: Expanding algebraic expressions warmup check.</td>
-              <td>Instruction: Distributing negative coefficients. Common error analysis.</td>
-              <td>Practice: Station rotation: 3 stations with tiered difficulty problem sets.</td>
+              <td>Teacher Activity: Check previous homework solutions. Student Activity: Complete expanding algebraic expressions warmup. Time: 5 minutes. Resources: Warmup half-sheet. Assessment: Thumb signals check.</td>
+              <td>Teacher Activity: Demonstrate distributing negative coefficients on board. Student Activity: Identify common distribution errors in sample work. Time: 15 minutes. Resources: Whiteboard, dry erase markers. Assessment: Error analysis questioning.</td>
+              <td>Teacher Activity: Facilitate station rotations and pull focus group. Student Activity: Rotate through 3 tiered difficulty stations with problem sets. Time: 25 minutes. Resources: Station problem cards, self-check answer keys. Assessment: Station rotation tracker check.</td>
             </tr>
             <tr>
               <td>Friday</td>
               <td>Students will formulate linear equations from real-life word problem contexts.</td>
+              <td>SWBAT translate verbal problem statements into algebraic equations and find unknown values.</td>
               <td>Word problem scavenger hunt around classroom. Exit slip evaluation.</td>
-              <td>Warmup: Translate verbal statements into algebraic expressions.</td>
-              <td>Instruction: Identifying key words: 'per', 'sum', 'difference', 'total cost'.</td>
-              <td>Practice: Word problem task cards with self-checking QR codes.</td>
+              <td>Teacher Activity: Display real-world budgeting scenario. Student Activity: Translate verbal statements into algebraic expressions. Time: 8 minutes. Resources: Projector slides. Assessment: Quick poll response.</td>
+              <td>Teacher Activity: Introduce keyword chart ('per', 'total cost', 'difference'). Student Activity: Highlight key verbal clues in 4 sample problems. Time: 12 minutes. Resources: Clue word reference chart. Assessment: Guided practice checks.</td>
+              <td>Teacher Activity: Monitor classroom scavenger hunt stations. Student Activity: Work in pairs to solve 8 real-world problem stations posted in classroom. Time: 25 minutes. Resources: Scavenger hunt station posters, recording sheet. Assessment: Collect exit slip and recording sheets.</td>
             </tr>
           </table>
 

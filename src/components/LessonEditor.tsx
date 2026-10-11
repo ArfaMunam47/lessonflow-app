@@ -317,13 +317,13 @@ export const LessonEditor: React.FC<LessonEditorProps> = ({ record }) => {
           </div>
         )}
 
-        {/* Core Lesson Fields: Target and Activities */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {/* Target */}
+        {/* Core Lesson Fields: Target, Learning Outcomes, and Activities */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          {/* Attainment Target */}
           <div className="space-y-1.5">
             <div className="flex items-center justify-between">
               <label className="block text-xs font-black text-[#18181B]">
-                Weekly / Lesson Target
+                Attainment Target
               </label>
               <div className="flex items-center space-x-1.5">
                 <button
@@ -358,7 +358,51 @@ export const LessonEditor: React.FC<LessonEditorProps> = ({ record }) => {
               rows={3}
               value={record.target}
               onChange={e => handleFieldChange('target', e.target.value)}
-              placeholder="e.g. Students will understand how to convert proper fractions to decimals..."
+              placeholder="e.g. CCSS standard or attainment target..."
+              className="w-full text-xs font-medium text-[#18181B] border-2 border-[#18181B] rounded-xl p-2.5 bg-white shadow-[1px_1px_0px_#18181B]/30 focus:outline-hidden resize-y"
+            />
+          </div>
+
+          {/* Learning Outcomes */}
+          <div className="space-y-1.5">
+            <div className="flex items-center justify-between">
+              <label className="block text-xs font-black text-[#18181B]">
+                Learning Outcomes
+              </label>
+              <div className="flex items-center space-x-1.5">
+                <button
+                  type="button"
+                  onClick={() =>
+                    copyToSystemClipboard(record.learningOutcomes || '', `${record.day} ${record.className} Outcomes`)
+                  }
+                  title="Copy learning outcomes text"
+                  className="inline-flex items-center text-[10px] font-black text-[#18181B] bg-white border-2 border-[#18181B] hover:bg-[#FAF7EE] px-2 py-0.5 rounded-md shadow-[1px_1px_0px_#18181B] cursor-pointer"
+                >
+                  <Copy className="w-2.5 h-2.5 mr-1" />
+                  Copy
+                </button>
+                <button
+                  type="button"
+                  onClick={() =>
+                    addClipboardItem(
+                      record.learningOutcomes || '',
+                      `${record.day} ${record.className} Outcomes`,
+                      'target'
+                    )
+                  }
+                  title="Save outcomes to clipboard gallery"
+                  className="inline-flex items-center text-[10px] font-black text-[#18181B] bg-white border-2 border-[#18181B] hover:bg-[#FAF7EE] px-2 py-0.5 rounded-md shadow-[1px_1px_0px_#18181B] cursor-pointer"
+                >
+                  <ClipboardPlus className="w-2.5 h-2.5 mr-1" />
+                  + Gallery
+                </button>
+              </div>
+            </div>
+            <textarea
+              rows={3}
+              value={record.learningOutcomes || ''}
+              onChange={e => handleFieldChange('learningOutcomes', e.target.value)}
+              placeholder="e.g. SWBAT isolate the unknown variable in a two-step equation..."
               className="w-full text-xs font-medium text-[#18181B] border-2 border-[#18181B] rounded-xl p-2.5 bg-white shadow-[1px_1px_0px_#18181B]/30 focus:outline-hidden resize-y"
             />
           </div>

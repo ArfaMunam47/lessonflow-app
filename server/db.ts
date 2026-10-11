@@ -46,14 +46,14 @@ const DB_FILE = path.join(DATA_DIR, 'lessonflow.json');
 const DEFAULT_TEMPLATES: Array<Omit<BlockTemplate, 'id' | 'userId' | 'createdAt' | 'updatedAt'>> = [
   {
     name: 'Standard 5-Field Lesson Block',
-    description: 'Standard lesson-plan block: Objective, Teacher Activity, Student Activity, Resources, and Assessment.',
+    description: 'BEAMS-aligned activity block: Teacher Activity, Student Activity, Time, Learning Materials / Resources, and Formative Assessment.',
     isDefault: true,
     fields: [
-      { key: 'objective', label: 'Objective', type: 'textarea', order: 1, isRequired: true, placeholder: 'Lesson objective...' },
-      { key: 'teacher_activity', label: 'Teacher Activity', type: 'textarea', order: 2, isRequired: true, placeholder: 'Teacher direct instruction or modeling...' },
-      { key: 'student_activity', label: 'Student Activity', type: 'textarea', order: 3, isRequired: true, placeholder: 'Student practice, group work, or paired activity...' },
-      { key: 'resources', label: 'Resources / Materials', type: 'text', order: 4, isRequired: false, placeholder: 'Materials, links, or handouts...' },
-      { key: 'assessment', label: 'Assessment / Check for Understanding', type: 'textarea', order: 5, isRequired: false, placeholder: 'Exit ticket, rubric, or check...' },
+      { key: 'teacher_activity', label: 'Teacher Activity', type: 'textarea', order: 1, isRequired: true, placeholder: 'Teacher direct instruction, modeling, or facilitation...' },
+      { key: 'student_activity', label: 'Student Activity', type: 'textarea', order: 2, isRequired: true, placeholder: 'Student practice, group task, or hands-on activity...' },
+      { key: 'time', label: 'Time (mins)', type: 'text', order: 3, isRequired: false, placeholder: 'e.g. 10 mins' },
+      { key: 'resources', label: 'Learning Materials / Resources', type: 'textarea', order: 4, isRequired: false, placeholder: 'Handouts, manipulatives, digital resources, slides...' },
+      { key: 'assessment', label: 'Formative Assessment', type: 'textarea', order: 5, isRequired: false, placeholder: 'Formative check, questioning, exit slip, or observation...' },
     ],
   },
   {
@@ -430,6 +430,7 @@ class Database {
       day: string;
       date?: string;
       target?: string;
+      learningOutcomes?: string;
       activities?: string;
       blockCount?: number;
       templateId?: string;
@@ -486,6 +487,7 @@ class Database {
       day: cleanPlainText(data.day) || 'Monday',
       date: data.date || '',
       target: cleanPlainText(data.target) || '',
+      learningOutcomes: data.learningOutcomes !== undefined ? cleanPlainText(data.learningOutcomes) : undefined,
       activities: cleanPlainText(data.activities) || '',
       status: 'draft',
       completed: false,
@@ -514,6 +516,7 @@ class Database {
     if (updates.day !== undefined) record.day = cleanPlainText(updates.day);
     if (updates.date !== undefined) record.date = updates.date;
     if (updates.target !== undefined) record.target = cleanPlainText(updates.target);
+    if (updates.learningOutcomes !== undefined) record.learningOutcomes = cleanPlainText(updates.learningOutcomes);
     if (updates.activities !== undefined) record.activities = cleanPlainText(updates.activities);
     if (updates.status !== undefined) record.status = updates.status;
     if (updates.completed !== undefined) {
@@ -1117,7 +1120,16 @@ class Database {
         section: cleanPlainText(draft.section) || '',
         day: cleanPlainText(draft.day) || 'Monday',
         date: draft.date || '',
+
+        teacherName: draft.teacherName ? cleanPlainText(draft.teacherName) : undefined,
+        subject: draft.subject ? cleanPlainText(draft.subject) : undefined,
+        topic: draft.topic ? cleanPlainText(draft.topic) : undefined,
+        dayNumber: draft.dayNumber ? cleanPlainText(draft.dayNumber) : undefined,
+        duration: draft.duration ? cleanPlainText(draft.duration) : undefined,
+        sourceLessonId: draft.sourceLessonId ? cleanPlainText(draft.sourceLessonId) : undefined,
+
         target: cleanPlainText(draft.target) || '',
+        learningOutcomes: draft.learningOutcomes !== undefined ? cleanPlainText(draft.learningOutcomes) : undefined,
         activities: cleanPlainText(draft.activities) || '',
         status: draft.needsReview ? 'draft' : 'ready',
         completed: false,
@@ -1218,7 +1230,16 @@ class Database {
       section: record.section,
       day: record.day,
       date: record.date,
+
+      teacherName: record.teacherName,
+      subject: record.subject,
+      topic: record.topic,
+      dayNumber: record.dayNumber,
+      duration: record.duration,
+      sourceLessonId: record.sourceLessonId,
+
       target: record.target,
+      learningOutcomes: record.learningOutcomes,
       activities: record.activities,
       totalBlocks: record.blocks.length,
       blocks: record.blocks.map(b => ({

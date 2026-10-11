@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>LessonFlow Assistant</title>
+  <link rel="stylesheet" href="sidepanel.css" />
+</head>
+<body>
+  <div class="lf-container">
+    
+    <!-- Top Header -->
+    <header class="lf-header">
+      <div class="lf-brand">
+        <div class="lf-logo">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#18181B" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"></path>
+            <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"></path>
+          </svg>
+        </div>
+        <div>
+          <h1 class="lf-title">LessonFlow</h1>
+          <span class="lf-subtitle">School Transfer Assistant</span>
+        </div>
+      </div>
+
+      <div class="lf-header-actions">
+        <div id="conn-pill" class="lf-pill lf-pill-connecting" title="Checking LessonFlow connection">
+          <span class="lf-dot"></span>
+          <span id="conn-text">Connecting...</span>
+        </div>
+        <button id="btn-open-settings" class="lf-btn-icon" title="Configure API Connection">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+            <circle cx="12" cy="12" r="3"></circle>
+            <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+          </svg>
+        </button>
+      </div>
+    </header>
+
+    <!-- Website Status Banner -->
+    <div id="website-banner" class="lf-card lf-card-website">
+      <div class="lf-card-header-compact">
+        <span class="lf-section-tag">Target Website</span>
+        <span id="site-status-badge" class="lf-badge lf-badge-neutral">Detecting...</span>
+      </div>
+      <div class="lf-site-row">
+        <span id="current-hostname" class="lf-hostname">Scanning active tab...</span>
+      </div>
+      <div class="lf-site-actions">
+        <button id="btn-inspect-page" class="lf-btn lf-btn-secondary lf-btn-sm">
+          🔍 Inspect Website Fields
+        </button>
+        <button id="btn-view-mappings" class="lf-btn lf-btn-subtle lf-btn-sm">
+          Manage Mappings (<span id="mapping-count">0</span>)
+        </button>
+      </div>
+      <div id="inspect-active-bar" class="lf-inspect-active-bar" style="display: none;">
+        <span>🎯 Move pointer over website field to map it</span>
+        <button id="btn-cancel-inspect" class="lf-btn-cancel">Cancel (Esc)</button>
+      </div>
+    </div>
+
+    <!-- Lesson Selection Section -->
+    <div class="lf-card">
+      <div class="lf-card-header">
+        <div class="lf-card-title-group">
+          <span class="lf-section-tag lf-tag-mint">Step 1</span>
+          <h2 class="lf-card-title">Choose Saved Lesson</h2>
+        </div>
+        <button id="btn-refresh-lessons" class="lf-btn-icon-subtle" title="Refresh lessons from LessonFlow">
+          🔄
+        </button>
+      </div>
+
+      <div class="lf-form-group">
+        <label for="select-week">Week</label>
+        <select id="select-week" class="lf-select">
+          <option value="">Loading weeks...</option>
+        </select>
+      </div>
+
+      <div class="lf-form-group">
+        <label for="select-lesson">Lesson Plan</label>
+        <select id="select-lesson" class="lf-select" disabled>
+          <option value="">Select a week first</option>
+        </select>
+      </div>
+
+      <!-- Selected Lesson Summary Pill -->
+      <div id="lesson-summary-box" class="lf-summary-box" style="display: none;">
+        <div class="lf-summary-header">
+          <strong id="sum-class-day">6A — Monday</strong>
+          <span id="sum-status-badge" class="lf-badge lf-badge-ready">Ready</span>
+        </div>
+        <div id="sum-target" class="lf-summary-target">...</div>
+        <div class="lf-summary-meta">
+          <span>🧱 Blocks: <strong id="sum-blocks-count">0</strong></span>
+          <span id="sum-source">📄 Imported</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Mode Selector & Transfer Controls -->
+    <div id="transfer-card" class="lf-card" style="display: none;">
+      <div class="lf-card-header">
+        <div class="lf-card-title-group">
+          <span class="lf-section-tag lf-tag-yellow">Step 2</span>
+          <h2 class="lf-card-title">Transfer to Website</h2>
+        </div>
+      </div>
+
+      <!-- Mode Tabs -->
+      <div class="lf-tabs">
+        <button id="tab-copy" class="lf-tab lf-tab-active" data-mode="copy_only">
+          📋 1. Copy Only
+        </button>
+        <button id="tab-guided" class="lf-tab" data-mode="guided_fill">
+          🎯 2. Guided Fill
+        </button>
+        <button id="tab-all" class="lf-tab" data-mode="fill_all_mapped">
+          ⚡ 3. Fill Mapped
+        </button>
+      </div>
+
+      <!-- Active Mode Description -->
+      <div id="mode-desc" class="lf-mode-desc">
+        Click any field to copy plain text. Paste directly into your school website.
+      </div>
+
+      <!-- Field-by-Field List -->
+      <div id="fields-list" class="lf-fields-list">
+        <!-- Rendered dynamically by sidepanel.js -->
+      </div>
+
+      <!-- Global Actions Bar -->
+      <div class="lf-actions-bar">
+        <button id="btn-fill-all" class="lf-btn lf-btn-primary" style="display: none;">
+          ⚡ Fill All Mapped Fields
+        </button>
+        <button id="btn-add-block" class="lf-btn lf-btn-secondary" style="display: none;">
+          + Click Website &quot;Add Block&quot;
+        </button>
+        <button id="btn-stop-op" class="lf-btn lf-btn-danger" style="display: none;">
+          ⏹ Stop Operation
+        </button>
+      </div>
+
+      <!-- Operation Report Box -->
+      <div id="report-box" class="lf-report-box" style="display: none;">
+        <div class="lf-report-title">
+          <span>Transfer Summary</span>
+          <span id="report-status-badge" class="lf-badge lf-badge-ready">Completed</span>
+        </div>
+        <div id="report-message" class="lf-report-message"></div>
+        <div class="lf-safety-note">
+          ⚠️ <strong>Manual Submission Required:</strong> Review all fields on the school website and click Save/Submit manually.
+        </div>
+      </div>
+    </div>
+
+    <!-- Mapping Wizard Modal (Overlay) -->
+    <div id="mapping-modal" class="lf-modal-overlay" style="display: none;">
+      <div class="lf-modal">
+        <div class="lf-modal-header">
+          <h3>Map Website Element</h3>
+          <button id="btn-close-map-modal" class="lf-modal-close">✕</button>
+        </div>
+        <div class="lf-modal-body">
+          <div class="lf-inspect-preview">
+            <span class="lf-tag-small" id="map-elem-tag">&lt;textarea&gt;</span>
+            <div id="map-elem-label" class="lf-elem-label">Target Text</div>
+            <code id="map-elem-sel" class="lf-elem-sel">#target-input</code>
+          </div>
+
+          <div class="lf-form-group">
+            <label for="map-field-select">Associate with LessonFlow field:</label>
+            <select id="map-field-select" class="lf-select">
+              <optgroup label="Lesson Header">
+                <option value="className">Class Name (e.g. 6A)</option>
+                <option value="section">Section (e.g. Blue)</option>
+                <option value="day">Day of Week (e.g. Monday)</option>
+                <option value="target">Learning Target</option>
+                <option value="activities">Activities &amp; Procedures</option>
+              </optgroup>
+              <optgroup label="Dynamic Blocks" id="map-blocks-group">
+                <!-- Populated dynamically -->
+              </optgroup>
+              <optgroup label="Website Actions">
+                <option value="add_block_button">➕ &quot;Add Block&quot; Button</option>
+              </optgroup>
+            </select>
+          </div>
+
+          <div class="lf-form-group">
+            <label>Sample value to be transferred:</label>
+            <div id="map-sample-val" class="lf-sample-box">Students will understand...</div>
+          </div>
+        </div>
+        <div class="lf-modal-footer">
+          <button id="btn-test-mapping-elem" class="lf-btn lf-btn-subtle">Test Highlight</button>
+          <button id="btn-save-mapping" class="lf-btn lf-btn-primary">Save Mapping</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Mappings Manager Modal -->
+    <div id="manager-modal" class="lf-modal-overlay" style="display: none;">
+      <div class="lf-modal">
+        <div class="lf-modal-header">
+          <h3>Website Field Mappings</h3>
+          <button id="btn-close-manager-modal" class="lf-modal-close">✕</button>
+        </div>
+        <div class="lf-modal-body">
+          <div id="mappings-list-container" class="lf-mappings-list">
+            <!-- Rendered dynamically -->
+          </div>
+        </div>
+        <div class="lf-modal-footer">
+          <button id="btn-clear-all-mappings" class="lf-btn lf-btn-danger lf-btn-sm">Clear This Site</button>
+          <button id="btn-done-manager" class="lf-btn lf-btn-primary">Done</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Settings Modal -->
+    <div id="settings-modal" class="lf-modal-overlay" style="display: none;">
+      <div class="lf-modal">
+        <div class="lf-modal-header">
+          <h3>Connection Settings</h3>
+          <button id="btn-close-settings" class="lf-modal-close">✕</button>
+        </div>
+        <div class="lf-modal-body">
+          <div class="lf-form-group">
+            <label for="cfg-api-url">LessonFlow API Base URL</label>
+            <input type="url" id="cfg-api-url" class="lf-input" placeholder="http://localhost:3000" />
+            <small class="lf-help">Default: http://localhost:3000 (or deployed app URL)</small>
+          </div>
+          <div class="lf-form-group">
+            <label for="cfg-api-token">Personal API Token</label>
+            <input type="text" id="cfg-api-token" class="lf-input" placeholder="lf_tok_active" />
+            <small class="lf-help">Found in LessonFlow → Settings → Chrome Extension API</small>
+          </div>
+        </div>
+        <div class="lf-modal-footer">
+          <button id="btn-save-settings" class="lf-btn lf-btn-primary">Save &amp; Reconnect</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Floating Toast Notification -->
+    <div id="toast" class="lf-toast" style="display: none;"></div>
+
+  </div>
+
+  <script type="module" src="sidepanel.js"></script>
+</body>
+</html>

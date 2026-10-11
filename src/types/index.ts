@@ -103,12 +103,22 @@ export interface LessonRecord {
   id: string;
   weekId: string;
   userId: string;
-  className: string;   // e.g. "6A"
-  section: string;     // e.g. "Blue"
-  day: string;         // e.g. "Monday"
+  className: string;   // e.g. "11", "Class 11", "6A"
+  section: string;     // e.g. "C", "Blue"
+  day: string;         // e.g. "Monday", "Day 3"
   date?: string;
-  target: string;      // e.g. "Students will understand..."
-  activities: string;  // e.g. "Students will complete..."
+  
+  // Specific School Document Metadata
+  teacherName?: string;
+  subject?: string;
+  topic?: string;       // Actual topic of this particular lesson/day
+  dayNumber?: string;   // e.g. "Day 3", "3"
+  duration?: string;    // e.g. "45 mins", "60 mins"
+  sourceLessonId?: string; // e.g. "11 C Day 3"
+  
+  target: string;      // e.g. "Students will understand..." (Attainment Target)
+  learningOutcomes?: string; // Specific Learning Outcomes / Objectives
+  activities: string;  // e.g. "Students will complete..." (Procedures / Activities)
   status: RecordStatus;
   completed: boolean;
   orderIndex: number;
@@ -138,7 +148,7 @@ export interface ClipboardItem {
   className?: string;
   section?: string;
   day?: string;
-  category: 'target' | 'activities' | 'block_field' | 'general' | 'custom';
+  category: 'target' | 'learning_outcomes' | 'activities' | 'block_field' | 'general' | 'custom';
   label: string;
   plainText: string;
   orderIndex: number;
@@ -172,7 +182,17 @@ export interface ParsedLessonDraft {
   className: string;
   section?: string;
   date?: string;
+  
+  // Specific School Document Metadata
+  teacherName?: string;
+  subject?: string;
+  topic?: string;       // Actual topic of this particular lesson/day
+  dayNumber?: string;   // e.g. "Day 3", "3"
+  duration?: string;    // e.g. "45 mins", "60 mins"
+  sourceLessonId?: string; // e.g. "11 C Day 3"
+
   target: string;
+  learningOutcomes?: string;
   activities: string;
   needsReview?: boolean;
   blocks: ParsedBlockDraft[];
@@ -197,7 +217,7 @@ export interface ParsedWeeklyImport {
 }
 
 /**
- * Clean data contract for the future Chrome Extension.
+ * Clean data contract for the Chrome Extension.
  */
 export interface ExtensionLessonRecordDTO {
   id: string;
@@ -205,7 +225,17 @@ export interface ExtensionLessonRecordDTO {
   section: string;
   day: string;
   date?: string;
+
+  // Specific School Document Metadata
+  teacherName?: string;
+  subject?: string;
+  topic?: string;
+  dayNumber?: string;
+  duration?: string;
+  sourceLessonId?: string;
+
   target: string;
+  learningOutcomes?: string;
   activities: string;
   totalBlocks: number;
   blocks: Array<{

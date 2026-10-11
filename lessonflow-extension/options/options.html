@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>LessonFlow Extension Options</title>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background: #FAF7EE;
+      color: #18181B;
+      padding: 30px;
+      margin: 0;
+    }
+    .container {
+      max-width: 520px;
+      margin: 0 auto;
+      background: #FFFFFF;
+      border: 2px solid #18181B;
+      border-radius: 20px;
+      padding: 24px;
+      box-shadow: 3px 3px 0px #18181B;
+    }
+    h1 {
+      font-size: 18px;
+      font-weight: 900;
+      margin-bottom: 6px;
+    }
+    p {
+      font-size: 12px;
+      color: #52525B;
+      margin-bottom: 18px;
+      font-weight: 600;
+    }
+    .form-group {
+      margin-bottom: 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+    label {
+      font-size: 11px;
+      font-weight: 800;
+      text-transform: uppercase;
+    }
+    input {
+      font-size: 13px;
+      font-weight: 700;
+      padding: 8px 12px;
+      border: 2px solid #18181B;
+      border-radius: 10px;
+      background: #FAF7EE;
+      outline: none;
+    }
+    input:focus {
+      background: #FFFFFF;
+    }
+    .help {
+      font-size: 10px;
+      color: #71717A;
+    }
+    .btn {
+      background: #18181B;
+      color: #FFFFFF;
+      font-weight: 800;
+      font-size: 12px;
+      padding: 10px 18px;
+      border: 2px solid #18181B;
+      border-radius: 10px;
+      cursor: pointer;
+      box-shadow: 2px 2px 0px #18181B;
+      margin-top: 8px;
+    }
+    .btn:hover {
+      background: #27272A;
+    }
+    .status {
+      margin-top: 10px;
+      font-size: 11px;
+      font-weight: 800;
+      color: #065F46;
+      display: none;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>LessonFlow Assistant Settings</h1>
+    <p>Configure backend API credentials for school website automation.</p>
+
+    <div class="form-group">
+      <label for="apiUrl">LessonFlow API URL</label>
+      <input type="url" id="apiUrl" placeholder="http://localhost:3000" />
+      <span class="help">Default: http://localhost:3000 or your hosted LessonFlow URL</span>
+    </div>
+
+    <div class="form-group">
+      <label for="apiToken">Personal API Token</label>
+      <input type="text" id="apiToken" placeholder="lf_tok_active" />
+      <span class="help">Copy from LessonFlow → Settings → Chrome Extension API</span>
+    </div>
+
+    <button id="saveBtn" class="btn">Save Settings</button>
+    <div id="status" class="status">✓ Settings saved successfully.</div>
+  </div>
+
+  <script src="options.js"></script>
+</body>
+</html>

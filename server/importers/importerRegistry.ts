@@ -113,6 +113,15 @@ class ImporterRegistry {
       };
     }
 
+    // Check Word document URL
+    if (/\.(?:docx|doc)(?:\?.*)?$/i.test(trimmed)) {
+      return {
+        valid: true,
+        sourceType: 'word',
+        hint: 'Word document link detected. Direct binary Word parsing is not supported; copy and paste text directly into Pasted Text or save as PDF.',
+      };
+    }
+
     return {
       valid: false,
       sourceType: 'unknown',
@@ -147,6 +156,12 @@ class ImporterRegistry {
 
     const handler = this.handlers.get(resolvedType);
     if (!handler) {
+      if (resolvedType === 'word') {
+        throw new Error(
+          'Direct Word (.docx/.doc) binary file import is not supported yet without an external binary parser. ' +
+          'Please copy and paste your lesson plan text directly into the Pasted Text tab, or upload/link as a PDF or Google Doc.'
+        );
+      }
       throw new Error(`Unsupported document source type: ${resolvedType}`);
     }
 

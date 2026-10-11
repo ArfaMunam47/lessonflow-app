@@ -54,6 +54,16 @@ async function startServer() {
     res.json({ status: 'ok', service: 'LessonFlow API', timestamp: new Date().toISOString() });
   });
 
+  // Safe demo school website simulator for extension testing
+  app.get('/demo-school-website', (_req, res) => {
+    const demoPath = path.resolve(__dirname, 'lessonflow-extension', 'demo', 'school-website-simulator.html');
+    if (fs.existsSync(demoPath)) {
+      res.sendFile(demoPath);
+    } else {
+      res.status(404).send('Demo simulator not found');
+    }
+  });
+
   // Client frontend handling (Vite dev middleware vs static build)
   if (!isProduction) {
     const { createServer } = await import('vite');

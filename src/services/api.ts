@@ -150,6 +150,7 @@ class ApiClient {
       day: string;
       date?: string;
       target?: string;
+      learningOutcomes?: string;
       activities?: string;
       blockCount?: number;
       templateId?: string;

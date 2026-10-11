@@ -28,6 +28,7 @@ import {
   FileText,
   CheckCircle2,
   AlertCircle,
+  AlertTriangle,
   RefreshCw,
   ExternalLink,
   Trash2,
@@ -35,6 +36,8 @@ import {
   Lock,
   Sparkles,
   ArrowRight,
+  ArrowUp,
+  ArrowDown,
   Info,
   Calendar,
   Layers,
@@ -83,6 +86,7 @@ export const ImportView: React.FC = () => {
 
   // Extracted draft state for review
   const [reviewDraft, setReviewDraft] = useState<ParsedWeeklyImport | null>(null);
+  const [isDraftDirty, setIsDraftDirty] = useState(false);
   const [extractedMeta, setExtractedMeta] = useState<{
     title: string;
     sourceType: ImportSourceType;
@@ -125,12 +129,19 @@ export const ImportView: React.FC = () => {
     return () => clearTimeout(timer);
   }, [sharedUrl]);
 
-  const resetImport = () => {
+  const resetImport = (force: boolean = false) => {
+    if (!force && isDraftDirty) {
+      const confirmDiscard = window.confirm(
+        'You have unsaved changes in this review draft. Are you sure you want to discard them?'
+      );
+      if (!confirmDiscard) return;
+    }
     setStage('idle');
     setErrorMessage(null);
     setErrorType(null);
     setErrorHint(null);
     setReviewDraft(null);
+    setIsDraftDirty(false);
     setExtractedMeta(null);
   };
 
@@ -293,11 +304,13 @@ export const ImportView: React.FC = () => {
 
   const handleUpdateDraftWeek = (field: 'weekNumber' | 'weekTitle', value: string) => {
     if (!reviewDraft) return;
+    setIsDraftDirty(true);
     setReviewDraft({ ...reviewDraft, [field]: value });
   };
 
   const handleUpdateLesson = (lessonIndex: number, field: keyof ParsedLessonDraft, value: any) => {
     if (!reviewDraft) return;
+    setIsDraftDirty(true);
     const updated = [...reviewDraft.lessons];
     updated[lessonIndex] = { ...updated[lessonIndex], [field]: value };
     setReviewDraft({ ...reviewDraft, lessons: updated });
@@ -305,6 +318,7 @@ export const ImportView: React.FC = () => {
 
   const handleUpdateBlockField = (lessonIndex: number, blockIndex: number, fieldKey: string, value: string) => {
     if (!reviewDraft) return;
+    setIsDraftDirty(true);
     const updated = [...reviewDraft.lessons];
     const lesson = { ...updated[lessonIndex] };
     const blocks = [...lesson.blocks];
@@ -318,6 +332,7 @@ export const ImportView: React.FC = () => {
 
   const handleAddBlock = (lessonIndex: number) => {
     if (!reviewDraft) return;
+    setIsDraftDirty(true);
     const updated = [...reviewDraft.lessons];
     const lesson = { ...updated[lessonIndex] };
     const newBlockNumber = lesson.blocks.length + 1;
@@ -326,9 +341,11 @@ export const ImportView: React.FC = () => {
       {
         blockNumber: newBlockNumber,
         fields: {
-          objective: '',
           teacher_activity: '',
           student_activity: '',
+          time: '',
+          resources: '',
+          assessment: '',
         },
       },
     ];
@@ -336,8 +353,39 @@ export const ImportView: React.FC = () => {
     setReviewDraft({ ...reviewDraft, lessons: updated });
   };
 
+  const handleMoveBlockUp = (lessonIndex: number, blockIndex: number) => {
+    if (!reviewDraft || blockIndex === 0) return;
+    setIsDraftDirty(true);
+    const updated = [...reviewDraft.lessons];
+    const lesson = { ...updated[lessonIndex] };
+    const blocks = [...lesson.blocks];
+    const temp = blocks[blockIndex - 1];
+    blocks[blockIndex - 1] = blocks[blockIndex];
+    blocks[blockIndex] = temp;
+    lesson.blocks = blocks.map((b, idx) => ({ ...b, blockNumber: idx + 1 }));
+    updated[lessonIndex] = lesson;
+    setReviewDraft({ ...reviewDraft, lessons: updated });
+  };
+
+  const handleMoveBlockDown = (lessonIndex: number, blockIndex: number) => {
+    if (!reviewDraft) return;
+    const lesson = reviewDraft.lessons[lessonIndex];
+    if (!lesson || blockIndex >= lesson.blocks.length - 1) return;
+    setIsDraftDirty(true);
+    const updated = [...reviewDraft.lessons];
+    const updatedLesson = { ...lesson };
+    const blocks = [...updatedLesson.blocks];
+    const temp = blocks[blockIndex + 1];
+    blocks[blockIndex + 1] = blocks[blockIndex];
+    blocks[blockIndex] = temp;
+    updatedLesson.blocks = blocks.map((b, idx) => ({ ...b, blockNumber: idx + 1 }));
+    updated[lessonIndex] = updatedLesson;
+    setReviewDraft({ ...reviewDraft, lessons: updated });
+  };
+
   const handleDeleteBlock = (lessonIndex: number, blockIndex: number) => {
     if (!reviewDraft) return;
+    setIsDraftDirty(true);
     const updated = [...reviewDraft.lessons];
     const lesson = { ...updated[lessonIndex] };
     lesson.blocks = lesson.blocks
@@ -349,6 +397,7 @@ export const ImportView: React.FC = () => {
 
   const handleDeleteLesson = (lessonIndex: number) => {
     if (!reviewDraft) return;
+    setIsDraftDirty(true);
     const updated = reviewDraft.lessons.filter((_, i) => i !== lessonIndex);
     setReviewDraft({ ...reviewDraft, lessons: updated });
   };
@@ -357,7 +406,7 @@ export const ImportView: React.FC = () => {
     if (!reviewDraft || reviewDraft.lessons.length === 0) return;
     try {
       await commitImportDraft(reviewDraft);
-      resetImport();
+      resetImport(true);
     } catch (_) {
       // Error toast handled by context
     }
@@ -405,7 +454,7 @@ export const ImportView: React.FC = () => {
         {stage === 'review' && (
           <button
             type="button"
-            onClick={resetImport}
+            onClick={() => resetImport()}
             className="text-xs font-black text-[#18181B] hover:underline self-start sm:self-auto cursor-pointer"
           >
             ← Choose Different Source
@@ -794,7 +843,7 @@ export const ImportView: React.FC = () => {
               Try Again
             </button>
             <button
-              onClick={resetImport}
+              onClick={() => resetImport()}
               className="px-5 py-2.5 bg-white hover:bg-[#FAF7EE] text-[#18181B] font-black text-xs rounded-xl border-2 border-[#18181B] shadow-[2px_2px_0px_#18181B] cursor-pointer"
             >
               Back to Import Options
@@ -841,7 +890,7 @@ export const ImportView: React.FC = () => {
             <div className="flex items-center space-x-3 shrink-0">
               <button
                 type="button"
-                onClick={resetImport}
+                onClick={() => resetImport()}
                 className="px-4 py-2.5 text-xs font-black text-[#18181B] hover:bg-[#FAF7EE] bg-white border-2 border-[#18181B] rounded-xl shadow-[1px_1px_0px_#18181B] cursor-pointer"
               >
                 Cancel
@@ -961,24 +1010,66 @@ export const ImportView: React.FC = () => {
                   </div>
                 </div>
 
-                {/* Target & Activities */}
+                {/* Lesson-level fields: Attainment Target, Learning Outcomes, and Activities & Procedures */}
                 <div className="space-y-3 text-xs">
                   <div>
-                    <label className="block font-black text-[#18181B] uppercase text-[10px] tracking-wider mb-1">Learning Target</label>
+                    <div className="flex items-center justify-between mb-1">
+                      <label className="block font-black text-[#18181B] uppercase text-[10px] tracking-wider">
+                        Attainment Target
+                      </label>
+                      {!lesson.target?.trim() && (
+                        <span className="text-[10px] font-black text-amber-700 bg-amber-100 px-2 py-0.5 rounded border border-amber-300">
+                          Empty — requires review
+                        </span>
+                      )}
+                    </div>
                     <textarea
                       rows={2}
                       value={lesson.target}
                       onChange={e => handleUpdateLesson(lIdx, 'target', e.target.value)}
+                      placeholder="Attainment target / standard..."
+                      className={`w-full border-2 rounded-xl p-2.5 text-[#18181B] font-bold bg-[#FAF7EE] focus:bg-white focus:outline-hidden resize-y font-sans ${
+                        !lesson.target?.trim() ? 'border-amber-400 bg-amber-50/50' : 'border-[#18181B]'
+                      }`}
+                    />
+                  </div>
+
+                  <div>
+                    <div className="flex items-center justify-between mb-1">
+                      <label className="block font-black text-[#18181B] uppercase text-[10px] tracking-wider">
+                        Learning Outcomes
+                      </label>
+                      {!lesson.learningOutcomes?.trim() && (
+                        <span className="text-[10px] font-black text-amber-700 bg-amber-100 px-2 py-0.5 rounded border border-amber-300">
+                          Empty / optional
+                        </span>
+                      )}
+                    </div>
+                    <textarea
+                      rows={2}
+                      value={lesson.learningOutcomes || ''}
+                      onChange={e => handleUpdateLesson(lIdx, 'learningOutcomes', e.target.value)}
+                      placeholder="Specific student learning outcomes..."
                       className="w-full border-2 border-[#18181B] rounded-xl p-2.5 text-[#18181B] font-bold bg-[#FAF7EE] focus:bg-white focus:outline-hidden resize-y font-sans"
                     />
                   </div>
 
                   <div>
-                    <label className="block font-black text-[#18181B] uppercase text-[10px] tracking-wider mb-1">Activities & Procedures</label>
+                    <div className="flex items-center justify-between mb-1">
+                      <label className="block font-black text-[#18181B] uppercase text-[10px] tracking-wider">
+                        Activities & Procedures Overview
+                      </label>
+                      {!lesson.activities?.trim() && (
+                        <span className="text-[10px] font-black text-amber-700 bg-amber-100 px-2 py-0.5 rounded border border-amber-300">
+                          Empty — overview
+                        </span>
+                      )}
+                    </div>
                     <textarea
                       rows={2}
                       value={lesson.activities}
                       onChange={e => handleUpdateLesson(lIdx, 'activities', e.target.value)}
+                      placeholder="Overview of lesson flow and activities..."
                       className="w-full border-2 border-[#18181B] rounded-xl p-2.5 text-[#18181B] font-bold bg-[#FAF7EE] focus:bg-white focus:outline-hidden resize-y font-sans"
                     />
                   </div>
@@ -988,7 +1079,7 @@ export const ImportView: React.FC = () => {
                 <div className="space-y-2 pt-2 border-t-2 border-[#18181B]/15">
                   <div className="flex items-center justify-between">
                     <span className="text-[10px] uppercase font-black text-[#52525B] tracking-wider">
-                      Dynamic Blocks ({lesson.blocks.length})
+                      Activity Blocks ({lesson.blocks.length})
                     </span>
                     <button
                       type="button"
@@ -1001,42 +1092,135 @@ export const ImportView: React.FC = () => {
                   </div>
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                    {lesson.blocks.map((block, bIdx) => (
-                      <div
-                        key={bIdx}
-                        className="bg-[#FAF7EE] border-2 border-[#18181B] rounded-xl p-3.5 space-y-2.5 text-xs relative group shadow-[1px_1px_0px_#18181B]"
-                      >
-                        <div className="flex items-center justify-between">
-                          <span className="font-black text-[#18181B] text-xs">
-                            Block {block.blockNumber}
-                          </span>
-                          <button
-                            type="button"
-                            onClick={() => handleDeleteBlock(lIdx, bIdx)}
-                            className="text-[#52525B] hover:text-rose-600 p-0.5 rounded cursor-pointer"
-                            title="Delete this block"
-                          >
-                            <Trash2 className="w-3.5 h-3.5" />
-                          </button>
-                        </div>
+                    {lesson.blocks.map((block, bIdx) => {
+                      const isBlockFirst = bIdx === 0;
+                      const isBlockLast = bIdx === lesson.blocks.length - 1;
+                      const hasTeacher = Boolean(block.fields.teacher_activity?.trim());
+                      const hasStudent = Boolean(block.fields.student_activity?.trim());
+                      const blockEmpty = !hasTeacher && !hasStudent;
 
-                        <div className="space-y-2">
-                          {Object.entries(block.fields).map(([k, val]) => (
-                            <div key={k}>
-                              <label className="block text-[10px] font-black text-[#52525B] uppercase tracking-wider mb-0.5">
-                                {k.replace(/_/g, ' ')}
-                              </label>
-                              <textarea
-                                rows={2}
-                                value={val}
-                                onChange={e => handleUpdateBlockField(lIdx, bIdx, k, e.target.value)}
-                                className="w-full bg-white border-2 border-[#18181B] rounded-lg p-2 text-xs font-bold text-[#18181B] focus:outline-hidden resize-y font-sans"
-                              />
+                      // The 5 canonical BEAMS block keys
+                      const canonicalKeys = [
+                        { key: 'teacher_activity', label: 'Teacher Activity' },
+                        { key: 'student_activity', label: 'Student Activity' },
+                        { key: 'time', label: 'Time' },
+                        { key: 'resources', label: 'Learning Materials / Resources' },
+                        { key: 'assessment', label: 'Formative Assessment' },
+                      ];
+
+                      // Collect custom/legacy fields (e.g. 'objective')
+                      const customFieldEntries = Object.entries(block.fields).filter(
+                        ([k]) => !canonicalKeys.some(c => c.key === k)
+                      );
+
+                      return (
+                        <div
+                          key={bIdx}
+                          className={`border-2 rounded-xl p-3.5 space-y-2.5 text-xs relative group shadow-[1px_1px_0px_#18181B] ${
+                            block.needsReview || blockEmpty
+                              ? 'bg-[#FEFCE8] border-amber-400'
+                              : 'bg-[#FAF7EE] border-[#18181B]'
+                          }`}
+                        >
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center space-x-1.5">
+                              <span className="font-black text-[#18181B] text-xs">
+                                Block {block.blockNumber}
+                              </span>
+                              {(block.needsReview || blockEmpty) && (
+                                <span className="text-[10px] font-black text-amber-800 bg-amber-200 px-2 py-0.5 rounded border border-amber-400 flex items-center">
+                                  <AlertCircle className="w-2.5 h-2.5 mr-1" />
+                                  Needs check
+                                </span>
+                              )}
                             </div>
-                          ))}
+
+                            <div className="flex items-center space-x-1">
+                              {/* Move block up */}
+                              <button
+                                type="button"
+                                onClick={() => handleMoveBlockUp(lIdx, bIdx)}
+                                disabled={isBlockFirst}
+                                className="p-1 rounded bg-white border border-[#18181B] text-[#18181B] hover:bg-[#FAF7EE] disabled:opacity-30 cursor-pointer"
+                                title="Move block up"
+                              >
+                                <ArrowUp className="w-3 h-3" />
+                              </button>
+                              {/* Move block down */}
+                              <button
+                                type="button"
+                                onClick={() => handleMoveBlockDown(lIdx, bIdx)}
+                                disabled={isBlockLast}
+                                className="p-1 rounded bg-white border border-[#18181B] text-[#18181B] hover:bg-[#FAF7EE] disabled:opacity-30 cursor-pointer"
+                                title="Move block down"
+                              >
+                                <ArrowDown className="w-3 h-3" />
+                              </button>
+                              {/* Delete block */}
+                              <button
+                                type="button"
+                                onClick={() => handleDeleteBlock(lIdx, bIdx)}
+                                className="text-[#52525B] hover:text-rose-600 p-1 rounded hover:bg-rose-50 cursor-pointer"
+                                title="Delete this block"
+                              >
+                                <Trash2 className="w-3.5 h-3.5" />
+                              </button>
+                            </div>
+                          </div>
+
+                          <div className="space-y-2">
+                            {/* Canonical 5 BEAMS fields */}
+                            {canonicalKeys.map(({ key, label }) => {
+                              const val = block.fields[key] || '';
+                              const isRequiredField = key === 'teacher_activity' || key === 'student_activity';
+                              const isEmpty = !val.trim();
+
+                              return (
+                                <div key={key}>
+                                  <div className="flex items-center justify-between mb-0.5">
+                                    <label className="block text-[10px] font-black text-[#52525B] uppercase tracking-wider">
+                                      {label}
+                                      {isRequiredField && <span className="text-rose-500 ml-0.5">*</span>}
+                                    </label>
+                                    {isEmpty && isRequiredField && (
+                                      <span className="text-[9px] font-bold text-amber-700 bg-amber-100 px-1.5 py-0.2 rounded">
+                                        empty
+                                      </span>
+                                    )}
+                                  </div>
+                                  <textarea
+                                    rows={key === 'teacher_activity' || key === 'student_activity' ? 2 : 1}
+                                    value={val}
+                                    onChange={e => handleUpdateBlockField(lIdx, bIdx, key, e.target.value)}
+                                    placeholder={isEmpty ? `(Empty ${label.toLowerCase()})` : undefined}
+                                    className={`w-full bg-white border-2 rounded-lg p-2 text-xs font-bold text-[#18181B] focus:outline-hidden resize-y font-sans ${
+                                      isEmpty && isRequiredField
+                                        ? 'border-amber-300 bg-amber-50/30'
+                                        : 'border-[#18181B]'
+                                    }`}
+                                  />
+                                </div>
+                              );
+                            })}
+
+                            {/* Any preserved custom/legacy fields (e.g. objective) */}
+                            {customFieldEntries.map(([k, val]) => (
+                              <div key={k}>
+                                <label className="block text-[10px] font-black text-[#52525B] uppercase tracking-wider mb-0.5">
+                                  {k.replace(/_/g, ' ')} (Legacy / Custom)
+                                </label>
+                                <textarea
+                                  rows={2}
+                                  value={val}
+                                  onChange={e => handleUpdateBlockField(lIdx, bIdx, k, e.target.value)}
+                                  className="w-full bg-white border-2 border-[#18181B] rounded-lg p-2 text-xs font-bold text-[#18181B] focus:outline-hidden resize-y font-sans"
+                                />
+                              </div>
+                            ))}
+                          </div>
                         </div>
-                      </div>
-                    ))}
+                      );
+                    })}
                   </div>
                 </div>
               </div>
@@ -1047,7 +1231,7 @@ export const ImportView: React.FC = () => {
           <div className="flex justify-end space-x-3 pt-2">
             <button
               type="button"
-              onClick={resetImport}
+              onClick={() => resetImport()}
               className="px-5 py-2.5 text-xs font-black text-[#18181B] hover:bg-[#FAF7EE] bg-white border-2 border-[#18181B] rounded-xl shadow-[1px_1px_0px_#18181B] cursor-pointer"
             >
               Cancel
