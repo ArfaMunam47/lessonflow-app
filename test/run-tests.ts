@@ -810,6 +810,390 @@ Time: 15 mins
   assert(extDTO!.blocks[0].fields.some(f => f.key === 'teacher_activity' && f.value === 'Warmup review on projector'), 'Extension DTO has edited teacher_activity');
   assert(extDTO!.blocks[1].fields.some(f => f.key === 'teacher_activity' && f.value === 'Circulate and support differentiated small groups'), 'Extension DTO has reordered block content');
 
+  // Test 31: Faithful School Document Metadata Extraction & Lesson Sequence Preservation
+  console.log('\n[Test 31] Faithful School Document Metadata Extraction & Lesson Sequence Preservation');
+
+  const schoolDocumentText = `
+# Weekly Curriculum - Science & Math
+
+Teacher Name: Dr. Robert Vance
+Subject: Physics
+Class and Section: Class 11, Section C
+Day Number: Day 3
+Duration: 45 mins
+Topic: Projectile Motion & Trajectory
+Attainment Target: CCSS.MATH.HSA.CED.A.2: Create equations in two variables to represent relationships between quantities.
+Learning Outcomes: SWBAT calculate the maximum projectile height and horizontal range using kinematic equations.
+Activities: 1. Launch angle simulation warmup 2. Derivation of range formula 3. Laboratory calculations
+
+| Block | Content and Teacher Activity | Student Activity | Time in minutes | Learning Materials and Resources | Formative Assessment |
+| 1 | Model initial velocity vector decomposition (Vx, Vy) on smartboard. | Sketch velocity vector triangles in lab notebooks. | 10 mins | Interactive trajectory simulator, smartboard | Check vector decomposition sketches on desk. |
+| 2 | Guide students through algebraic derivation of range R = (v^2 * sin(2θ)) / g. | Solve guided derivation steps on handout page 3. | 20 mins | Derivation handout, scientific calculator | Cold call CFU on trigonometric double-angle formula. |
+| Content and Teacher Activity | Student Activity | Time in minutes | Learning Materials and Resources | Formative Assessment |
+| 3 | Circulate and verify student calculations for 45-degree optimal angle test. | Calculate predicted range for projectile launcher lab test. | 15 mins | Spring launcher, carbon paper, meter sticks | Measure launch accuracy vs theoretical calculation. |
+
+Teacher Name: Dr. Robert Vance
+Subject: Physics
+Class and Section: Class 11, Section C
+Day Number: Day 4
+Duration: 45 mins
+Topic: Air Resistance & Terminal Velocity
+Attainment Target: CCSS.MATH.HSA.CED.A.3: Represent constraints by equations or inequalities.
+Learning Outcomes: SWBAT compare vacuum trajectories with drag-influenced trajectories.
+Activities: Parachute drop experiment and drag coefficient analysis.
+
+| Block | Content and Teacher Activity | Student Activity | Time in minutes | Learning Materials and Resources | Formative Assessment |
+| 1 | Demonstrate coffee filter descent in air vs ball bearing in vacuum tube. | Record fall times with photogate timers. | 15 mins | Photogates, coffee filters, vacuum drop tube | Formative notebook checkpoint. |
+| 2 | Lead discussion on terminal velocity equations. | Plot velocity-time curves on graph paper. | 20 mins | Graph paper, physics workbook page 54 | Exit ticket: calculate terminal velocity condition. |
+
+Teacher Name: Dr. Robert Vance
+Subject: Physics
+Class and Section: Class 10, Section A
+Day Number: Day 1
+Duration: 50 mins
+Topic: Introduction to Scalars and Vectors
+Attainment Target: NGSS HS-PS2-1: Analyze data to support the claim that Newton's second law of motion is obeyed.
+Learning Outcomes: SWBAT distinguish between scalar and vector quantities with real-world examples.
+Activities: Direct lecture, classroom displacement walk, and card sorting activity.
+
+| Block | Content and Teacher Activity | Student Activity | Time in minutes | Learning Materials and Resources | Formative Assessment |
+| 1 | Introduce difference between distance and displacement with map walk. | Track displacement vs distance traveled across classroom floor. | 20 mins | Floor grid tape, measuring wheel | Whiteboard check: distance vs displacement. |
+| 2 | Distribute vector classification cards. | Sort 12 physical quantities into scalar and vector columns. | 15 mins | Sorting card deck, T-chart handout | Check sorted cards against answer rubric. |
+  `;
+
+  const parsedSchoolDoc = heuristicParseDocument({
+    rawText: schoolDocumentText,
+    effectiveTitle: 'Physics Curriculum Week 11',
+    effectiveSourceType: 'plain_text',
+  });
+
+  // Verify lesson count matches actual lesson structure (3 lessons, NOT 7 or 32!)
+  assert(parsedSchoolDoc.lessons.length === 3, `Extracted exact lesson count: expected 3 lessons, got ${parsedSchoolDoc.lessons.length}`);
+
+  // Verify Lesson 1 metadata
+  const l1 = parsedSchoolDoc.lessons[0];
+  assert(l1.className.includes('11'), `Lesson 1 class is Class 11 (Got ${l1.className})`);
+  assert(l1.section === 'C' || l1.section === 'Section C', `Lesson 1 section is C (Got ${l1.section})`);
+  assert(l1.dayNumber === 'Day 3', `Lesson 1 dayNumber is Day 3 (Got ${l1.dayNumber})`);
+  assert(l1.topic === 'Projectile Motion & Trajectory', `Lesson 1 topic is "Projectile Motion & Trajectory" (Got "${l1.topic}")`);
+  assert(
+    Boolean(l1.topic && l1.topic !== l1.target && !l1.topic.includes('CCSS.MATH')),
+    'Attainment Target is NEVER placed in Topic field'
+  );
+  assert(l1.target.includes('CCSS.MATH.HSA.CED.A.2'), 'Lesson 1 attainment target extracted faithfully');
+  assert(Boolean(l1.learningOutcomes?.includes('calculate the maximum projectile height')), 'Lesson 1 learning outcomes extracted');
+  assert(l1.teacherName === 'Dr. Robert Vance', 'Lesson 1 teacherName extracted');
+  assert(l1.subject === 'Physics', 'Lesson 1 subject extracted');
+  assert(l1.duration === '45 mins', 'Lesson 1 duration extracted');
+
+  // Verify repeated table header was filtered out and NOT treated as a 4th block or new lesson
+  assert(l1.blocks.length === 3, `Lesson 1 has exactly 3 activity blocks (Got ${l1.blocks.length})`);
+  assert(l1.blocks[0].fields.teacher_activity.includes('Model initial velocity vector decomposition'), 'Block 1 teacher activity preserved');
+  assert(l1.blocks[1].fields.teacher_activity.includes('Guide students through algebraic derivation'), 'Block 2 teacher activity preserved');
+  assert(l1.blocks[2].fields.teacher_activity.includes('Circulate and verify student calculations'), 'Block 3 teacher activity preserved (repeated header ignored)');
+
+  // Verify Lesson 2 metadata
+  const l2 = parsedSchoolDoc.lessons[1];
+  assert(l2.className.includes('11'), 'Lesson 2 class is Class 11');
+  assert(l2.dayNumber === 'Day 4', 'Lesson 2 dayNumber is Day 4');
+  assert(l2.topic === 'Air Resistance & Terminal Velocity', 'Lesson 2 topic is "Air Resistance & Terminal Velocity"');
+  assert(l2.blocks.length === 2, 'Lesson 2 has exactly 2 activity blocks');
+
+  // Verify Lesson 3 metadata (class changed to Class 10, dayNumber is Day 1)
+  const l3 = parsedSchoolDoc.lessons[2];
+  assert(l3.className.includes('10'), 'Lesson 3 class correctly identifies Class 10');
+  assert(l3.dayNumber === 'Day 1', 'Lesson 3 dayNumber is Day 1 without resetting or corrupting prior lessons');
+  assert(l3.topic === 'Introduction to Scalars and Vectors', 'Lesson 3 topic is "Introduction to Scalars and Vectors"');
+  assert(l3.blocks.length === 2, 'Lesson 3 has 2 activity blocks');
+
+  // Test 32: School Document Metadata Persistence & Chrome Extension DTO Delivery
+  console.log('\n[Test 32] School Document Metadata Persistence & Chrome Extension DTO Delivery');
+
+  // Commit the parsed school document to database
+  const commitSchoolRes = await db.commitImportedWeek(teacherA.id, parsedSchoolDoc);
+  assert(commitSchoolRes.recordsCount === 3, 'Committed all 3 school lessons to database');
+
+  const savedLessons = db.listLessonRecords(teacherA.id, commitSchoolRes.week.id);
+  assert(savedLessons.length === 3, 'Retrieved all 3 saved records from database');
+
+  const savedL1 = savedLessons[0];
+  assert(savedL1.topic === 'Projectile Motion & Trajectory', 'Saved record has topic: Projectile Motion & Trajectory');
+  assert(savedL1.dayNumber === 'Day 3', 'Saved record has dayNumber: Day 3');
+  assert(savedL1.teacherName === 'Dr. Robert Vance', 'Saved record has teacherName');
+  assert(savedL1.subject === 'Physics', 'Saved record has subject');
+  assert(savedL1.duration === '45 mins', 'Saved record has duration');
+
+  // Verify update preserves metadata fields
+  const updatedL1 = await db.updateLessonRecord(teacherA.id, savedL1.id, {
+    topic: '2D Kinematics and Projectiles',
+    duration: '50 mins',
+  });
+  assert(updatedL1 !== null, 'Updated lesson record');
+  assert(updatedL1!.topic === '2D Kinematics and Projectiles', 'Updated topic persisted');
+  assert(updatedL1!.duration === '50 mins', 'Updated duration persisted');
+  assert(updatedL1!.dayNumber === 'Day 3', 'Preserved dayNumber on update');
+
+  // Verify Chrome Extension DTO includes all school metadata
+  const schoolExtDTO = db.getExtensionRecordDTO(teacherA.id, savedL1.id);
+  assert(schoolExtDTO !== null, 'Generated Extension DTO for school lesson');
+  assert(schoolExtDTO!.topic === '2D Kinematics and Projectiles', 'Extension DTO has topic');
+  assert(schoolExtDTO!.dayNumber === 'Day 3', 'Extension DTO has dayNumber');
+  assert(schoolExtDTO!.teacherName === 'Dr. Robert Vance', 'Extension DTO has teacherName');
+  assert(schoolExtDTO!.subject === 'Physics', 'Extension DTO has subject');
+  assert(schoolExtDTO!.duration === '50 mins', 'Extension DTO has duration');
+  assert(schoolExtDTO!.blocks.length === 3, 'Extension DTO has all 3 activity blocks');
+  assert(schoolExtDTO!.blocks[0].fields.some(f => f.key === 'teacher_activity' && f.value.includes('Model initial velocity')), 'Extension DTO has Block 1 teacher_activity');
+  assert(schoolExtDTO!.blocks[0].fields.some(f => f.key === 'student_activity' && f.value.includes('Sketch velocity vector')), 'Extension DTO has Block 1 student_activity');
+  assert(schoolExtDTO!.blocks[0].fields.some(f => f.key === 'time' && f.value === '10 mins'), 'Extension DTO has Block 1 time');
+  assert(schoolExtDTO!.blocks[0].fields.some(f => f.key === 'resources' && f.value.includes('Interactive trajectory simulator')), 'Extension DTO has Block 1 resources');
+  assert(schoolExtDTO!.blocks[0].fields.some(f => f.key === 'assessment' && f.value.includes('Check vector decomposition')), 'Extension DTO has Block 1 assessment');
+
+  // Test 33: Multi-Page Real School Document Import (Day 3 & Day 4 Consecutive Lessons)
+  console.log('\n[Test 33] Multi-Page Real School Document Import: Day 3 & Day 4 Consecutive Lessons');
+
+  const realSchoolPdfText = `
+Here is the revised 40-minute lesson plan with pseudocode question practice included in the student activity.
+
+Lesson Plan – Iteration (FOR TO NEXT Loop)
+
+Name of Teacher: Mubrra Mushtaq
+Subject: Computer Science
+Topic: Iteration – FOR TO NEXT Loop
+Class: 11 C
+Duration: 40 Minutes
+
+Attainment Target
+
+Students will understand the purpose and working of the FOR TO NEXT loop and apply it to write and trace pseudocode that repeats instructions a specified number of times.
+
+Learning Outcomes (SLOs)
+
+By the end of the lesson, students will be able to:
+1. Identify the purpose and structure of a FOR TO NEXT loop.
+2. Write pseudocode using a FOR TO NEXT loop to repeat instructions a specified number of times.
+3. Trace FOR TO NEXT loops and determine their outputs accurately.
+
+BSS Learner Profile: The lesson develops Analytical, Inquisitive, Collaborative, and Reflective learners.
+
+Lesson Delivery
+
+Content And Teacher Activity
+Student Activity
+Time (min)
+Learning Materials and Resources
+Formative assessment (Day to day assessment)
+
+Recap & Starter: Ask students why a program may need to repeat instructions. Display a repeated-output example and ask how a loop could make the pseudocode shorter. Introduce iteration and the FOR TO NEXT loop.
+Recall previous knowledge, suggest solutions, and identify situations where instructions need to be repeated.
+5
+Whiteboard/projector, notebook
+Oral questioning to assess understanding of repetition.
+
+Teacher Explanation – FOR TO NEXT Loop: Explain the purpose and syntax of the loop. Demonstrate FOR Count ← 1 TO 5, an indented instruction, and NEXT Count. Show how the loop variable changes and how the output is produced. Model one short pseudocode tracing question.
+Observe the example, note the syntax, identify the loop variable and range, and predict the output.
+10
+Whiteboard/projector, textbook/notes
+Ask how many times the loop executes and what values the loop variable takes.
+
+Pseudocode Practice & Cramming – Self-Reading and Oral Recall: Ask students to read the relevant textbook section independently and learn the purpose, syntax, and working of the loop. Students then solve teacher-provided pseudocode questions individually, including predicting outputs, tracing loop variables, and completing a FOR TO NEXT loop. Listen to students explain their answers and correct errors. Extension for early finishers: Write a loop to display even numbers from 2 to 10, exchange it with a partner, and peer-check the range and output.
+Read and learn key points, explain the loop orally, and solve pseudocode questions independently. Trace each iteration and write the final output. Early finishers create and peer-check an additional loop.
+20
+Textbook, pseudocode worksheet, notebook, whiteboard
+Check syntax, tracing tables, predicted outputs, and students' explanations.
+
+Recap: Ask students to write a FOR TO NEXT loop that displays numbers from 1 to 4. Ask them to state the output and number of iterations.
+Complete the exit task independently and explain their answers.
+5
+Notebook, whiteboard
+Check pseudocode structure, output, and understanding of iteration.
+
+Total: 40 Minutes
+
+Sample Pseudocode Questions
+Question 1 – Predict the output
+FOR Count ← 1 TO 4
+OUTPUT Count
+NEXT Count
+
+Question 2 – Trace the loop
+Total ← 0
+FOR Number ← 1 TO 3
+Total ← Total + Number
+NEXT Number
+OUTPUT Total
+
+Question 3 – Complete the pseudocode
+FOR Number ← ____ TO ____
+OUTPUT Number
+NEXT Number
+
+Key Exam Points
+● Iteration means repeating a set of instructions.
+● A FOR TO NEXT loop is suitable when the number of repetitions is known.
+
+TEF Alignment
+● Dimension 3 – Multiple Sources of Information
+● Dimension 4 – Self & Peer Reflection
+
+Evidence of Learning
+Completed pseudocode questions, tracing answers, oral recall, extension work, peer-checking, and exit responses.
+
+Here is an 80-minute BEAMS lesson plan for CAT preparation, focusing on revision of Chapters 9 and 10, past-paper practice, and the self-reading and cramming approach suitable for Matric students.
+
+Lesson Plan – CAT Preparation
+
+Name of Teacher: Mubrra Mushtaq
+Subject: Computer Science
+Topic: CAT Preparation – Revision of Chapters 9 and 10
+Class: 11 C
+Duration: 80 minutes
+
+Attainment Target
+
+Students will revise key concepts from Chapters 9 and 10 and improve their ability to answer examination-style questions accurately.
+
+Learning Outcomes (SLOs)
+
+By the end of the lesson, students will be able to:
+1. Recall important definitions, concepts, and key points from Chapters 9 and 10.
+2. Solve past-paper questions related to the revised chapters.
+3. Identify and correct mistakes to improve their CAT preparation.
+
+BSS Learner Profile: The lesson develops Analytical, Independent, Inquisitive, and Reflective learners.
+
+Content And Teacher Activity
+Student Activity
+Time (min)
+Learning Materials and Resources
+Formative assessment (Day to day assessment)
+
+Recap & Revision Starter: Briefly introduce the CAT preparation session. Ask students to recall the main topics and important terms from Chapters 9 and 10. Write the chapter headings on the board and invite students to share key concepts.
+Recall previous learning and identify important topics from both chapters.
+8
+Textbook, board/projector, notebooks
+Oral questioning and checking prior knowledge.
+
+Teacher-Guided Revision: Review the important definitions, concepts, rules, and examples from Chapters 9 and 10. Clarify difficult points and highlight commonly tested areas. Explain how to identify command words and structure answers according to the marks allocated.
+Listen, revise important points, ask questions, and mark difficult concepts for further review.
+12
+Textbook, board/projector, revision notes
+Targeted questioning and clarification of misconceptions.
+
+Cramming – Self-Reading & Oral Recall: Give students time to read the relevant textbook sections independently and learn key definitions, facts, and concepts. Call students individually to recall answers without looking at the book. Correct incomplete or inaccurate responses and ask students to repeat the corrected points.
+Read and learn independently, then recall important concepts orally when called by the teacher. Correct and repeat answers where necessary.
+15
+Textbook, notebooks
+Individual oral recall, immediate feedback, and identification of learning gaps.
+
+Past-Paper Practice – Individual Attempt: Distribute selected past-paper questions from Chapters 9 and 10. Guide students to read each question carefully, identify what is being asked, and answer according to the marks allocated. Allow students to attempt the questions independently before discussing answers.
+Solve past-paper questions independently, apply revised concepts, and manage their time while writing answers.
+25
+Past-paper questions, notebooks, pens, marking scheme
+Teacher circulates, checks progress, monitors answer quality, and supports students who need help.
+
+Marking & Error Correction: Display or explain the correct answers using the marking scheme. Ask students to compare their responses, identify missing points, and correct mistakes in a different colour. Clarify common errors.
+Check their answers against the marking scheme, correct mistakes, and note concepts that need further revision.
+15
+Past-paper questions, marking scheme, board/projector
+Self-assessment, teacher questioning, and checking corrected responses.
+
+Recap & Reflection: Ask students to name one concept they revised successfully and one area they need to practise more. Remind them to revise corrected answers before the CAT.
+Reflect on their preparation and identify their next revision priority.
+5
+Notebook, board
+Oral responses and individual reflection.
+
+Total: 80 minutes
+
+CAT Preparation Focus
+● Revise key definitions and terminology from Chapters 9 and 10.
+● Learn important concepts and rules.
+● Practise past-paper questions independently.
+
+Evidence of Learning
+Students' oral recall, attempted past-paper questions, self-corrected answers, and reflections will provide evidence of revision and examination readiness.
+  `;
+
+  const parsedRealDoc = heuristicParseDocument({
+    rawText: realSchoolPdfText,
+    effectiveTitle: 'Computer Science Week 8 Plans.pdf',
+    effectiveSourceType: 'pdf',
+  });
+
+  // Verify exactly 2 distinct lessons are preserved without page-break duplication or merging
+  assert(parsedRealDoc.lessons.length === 2, `Extracted exactly 2 lessons from multi-page document (Got ${parsedRealDoc.lessons.length})`);
+
+  // Verify Day 3 (Lesson 1)
+  const d3 = parsedRealDoc.lessons[0];
+  assert(d3.teacherName === 'Mubrra Mushtaq', `Day 3 teacherName is Mubrra Mushtaq (Got "${d3.teacherName}")`);
+  assert(d3.subject === 'Computer Science', `Day 3 subject is Computer Science (Got "${d3.subject}")`);
+  assert(d3.topic === 'Iteration – FOR TO NEXT Loop', `Day 3 topic is "Iteration – FOR TO NEXT Loop" (Got "${d3.topic}")`);
+  assert(d3.topic !== d3.target, 'Day 3 Topic is strictly separate from Attainment Target');
+  assert(d3.className === 'Class 11', `Day 3 className parsed as Class 11 (Got "${d3.className}")`);
+  assert(d3.section === 'C', `Day 3 section parsed as C (Got "${d3.section}")`);
+  assert(d3.duration === '40 Minutes', `Day 3 duration is 40 Minutes (Got "${d3.duration}")`);
+  assert(d3.target.includes('understand the purpose and working of the FOR TO NEXT loop'), 'Day 3 Attainment Target extracted faithfully without colon');
+  assert(Boolean(d3.learningOutcomes?.includes('Identify the purpose and structure of a FOR TO NEXT loop')), 'Day 3 Learning Outcomes (SLOs) extracted faithfully without colon');
+  assert(d3.blocks.length === 4, `Day 3 has exactly 4 activity blocks (Got ${d3.blocks.length})`);
+  assert(d3.blocks[0].fields.teacher_activity.includes('Recap & Starter'), 'Day 3 Block 1 teacher_activity preserved');
+  assert(d3.blocks[0].fields.student_activity.includes('Recall previous knowledge'), 'Day 3 Block 1 student_activity preserved');
+  assert(d3.blocks[0].fields.time === '5 mins' || d3.blocks[0].fields.time === '5', 'Day 3 Block 1 time is 5 min');
+  assert(d3.blocks[0].fields.resources.includes('Whiteboard/projector'), 'Day 3 Block 1 resources preserved');
+  assert(d3.blocks[0].fields.assessment.includes('Oral questioning'), 'Day 3 Block 1 assessment preserved');
+  assert(d3.blocks[1].fields.teacher_activity.includes('Teacher Explanation'), 'Day 3 Block 2 teacher_activity preserved');
+  assert(d3.blocks[2].fields.teacher_activity.includes('Pseudocode Practice'), 'Day 3 Block 3 teacher_activity preserved');
+  assert(d3.blocks[3].fields.teacher_activity.includes('Recap'), 'Day 3 Block 4 teacher_activity preserved');
+
+  // Verify Day 4 (Lesson 2)
+  const d4 = parsedRealDoc.lessons[1];
+  assert(d4.teacherName === 'Mubrra Mushtaq', `Day 4 teacherName is Mubrra Mushtaq (Got "${d4.teacherName}")`);
+  assert(d4.subject === 'Computer Science', `Day 4 subject is Computer Science (Got "${d4.subject}")`);
+  assert(d4.topic === 'CAT Preparation – Revision of Chapters 9 and 10', `Day 4 topic is "CAT Preparation – Revision of Chapters 9 and 10" (Got "${d4.topic}")`);
+  assert(d4.topic !== d4.target, 'Day 4 Topic is strictly separate from Attainment Target');
+  assert(d4.className === 'Class 11', `Day 4 className parsed as Class 11 (Got "${d4.className}")`);
+  assert(d4.section === 'C', `Day 4 section parsed as C (Got "${d4.section}")`);
+  assert(d4.duration === '80 minutes', `Day 4 duration is 80 minutes (Got "${d4.duration}")`);
+  assert(d4.target.includes('revise key concepts from Chapters 9 and 10'), 'Day 4 Attainment Target extracted faithfully');
+  assert(Boolean(d4.learningOutcomes?.includes('Recall important definitions, concepts')), 'Day 4 Learning Outcomes (SLOs) extracted faithfully');
+  assert(d4.blocks.length === 6, `Day 4 has exactly 6 activity blocks (Got ${d4.blocks.length})`);
+  assert(d4.blocks[0].fields.teacher_activity.includes('Recap & Revision Starter'), 'Day 4 Block 1 teacher_activity preserved');
+  assert(d4.blocks[1].fields.teacher_activity.includes('Teacher-Guided Revision'), 'Day 4 Block 2 teacher_activity preserved');
+  assert(d4.blocks[2].fields.teacher_activity.includes('Cramming'), 'Day 4 Block 3 teacher_activity preserved');
+  assert(d4.blocks[3].fields.teacher_activity.includes('Past-Paper Practice'), 'Day 4 Block 4 teacher_activity preserved');
+  assert(d4.blocks[4].fields.teacher_activity.includes('Marking & Error Correction'), 'Day 4 Block 5 teacher_activity preserved');
+  assert(d4.blocks[5].fields.teacher_activity.includes('Recap & Reflection'), 'Day 4 Block 6 teacher_activity preserved');
+
+  // Verify missing dayNumber flags for review without guessing
+  assert(d3.needsReview === true, 'Day 3 flagged for teacher review because day number is unstated in source text');
+  assert(d4.needsReview === true, 'Day 4 flagged for teacher review because day number is unstated in source text');
+
+  // Verify persistence and Chrome Extension DTO delivery for real document lessons
+  const realCommit = await db.commitImportedWeek(teacherA.id, {
+    ...parsedRealDoc,
+    lessons: [
+      { ...d3, dayNumber: 'Day 3', day: 'Day 3', sourceLessonId: '11 C Day 3' },
+      { ...d4, dayNumber: 'Day 4', day: 'Day 4', sourceLessonId: '11 C Day 4' },
+    ],
+  });
+  assert(realCommit.recordsCount === 2, 'Committed both reviewed real lessons to database');
+
+  const realSavedLessons = db.listLessonRecords(teacherA.id, realCommit.week.id);
+  assert(realSavedLessons.length === 2, 'Retrieved 2 real school lessons from database');
+  assert(realSavedLessons[0].topic === 'Iteration – FOR TO NEXT Loop', 'Saved Day 3 topic');
+  assert(realSavedLessons[0].dayNumber === 'Day 3', 'Saved Day 3 dayNumber');
+  assert(realSavedLessons[1].topic === 'CAT Preparation – Revision of Chapters 9 and 10', 'Saved Day 4 topic');
+  assert(realSavedLessons[1].dayNumber === 'Day 4', 'Saved Day 4 dayNumber');
+
+  const realDtoD3 = db.getExtensionRecordDTO(teacherA.id, realSavedLessons[0].id);
+  assert(realDtoD3 !== null, 'Extension DTO generated for real Day 3');
+  assert(realDtoD3!.topic === 'Iteration – FOR TO NEXT Loop', 'Extension DTO has Day 3 topic');
+  assert(realDtoD3!.blocks.length === 4, 'Extension DTO has all 4 activity blocks for Day 3');
+
+  const realDtoD4 = db.getExtensionRecordDTO(teacherA.id, realSavedLessons[1].id);
+  assert(realDtoD4 !== null, 'Extension DTO generated for real Day 4');
+  assert(realDtoD4!.topic === 'CAT Preparation – Revision of Chapters 9 and 10', 'Extension DTO has Day 4 topic');
+  assert(realDtoD4!.blocks.length === 6, 'Extension DTO has all 6 activity blocks for Day 4');
+
   console.log(`\n========================================`);
   console.log(`Tests Finished: ${passed} Passed, ${failed} Failed`);
   console.log(`========================================\n`);

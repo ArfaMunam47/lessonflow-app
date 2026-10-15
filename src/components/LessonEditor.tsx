@@ -217,8 +217,21 @@ export const LessonEditor: React.FC<LessonEditorProps> = ({ record }) => {
       </div>
 
       <div className="p-6 space-y-6">
-        {/* Metadata Section: Class, Section, Day, Date */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3.5 bg-[#FAF7EE] p-4 rounded-2xl border-2 border-[#18181B] shadow-[1px_1px_0px_#18181B]">
+        {/* Metadata Section: Identifiers, Topic & School Context */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5 bg-[#FAF7EE] p-4 rounded-2xl border-2 border-[#18181B] shadow-[1px_1px_0px_#18181B]">
+          <div>
+            <label className="block text-[10px] font-black text-[#52525B] uppercase tracking-wider mb-1">
+              Source Identifier
+            </label>
+            <input
+              type="text"
+              value={record.sourceLessonId || ''}
+              onChange={e => handleFieldChange('sourceLessonId', e.target.value)}
+              placeholder="e.g. 11 C Day 3"
+              className="w-full text-xs font-bold text-[#18181B] bg-white border-2 border-[#18181B] rounded-xl px-3 py-1.5 focus:outline-hidden"
+            />
+          </div>
+
           <div>
             <label className="block text-[10px] font-black text-[#52525B] uppercase tracking-wider mb-1">
               Class <span className="text-rose-500">*</span>
@@ -227,7 +240,7 @@ export const LessonEditor: React.FC<LessonEditorProps> = ({ record }) => {
               type="text"
               value={record.className}
               onChange={e => handleFieldChange('className', e.target.value)}
-              placeholder="e.g. 6A"
+              placeholder="e.g. Class 11, 6A"
               className="w-full text-xs font-bold text-[#18181B] bg-white border-2 border-[#18181B] rounded-xl px-3 py-1.5 focus:outline-hidden"
             />
           </div>
@@ -240,37 +253,96 @@ export const LessonEditor: React.FC<LessonEditorProps> = ({ record }) => {
               type="text"
               value={record.section}
               onChange={e => handleFieldChange('section', e.target.value)}
-              placeholder="e.g. Blue"
+              placeholder="e.g. C, Blue"
               className="w-full text-xs font-bold text-[#18181B] bg-white border-2 border-[#18181B] rounded-xl px-3 py-1.5 focus:outline-hidden"
             />
           </div>
 
           <div>
             <label className="block text-[10px] font-black text-[#52525B] uppercase tracking-wider mb-1">
-              Day <span className="text-rose-500">*</span>
+              Day / Day Number <span className="text-rose-500">*</span>
             </label>
-            <select
-              value={record.day}
-              onChange={e => handleFieldChange('day', e.target.value)}
-              className="w-full text-xs font-bold text-[#18181B] bg-white border-2 border-[#18181B] rounded-xl px-2.5 py-1.5 focus:outline-hidden cursor-pointer"
-            >
+            <input
+              type="text"
+              list="days-list"
+              value={record.dayNumber || record.day}
+              onChange={e => {
+                handleFieldChange('day', e.target.value);
+                handleFieldChange('dayNumber', e.target.value);
+              }}
+              placeholder="e.g. Day 3, Monday"
+              className="w-full text-xs font-bold text-[#18181B] bg-white border-2 border-[#18181B] rounded-xl px-3 py-1.5 focus:outline-hidden"
+            />
+            <datalist id="days-list">
               {DAYS_OF_WEEK.map(d => (
-                <option key={d} value={d}>
-                  {d}
-                </option>
+                <option key={d} value={d} />
               ))}
-            </select>
+              <option value="Day 1" />
+              <option value="Day 2" />
+              <option value="Day 3" />
+              <option value="Day 4" />
+              <option value="Day 5" />
+            </datalist>
+          </div>
+
+          <div>
+            <div className="flex items-center justify-between mb-1">
+              <label className="block text-[10px] font-black text-[#18181B] uppercase tracking-wider">
+                Lesson Topic (Day-Specific)
+              </label>
+              {!record.topic?.trim() && (
+                <span className="text-[9px] font-black text-rose-700 bg-rose-50 px-1.5 py-0.5 rounded border border-rose-200">
+                  Missing Topic
+                </span>
+              )}
+            </div>
+            <input
+              type="text"
+              value={record.topic || ''}
+              onChange={e => handleFieldChange('topic', e.target.value)}
+              placeholder="e.g. Quadratic Equations (distinct from Target)"
+              className={`w-full text-xs font-bold text-[#18181B] bg-white border-2 rounded-xl px-3 py-1.5 focus:outline-hidden ${
+                !record.topic?.trim() ? 'border-amber-400 bg-amber-50/40' : 'border-[#18181B]'
+              }`}
+            />
           </div>
 
           <div>
             <label className="block text-[10px] font-black text-[#52525B] uppercase tracking-wider mb-1">
-              Date (Optional)
+              Subject
             </label>
             <input
-              type="date"
-              value={record.date || ''}
-              onChange={e => handleFieldChange('date', e.target.value)}
-              className="w-full text-xs font-bold text-[#18181B] bg-white border-2 border-[#18181B] rounded-xl px-2.5 py-1.5 focus:outline-hidden cursor-pointer"
+              type="text"
+              value={record.subject || ''}
+              onChange={e => handleFieldChange('subject', e.target.value)}
+              placeholder="e.g. Mathematics, Physics"
+              className="w-full text-xs font-bold text-[#18181B] bg-white border-2 border-[#18181B] rounded-xl px-3 py-1.5 focus:outline-hidden"
+            />
+          </div>
+
+          <div>
+            <label className="block text-[10px] font-black text-[#52525B] uppercase tracking-wider mb-1">
+              Teacher Name
+            </label>
+            <input
+              type="text"
+              value={record.teacherName || ''}
+              onChange={e => handleFieldChange('teacherName', e.target.value)}
+              placeholder="e.g. Mr. Smith"
+              className="w-full text-xs font-bold text-[#18181B] bg-white border-2 border-[#18181B] rounded-xl px-3 py-1.5 focus:outline-hidden"
+            />
+          </div>
+
+          <div>
+            <label className="block text-[10px] font-black text-[#52525B] uppercase tracking-wider mb-1">
+              Duration
+            </label>
+            <input
+              type="text"
+              value={record.duration || ''}
+              onChange={e => handleFieldChange('duration', e.target.value)}
+              placeholder="e.g. 45 mins, 60 mins"
+              className="w-full text-xs font-bold text-[#18181B] bg-white border-2 border-[#18181B] rounded-xl px-3 py-1.5 focus:outline-hidden"
             />
           </div>
         </div>

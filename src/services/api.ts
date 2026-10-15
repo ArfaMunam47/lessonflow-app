@@ -149,6 +149,12 @@ class ApiClient {
       section?: string;
       day: string;
       date?: string;
+      teacherName?: string;
+      subject?: string;
+      topic?: string;
+      dayNumber?: string;
+      duration?: string;
+      sourceLessonId?: string;
       target?: string;
       learningOutcomes?: string;
       activities?: string;

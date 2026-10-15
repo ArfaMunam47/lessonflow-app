@@ -343,7 +343,23 @@ apiRouter.get('/lesson-records', (req, res) => {
 apiRouter.post('/weeks/:weekId/lesson-records', async (req, res) => {
   try {
     const user = req.user!;
-    const { className, section, day, date, target, learningOutcomes, activities, blockCount, templateId } = req.body;
+    const {
+      className,
+      section,
+      day,
+      date,
+      teacherName,
+      subject,
+      topic,
+      dayNumber,
+      duration,
+      sourceLessonId,
+      target,
+      learningOutcomes,
+      activities,
+      blockCount,
+      templateId,
+    } = req.body;
 
     if (!className || !day) {
       res.status(400).json({ error: 'Class and Day are required.' });
@@ -355,6 +371,12 @@ apiRouter.post('/weeks/:weekId/lesson-records', async (req, res) => {
       section,
       day,
       date,
+      teacherName,
+      subject,
+      topic,
+      dayNumber,
+      duration,
+      sourceLessonId,
       target,
       learningOutcomes,
       activities,

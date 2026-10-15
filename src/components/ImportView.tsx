@@ -941,15 +941,34 @@ export const ImportView: React.FC = () => {
                   lesson.needsReview ? 'bg-[#FFFBEB]' : ''
                 }`}
               >
-                {/* Lesson Header */}
+                {/* Lesson Header with Faithful Source Identifiers */}
                 <div className="flex flex-wrap items-center justify-between gap-2 pb-3 border-b-2 border-[#18181B]/15">
-                  <div className="flex items-center space-x-2">
-                    <span className="font-black text-sm text-[#18181B]">
-                      Lesson #{lIdx + 1}
+                  <div className="flex flex-wrap items-center gap-2">
+                    <span className="font-black text-sm text-[#18181B] bg-[#FAF7EE] px-2.5 py-1 rounded-xl border-2 border-[#18181B] shadow-[1px_1px_0px_#18181B]">
+                      {lesson.sourceLessonId || `${lesson.className || 'Class'} ${lesson.section ? `[${lesson.section}] ` : ''}${lesson.dayNumber || lesson.day}`}
                     </span>
-                    <span className="text-xs font-bold text-[#52525B]">
-                      ({lesson.day} - {lesson.className} {lesson.section ? `[${lesson.section}]` : ''})
+                    <span className="text-xs font-bold text-[#71717A]">
+                      (Sequence #{lIdx + 1})
                     </span>
+                    {lesson.topic ? (
+                      <span className="text-[11px] font-black text-[#18181B] bg-[#DBEAFE] px-2.5 py-0.5 rounded-md border-2 border-[#18181B]">
+                        Topic: {lesson.topic}
+                      </span>
+                    ) : (
+                      <span className="text-[10px] font-black text-amber-900 bg-amber-100 px-2 py-0.5 rounded-md border border-amber-300">
+                        No Topic — Review Required
+                      </span>
+                    )}
+                    {lesson.dayNumber && (
+                      <span className="text-[11px] font-black text-[#18181B] bg-[#E0E7FF] px-2 py-0.5 rounded-md border-2 border-[#18181B]">
+                        {lesson.dayNumber}
+                      </span>
+                    )}
+                    {lesson.duration && (
+                      <span className="text-[11px] font-bold text-[#18181B] bg-neutral-100 px-2 py-0.5 rounded-md border border-neutral-300">
+                        {lesson.duration}
+                      </span>
+                    )}
                     {lesson.needsReview && (
                       <span className="text-[10px] font-black text-[#18181B] bg-[#FEF08A] px-2.5 py-0.5 rounded-md border-2 border-[#18181B] flex items-center shadow-[1px_1px_0px_#18181B]">
                         <AlertCircle className="w-3 h-3 mr-1 stroke-[2.5]" />
@@ -978,34 +997,115 @@ export const ImportView: React.FC = () => {
                   </div>
                 </div>
 
-                {/* Day, Class, Section */}
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
+                {/* School Document Metadata: Identifiers & Lesson Context */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 text-xs bg-[#FAF7EE] p-4 rounded-2xl border-2 border-[#18181B] shadow-[1px_1px_0px_#18181B]">
                   <div>
-                    <label className="block font-black text-[#52525B] uppercase text-[10px] tracking-wider mb-1">Day</label>
+                    <label className="block font-black text-[#52525B] uppercase text-[10px] tracking-wider mb-1">
+                      Source Identifier
+                    </label>
                     <input
                       type="text"
-                      value={lesson.day}
-                      onChange={e => handleUpdateLesson(lIdx, 'day', e.target.value)}
-                      className="w-full border-2 border-[#18181B] rounded-xl p-2 font-black text-[#18181B] bg-[#FAF7EE] focus:bg-white focus:outline-hidden"
+                      value={lesson.sourceLessonId || ''}
+                      onChange={e => handleUpdateLesson(lIdx, 'sourceLessonId', e.target.value)}
+                      placeholder="e.g. 11 C Day 3"
+                      className="w-full border-2 border-[#18181B] rounded-xl p-2 font-black text-[#18181B] bg-white focus:outline-hidden"
                     />
                   </div>
                   <div>
-                    <label className="block font-black text-[#52525B] uppercase text-[10px] tracking-wider mb-1">Class</label>
+                    <label className="block font-black text-[#52525B] uppercase text-[10px] tracking-wider mb-1">
+                      Class / Grade <span className="text-rose-500">*</span>
+                    </label>
                     <input
                       type="text"
                       value={lesson.className}
                       onChange={e => handleUpdateLesson(lIdx, 'className', e.target.value)}
-                      className="w-full border-2 border-[#18181B] rounded-xl p-2 font-black text-[#18181B] bg-[#FAF7EE] focus:bg-white focus:outline-hidden"
+                      placeholder="e.g. Class 11"
+                      className="w-full border-2 border-[#18181B] rounded-xl p-2 font-black text-[#18181B] bg-white focus:outline-hidden"
                     />
                   </div>
                   <div>
-                    <label className="block font-black text-[#52525B] uppercase text-[10px] tracking-wider mb-1">Section</label>
+                    <label className="block font-black text-[#52525B] uppercase text-[10px] tracking-wider mb-1">
+                      Section
+                    </label>
                     <input
                       type="text"
                       value={lesson.section || ''}
                       onChange={e => handleUpdateLesson(lIdx, 'section', e.target.value)}
-                      placeholder="Optional"
-                      className="w-full border-2 border-[#18181B] rounded-xl p-2 font-bold text-[#18181B] bg-[#FAF7EE] focus:bg-white focus:outline-hidden"
+                      placeholder="e.g. C, Section C"
+                      className="w-full border-2 border-[#18181B] rounded-xl p-2 font-bold text-[#18181B] bg-white focus:outline-hidden"
+                    />
+                  </div>
+                  <div>
+                    <label className="block font-black text-[#52525B] uppercase text-[10px] tracking-wider mb-1">
+                      Day / Day Number <span className="text-rose-500">*</span>
+                    </label>
+                    <input
+                      type="text"
+                      value={lesson.dayNumber || lesson.day}
+                      onChange={e => {
+                        handleUpdateLesson(lIdx, 'day', e.target.value);
+                        handleUpdateLesson(lIdx, 'dayNumber', e.target.value);
+                      }}
+                      placeholder="e.g. Day 3, Monday"
+                      className="w-full border-2 border-[#18181B] rounded-xl p-2 font-black text-[#18181B] bg-white focus:outline-hidden"
+                    />
+                  </div>
+
+                  <div>
+                    <div className="flex items-center justify-between mb-1">
+                      <label className="block font-black text-[#18181B] uppercase text-[10px] tracking-wider">
+                        Lesson Topic (Day-Specific)
+                      </label>
+                      {!lesson.topic?.trim() && (
+                        <span className="text-[9px] font-black text-rose-700 bg-rose-50 px-1.5 py-0.5 rounded border border-rose-200">
+                          Missing Topic
+                        </span>
+                      )}
+                    </div>
+                    <input
+                      type="text"
+                      value={lesson.topic || ''}
+                      onChange={e => handleUpdateLesson(lIdx, 'topic', e.target.value)}
+                      placeholder="e.g. Projectile Motion (distinct from Target)"
+                      className={`w-full border-2 rounded-xl p-2 font-black text-[#18181B] bg-white focus:outline-hidden ${
+                        !lesson.topic?.trim() ? 'border-amber-400 bg-amber-50/40' : 'border-[#18181B]'
+                      }`}
+                    />
+                  </div>
+                  <div>
+                    <label className="block font-black text-[#52525B] uppercase text-[10px] tracking-wider mb-1">
+                      Subject
+                    </label>
+                    <input
+                      type="text"
+                      value={lesson.subject || ''}
+                      onChange={e => handleUpdateLesson(lIdx, 'subject', e.target.value)}
+                      placeholder="e.g. Mathematics, Physics"
+                      className="w-full border-2 border-[#18181B] rounded-xl p-2 font-bold text-[#18181B] bg-white focus:outline-hidden"
+                    />
+                  </div>
+                  <div>
+                    <label className="block font-black text-[#52525B] uppercase text-[10px] tracking-wider mb-1">
+                      Teacher Name
+                    </label>
+                    <input
+                      type="text"
+                      value={lesson.teacherName || ''}
+                      onChange={e => handleUpdateLesson(lIdx, 'teacherName', e.target.value)}
+                      placeholder="e.g. Mr. Smith"
+                      className="w-full border-2 border-[#18181B] rounded-xl p-2 font-bold text-[#18181B] bg-white focus:outline-hidden"
+                    />
+                  </div>
+                  <div>
+                    <label className="block font-black text-[#52525B] uppercase text-[10px] tracking-wider mb-1">
+                      Duration
+                    </label>
+                    <input
+                      type="text"
+                      value={lesson.duration || ''}
+                      onChange={e => handleUpdateLesson(lIdx, 'duration', e.target.value)}
+                      placeholder="e.g. 45 mins, 60 mins"
+                      className="w-full border-2 border-[#18181B] rounded-xl p-2 font-bold text-[#18181B] bg-white focus:outline-hidden"
                     />
                   </div>
                 </div>

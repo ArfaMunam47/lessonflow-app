@@ -115,14 +115,17 @@ export const LessonPlansView: React.FC<LessonPlansViewProps> = ({
     );
   }
 
-  // Group records by day
+  // Dynamically group records by day preserving original sequence
+  const distinctDays: string[] = [];
   const groupedRecords: Record<string, LessonRecord[]> = {};
-  DAYS_ORDER.forEach(d => (groupedRecords[d] = []));
 
   records.forEach(r => {
-    const dayKey = DAYS_ORDER.find(d => d.toLowerCase() === r.day.toLowerCase()) || 'Other';
-    if (!groupedRecords[dayKey]) groupedRecords[dayKey] = [];
-    groupedRecords[dayKey].push(r);
+    const rawDay = r.day || r.dayNumber || 'Unscheduled';
+    if (!groupedRecords[rawDay]) {
+      groupedRecords[rawDay] = [];
+      distinctDays.push(rawDay);
+    }
+    groupedRecords[rawDay].push(r);
   });
 
   return (
@@ -193,7 +196,7 @@ export const LessonPlansView: React.FC<LessonPlansViewProps> = ({
 
       {/* Grouped Days List */}
       <div className="space-y-6">
-        {DAYS_ORDER.map(dayName => {
+        {distinctDays.map(dayName => {
           const dayLessons = groupedRecords[dayName] || [];
           if (dayLessons.length === 0) return null;
 
@@ -219,15 +222,28 @@ export const LessonPlansView: React.FC<LessonPlansViewProps> = ({
                     className="bg-white border-2 border-[#18181B] hover:bg-[#FAF7EE] rounded-[20px] p-5 shadow-[2px_2px_0px_#18181B] hover:shadow-[3px_3px_0px_#18181B] cursor-pointer transition-all space-y-3.5 group flex flex-col justify-between"
                   >
                     <div>
-                      {/* Top Bar: Day / Class and Status */}
+                      {/* Top Bar: Identifiers, Class, Topic and Status */}
                       <div className="flex items-start justify-between gap-2 border-b-2 border-[#18181B]/15 pb-3">
                         <div>
-                          <span className="text-[10px] uppercase font-black text-[#52525B] tracking-wider block">
-                            {lesson.day}
-                          </span>
+                          <div className="flex flex-wrap items-center gap-1.5 mb-1">
+                            <span className="text-[10px] uppercase font-black text-[#52525B] tracking-wider block">
+                              {lesson.dayNumber || lesson.day}
+                            </span>
+                            {lesson.sourceLessonId && (
+                              <span className="text-[10px] font-black text-[#18181B] bg-[#FAF7EE] px-1.5 py-0.5 rounded border border-[#18181B]">
+                                {lesson.sourceLessonId}
+                              </span>
+                            )}
+                            {lesson.duration && (
+                              <span className="text-[10px] font-bold text-[#71717A] bg-neutral-100 px-1.5 py-0.5 rounded">
+                                {lesson.duration}
+                              </span>
+                            )}
+                          </div>
+
                           <div className="flex items-center space-x-2 mt-0.5">
                             <span className="text-base font-black text-[#18181B] group-hover:underline">
-                              Class {lesson.className}
+                              {lesson.className.startsWith('Class') ? lesson.className : `Class ${lesson.className}`}
                             </span>
                             {lesson.section && (
                               <span className="text-xs font-black text-[#18181B] bg-[#DBEAFE] px-2 py-0.5 rounded-md border-2 border-[#18181B]">
@@ -252,10 +268,22 @@ export const LessonPlansView: React.FC<LessonPlansViewProps> = ({
                         </span>
                       </div>
 
+                      {/* Topic Badge if Present */}
+                      {lesson.topic && (
+                        <div className="pt-2">
+                          <span className="text-[10px] font-black uppercase text-[#52525B] tracking-wider block mb-0.5">
+                            Topic
+                          </span>
+                          <span className="inline-block text-xs font-black text-[#18181B] bg-[#DBEAFE] px-2 py-0.5 rounded-md border border-[#18181B]">
+                            {lesson.topic}
+                          </span>
+                        </div>
+                      )}
+
                       {/* Target Preview */}
                       <div className="pt-2 space-y-1">
                         <span className="text-[10px] font-black uppercase text-[#52525B] tracking-wider block">
-                          Learning Target
+                          Attainment Target
                         </span>
                         <p className="text-xs text-[#18181B] font-bold line-clamp-2 leading-relaxed">
                           {lesson.target || 'No target specified.'}

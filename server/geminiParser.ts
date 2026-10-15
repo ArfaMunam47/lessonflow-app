@@ -70,23 +70,23 @@ export function extractBlockFieldsFromText(text: string): {
   }> = [
     {
       key: 'teacher_activity',
-      regex: /(?:^|\n)\s*(?:Teacher Activity|Teacher Actions?|Teacher|Direct Instruction|Teacher's Role|Teacher Procedure)\s*:\s*/i,
+      regex: /(?:^|\n)\s*(?:Content (?:And|&)?\s*Teacher Activit(?:y|ies)|Teacher Activity|Teacher Actions?|Teacher|Direct Instruction|Teacher's Role|Teacher Procedure)\s*:\s*/i,
     },
     {
       key: 'student_activity',
-      regex: /(?:^|\n)\s*(?:Student Activity|Student Actions?|Students?|Learner Activity|Independent Practice|Student Tasks?|Students' Role|Guided Practice|Student Procedure)\s*:\s*/i,
+      regex: /(?:^|\n)\s*(?:Student Activit(?:y|ies)|Student Actions?|Students?|Learner Activity|Independent Practice|Student Tasks?|Students' Role|Guided Practice|Student Procedure)\s*:\s*/i,
     },
     {
       key: 'time',
-      regex: /(?:^|\n)\s*(?:Time|Duration|Allocated Time|Time Allocation|Minutes?|Time\/Duration)\s*:\s*/i,
+      regex: /(?:^|\n)\s*(?:Time\s*(?:\(min(?:utes?)?\))?|Duration|Allocated Time|Time Allocation|Minutes?|Time\/Duration)\s*:\s*/i,
     },
     {
       key: 'resources',
-      regex: /(?:^|\n)\s*(?:Learning Materials|Materials|Resources|Equipment|Textbooks?|Materials\/Resources|Handouts|Supplies)\s*:\s*/i,
+      regex: /(?:^|\n)\s*(?:Learning Materials(?:\s*(?:and|&)?\s*Resources)?|Materials|Resources|Equipment|Textbooks?|Materials\/Resources|Handouts|Supplies)\s*:\s*/i,
     },
     {
       key: 'assessment',
-      regex: /(?:^|\n)\s*(?:Formative Assessment|Assessment|Check for Understanding|Evaluation|Exit Ticket|CFU|Assessment\/Check)\s*:\s*/i,
+      regex: /(?:^|\n)\s*(?:Formative Assessment(?:\s*\([^)]*\))?|Day to day assessment|Assessment|Check for Understanding|Evaluation|Exit Ticket|CFU|Assessment\/Check)\s*:\s*/i,
     },
     {
       key: 'objective',
@@ -118,6 +118,33 @@ export function extractBlockFieldsFromText(text: string): {
   };
 
   if (matches.length === 0) {
+    const lines = clean.split('\n').map(l => l.trim()).filter(Boolean);
+    const timeIdx = lines.findIndex(l => /^\d+\s*(?:mins?|minutes?)?$/i.test(l));
+
+    if (timeIdx !== -1 && lines.length >= 3) {
+      const val = lines[timeIdx];
+      fields.time = /^\d+$/.test(val) ? `${val} mins` : val;
+
+      const teacherLines = lines.slice(0, Math.max(1, timeIdx - 1));
+      const studentLines = lines.slice(Math.max(1, timeIdx - 1), timeIdx);
+      fields.teacher_activity = cleanPlainText(teacherLines.join('\n'));
+      fields.student_activity = cleanPlainText(studentLines.join('\n'));
+
+      if (lines[timeIdx + 1]) {
+        fields.resources = cleanPlainText(lines[timeIdx + 1]);
+      }
+      if (lines.length > timeIdx + 2) {
+        fields.assessment = cleanPlainText(lines.slice(timeIdx + 2).join('\n'));
+      }
+
+      const hasContent = Object.values(fields).some(v => v.length > 0);
+      const isPartiallyMissing = !fields.teacher_activity || !fields.student_activity;
+      return {
+        fields,
+        needsReview: hasContent && isPartiallyMissing,
+      };
+    }
+
     // Check if the text has an inline time notation like "(15 mins)" or "[10 min]"
     const timeMatch = clean.match(/\((?:(\d+)\s*(?:mins?|minutes?|min))\)/i) ||
                        clean.match(/\[(?:(\d+)\s*(?:mins?|minutes?|min))\]/i);
@@ -187,34 +214,49 @@ SOURCE INFO:
 - Document Title: ${effectiveTitle}
 ${effectiveSourceUrl ? `- Source URL: ${effectiveSourceUrl}` : ''}
 
-CRITICAL EXTRACTION RULES:
-1. SEPARATE LESSON-LEVEL CONCEPTS INDEPENDENTLY:
-   - "target": The overarching Attainment Target, curriculum standard, or competency (e.g. "Students will understand...", CCSS/NGSS standard).
-   - "learningOutcomes": Specific, measurable Student Learning Outcomes / Objectives / SWBAT (e.g. "By the end of the lesson students will be able to...").
-   - "activities": High-level overview / sequence of activities and procedures for the lesson.
-   CRITICAL: Do NOT merge or combine the Attainment Target with Learning Outcomes! Keep them strictly separate.
-   Do NOT place the entire lesson plan into the activities field when individual activity blocks can be extracted.
+CRITICAL SCHOOL DOCUMENT STRUCTURE & RULES:
+1. MULTI-PAGE & MULTI-DAY LESSON BOUNDARIES:
+   - A single lesson often spans multiple pages (e.g., 2 to 5 pages per lesson). A PAGE BREAK IS NEVER A NEW LESSON!
+   - A document may contain multiple consecutive lesson days (e.g., Day 3 followed by Day 4, or Lesson Plan – Iteration followed by Lesson Plan – CAT Preparation).
+   - Each lesson has its own metadata (Teacher Name, Subject, Topic, Class, Duration, Attainment Target, Learning Outcomes) followed by its activity blocks.
+   - Distinct lesson boundaries often begin with:
+     * "Lesson Plan – [Topic]" or "Lesson Plan - [Topic]"
+     * "Name of Teacher: ..." or "Teacher Name: ..." (when starting a new lesson)
+     * "Class [X] Section [Y] Day [Z]" or "Day [N]"
+   - Keep each day completely separate. NEVER mix Day 3 content into Day 4, or Day 4 into Day 3!
 
-2. EXTRACT THE FIVE FIELDS FOR EVERY ACTIVITY BLOCK:
-   Every lesson can contain a variable number of sequential activity blocks (Block 1, Block 2, Block 3, ...).
-   Preserve the source block order and block count. Do NOT assume a fixed number of blocks.
+2. SCHOOL DOCUMENT LESSON-LEVEL METADATA:
+   Extract these distinct metadata fields for EACH lesson:
+   - "sourceLessonId": Original combined source identifier if present (e.g. "11 C Day 3", "Class 11 Section C").
+   - "teacherName": Teacher name from lesson header (e.g., "Mubrra Mushtaq").
+   - "subject": Subject name (e.g. "Computer Science", "Physics").
+   - "topic": The actual specific topic of this particular lesson/day (e.g. "Iteration – FOR TO NEXT Loop", "CAT Preparation – Revision of Chapters 9 and 10").
+     CRITICAL: NEVER put the Attainment Target into the Topic field! The Topic is strictly the subject lesson topic.
+   - "className": Class or Grade (e.g. "Class 11", "11 C" -> "Class 11").
+   - "section": Section (e.g. "C", "Section C", "11 C" -> "C").
+   - "dayNumber": The exact day number from source (e.g. "Day 3", "Day 4").
+     CRITICAL: If the document does NOT explicitly print "Day 3" or "Day 4", do NOT guess or invent numbers! Leave empty and set "needsReview": true.
+   - "day": Day identifier (e.g. "Day 3", "Day 4", "Monday").
+   - "duration": Duration in minutes (e.g. "40 Minutes", "80 minutes").
+   - "target": The overarching Attainment Target, curriculum standard, or competency (e.g. "Students will understand the purpose and working of the FOR TO NEXT loop...").
+     CRITICAL: Headings may appear as "Attainment Target" followed by text on the next line without a colon. Keep strictly separate from Topic and Learning Outcomes.
+   - "learningOutcomes": Specific, measurable Student Learning Outcomes / SLOs (e.g. "1. Identify the purpose... 2. Write pseudocode...").
+   - "activities": High-level overview or sequence of procedures for the lesson.
+
+3. ACTIVITY BLOCKS (5 INDEPENDENT FIELDS PER BLOCK):
+   Every lesson contains sequential activity blocks from the "Lesson Delivery" / "Content And Teacher Activity" table.
    Extract each block using these exact five fields:
-   - "teacher_activity": What the teacher does (direct instruction, modeling, guided questions, facilitating, pacing).
-   - "student_activity": What students do (independent/group tasks, discussions, exercises, note taking, lab work).
-   - "time": Allocated duration or time range (e.g., "10 mins", "15 min", "08:30 - 08:45").
-   - "resources": Learning materials, textbooks, handouts, links, slides, equipment.
-   - "assessment": Formative assessment, checks for understanding, questioning techniques, exit tickets.
+   - "teacher_activity": Content and Teacher Activity (direct instruction, modeling, pacing, e.g. "Recap & Starter: ...").
+   - "student_activity": Student Activity (independent practice, tasks, lab work, exercises, e.g. "Recall previous knowledge...").
+   - "time": Allocated duration or time in minutes (e.g., "5", "10", "20", "8", "12", "15", "25").
+   - "resources": Learning Materials and Resources (e.g. "Whiteboard/projector, notebook", "Textbook, pseudocode worksheet").
+   - "assessment": Formative Assessment / Day-to-Day Assessment (e.g. "Oral questioning to assess understanding of repetition.").
 
-3. PRESERVE SOURCE CONTENT ACCURATELY:
-   - Preserve original wording, important punctuation, list items (•, 1. 2.), and paragraph breaks.
-   - Do NOT summarize, invent missing activities, or silently rewrite the source.
-   - Do NOT shift content from one field or block into another merely to fill a missing field.
-   - Leave genuinely missing fields as empty strings "".
-   - If extraction is uncertain, ambiguous, or partially occluded, set "needsReview": true on that block and lesson.
-
-4. MULTI-LESSON & TABLE STRUCTURES:
-   - Separate lessons by (Day + Class).
-   - Inspect tables carefully: rows may represent days or lessons, and columns may represent Target, Learning Outcomes, Activities, or individual Blocks.
+4. STOPPING CRITERIA & ARTIFACT FILTERING:
+   - Stop extracting activity blocks when the table reaches "Total: ..." or summary sections such as "Sample Pseudocode Questions", "Key Exam Points", "TEF Alignment", "CAT Preparation Focus", "Evidence of Learning".
+   - Ignore repeated table column headers that repeat across page breaks.
+   - Preserve original wording, punctuation, list items (•, 1. 2.), and paragraph breaks.
+   - Do NOT summarize or invent missing content. Leave missing fields as empty strings "" and set "needsReview": true.
 `;
 
   const contents: any[] = [];
@@ -250,37 +292,43 @@ CRITICAL EXTRACTION RULES:
         responseSchema: {
           type: Type.OBJECT,
           properties: {
-            weekNumber: { type: Type.STRING, description: 'e.g. Week 8' },
-            weekTitle: { type: Type.STRING, description: 'Curriculum unit, topic, or subject title' },
+            weekNumber: { type: Type.STRING, description: 'e.g. Week 8 or curriculum week label' },
+            weekTitle: { type: Type.STRING, description: 'Curriculum unit or overall subject title' },
             startDate: { type: Type.STRING, description: 'Start date if specified' },
             endDate: { type: Type.STRING, description: 'End date if specified' },
             lessons: {
               type: Type.ARRAY,
-              description: 'List of individual lesson records across days and classes',
+              description: 'List of individual lesson records across classes and days in source document order',
               items: {
                 type: Type.OBJECT,
                 properties: {
-                  day: { type: Type.STRING, description: 'Day of week: Monday, Tuesday, Wednesday, Thursday, Friday' },
-                  className: { type: Type.STRING, description: 'Class name (e.g. 6A, Grade 7, Math 6)' },
-                  section: { type: Type.STRING, description: 'Section name (e.g. Blue, Red, 1)' },
+                  sourceLessonId: { type: Type.STRING, description: 'Original source lesson label if present (e.g. "11 C Day 3", "Class 11 Section C Day 3")' },
+                  teacherName: { type: Type.STRING, description: 'Teacher name from document or lesson header' },
+                  subject: { type: Type.STRING, description: 'Subject (e.g. Mathematics, Science, English)' },
+                  topic: { type: Type.STRING, description: 'Actual topic of this particular lesson/day. Do NOT put Attainment Target here.' },
+                  className: { type: Type.STRING, description: 'Class name (e.g. "Class 11", "11", "Class 10")' },
+                  section: { type: Type.STRING, description: 'Section name (e.g. "Section C", "C")' },
+                  dayNumber: { type: Type.STRING, description: 'Day identifier from source (e.g. "Day 3", "Day 4", "Day 5", "3")' },
+                  day: { type: Type.STRING, description: 'Day name or day label (e.g. "Day 3", "Monday", "Tuesday")' },
+                  duration: { type: Type.STRING, description: 'Duration in minutes or time range (e.g. "45 mins", "60 mins")' },
                   date: { type: Type.STRING, description: 'Optional lesson date' },
                   target: { type: Type.STRING, description: 'Attainment target / curriculum standard' },
                   learningOutcomes: { type: Type.STRING, description: 'Specific learning outcomes or student objectives' },
                   activities: { type: Type.STRING, description: 'Overview of lesson activities or procedures' },
-                  needsReview: { type: Type.BOOLEAN, description: 'True if any text was ambiguous or partially cut off' },
+                  needsReview: { type: Type.BOOLEAN, description: 'True if any text was ambiguous or missing required fields' },
                   blocks: {
                     type: Type.ARRAY,
-                    description: 'Ordered sequence of activity blocks within this lesson',
+                    description: 'Ordered sequence of the 5-field activity blocks within this lesson',
                     items: {
                       type: Type.OBJECT,
                       properties: {
                         blockNumber: { type: Type.INTEGER, description: '1-based sequential block order' },
                         needsReview: { type: Type.BOOLEAN, description: 'True if any field is uncertain or flagged for human review' },
-                        teacher_activity: { type: Type.STRING, description: 'Teacher activity / direct instruction / modeling' },
-                        student_activity: { type: Type.STRING, description: 'Student activity / tasks / practice' },
-                        time: { type: Type.STRING, description: 'Duration or time allocation' },
-                        resources: { type: Type.STRING, description: 'Learning materials and resources' },
-                        assessment: { type: Type.STRING, description: 'Formative assessment or check for understanding' },
+                        teacher_activity: { type: Type.STRING, description: 'Content and Teacher Activity' },
+                        student_activity: { type: Type.STRING, description: 'Student Activity' },
+                        time: { type: Type.STRING, description: 'Time in minutes or duration' },
+                        resources: { type: Type.STRING, description: 'Learning Materials and Resources' },
+                        assessment: { type: Type.STRING, description: 'Formative Assessment / Day-to-Day Assessment' },
                         fields: {
                           type: Type.OBJECT,
                           description: 'Optional additional or legacy fields map if applicable',
@@ -290,7 +338,7 @@ CRITICAL EXTRACTION RULES:
                     },
                   },
                 },
-                required: ['day', 'className', 'target', 'activities', 'blocks'],
+                required: ['className', 'target', 'activities', 'blocks'],
               },
             },
           },
@@ -353,16 +401,30 @@ CRITICAL EXTRACTION RULES:
             });
           }
 
+          const rawClass = cleanPlainText(l.className);
+          const rawSection = l.section ? cleanPlainText(l.section) : '';
+          const rawDayNum = l.dayNumber ? cleanPlainText(l.dayNumber) : '';
+          const rawDay = cleanPlainText(l.day) || rawDayNum || 'Day 1';
+          const rawSourceId = l.sourceLessonId ? cleanPlainText(l.sourceLessonId) : undefined;
+          const topicVal = l.topic ? cleanPlainText(l.topic) : undefined;
+          const targetVal = cleanPlainText(l.target) || '';
+
           return {
             id: `draft_${lIdx + 1}_${crypto.randomUUID().slice(0, 6)}`,
-            day: cleanPlainText(l.day) || 'Monday',
-            className: cleanPlainText(l.className) || `Class ${lIdx + 1}`,
-            section: l.section ? cleanPlainText(l.section) : '',
+            sourceLessonId: rawSourceId,
+            teacherName: l.teacherName ? cleanPlainText(l.teacherName) : undefined,
+            subject: l.subject ? cleanPlainText(l.subject) : undefined,
+            topic: topicVal,
+            className: rawClass || (rawSourceId ? rawSourceId : `Class ${lIdx + 1}`),
+            section: rawSection,
+            dayNumber: rawDayNum || undefined,
+            day: rawDay,
+            duration: l.duration ? cleanPlainText(l.duration) : undefined,
             date: l.date ? cleanPlainText(l.date) : '',
-            target: cleanPlainText(l.target) || '',
+            target: targetVal,
             learningOutcomes: l.learningOutcomes ? cleanPlainText(l.learningOutcomes) : '',
             activities: cleanPlainText(l.activities) || '',
-            needsReview: Boolean(l.needsReview) || blocks.some(b => b.needsReview),
+            needsReview: Boolean(l.needsReview) || !topicVal || !targetVal || blocks.some(b => b.needsReview),
             blocks,
           };
         })
@@ -393,39 +455,208 @@ CRITICAL EXTRACTION RULES:
   }
 }
 
-/**
- * Parses labeled lesson metadata from a text section.
- */
-function extractLessonMetadata(text: string): {
-  day?: string;
+export interface ExtractedLessonMetadata {
+  teacherName?: string;
+  subject?: string;
+  topic?: string;
   className?: string;
   section?: string;
+  dayNumber?: string;
+  day?: string;
+  duration?: string;
+  sourceLessonId?: string;
   target: string;
   learningOutcomes: string;
   activities: string;
-} {
-  // 1. Attainment Target
-  const targetMatch = text.match(/(?:^|\n)\s*(?:Attainment Target|Learning Target|Target|Curriculum Target|Standard)\s*:\s*([^\n]+(?:\n(?!\s*(?:Learning Outcomes?|Outcomes?|Objectives?|Activities|Procedures|Block|##|###|Day|Class)\s*[:#])[^\n]+)*)/i);
+}
+
+/**
+ * Checks whether a table row is a repeated header row or formatting artifact.
+ */
+function isTableArtifactRow(row: string[], headers: string[]): boolean {
+  if (!row || row.length === 0) return true;
+  // If all cells are empty
+  if (row.every(c => !c || c.trim().length === 0)) return true;
+  // If row is a separator line (e.g. ---, ===, :---:)
+  if (row.every(c => c.replace(/[-:=\s|]/g, '').length === 0)) return true;
+
+  const headerKeywords = [
+    'teacher activity',
+    'student activity',
+    'content and teacher activity',
+    'learning materials and resources',
+    'learning materials',
+    'formative assessment',
+    'day-to-day assessment',
+    'time in minutes',
+    'teacher',
+    'student',
+    'time',
+    'resources',
+    'assessment',
+    'block',
+    'step',
+    'activity',
+  ];
+
+  let matchingHeaderCount = 0;
+  for (const cell of row) {
+    const cleanCell = cell.trim().toLowerCase();
+    if (headerKeywords.some(kw => cleanCell === kw || cleanCell.startsWith(kw))) {
+      matchingHeaderCount++;
+    }
+  }
+
+  // If 2 or more cells match header keywords, it's a repeated header row
+  return matchingHeaderCount >= 2;
+}
+
+/**
+ * Parses labeled lesson metadata from a text section with high fidelity.
+ */
+export function extractLessonMetadata(text: string): ExtractedLessonMetadata {
+  const clean = text || '';
+
+  // 1. Check for combined source identifier like "11 C Day 3" or "Class 11, Section C, Day 3"
+  let sourceLessonId: string | undefined;
+  let className: string | undefined;
+  let section: string | undefined;
+  let dayNumber: string | undefined;
+  let day: string | undefined;
+
+  const combinedMatch = clean.match(
+    /(?:^|\n)\s*#*\s*(?:Class\s*)?(\d+[A-Za-z]?)\s*[,|-]?\s*(?:Section\s*)?([A-Za-z0-9]+)\s*[,|-]?\s*(?:Day\s*)(\d+)/i
+  );
+
+  if (combinedMatch && combinedMatch[1] && combinedMatch[2] && combinedMatch[3]) {
+    sourceLessonId = `${combinedMatch[1]} ${combinedMatch[2]} Day ${combinedMatch[3]}`;
+    className = `Class ${combinedMatch[1]}`;
+    section = combinedMatch[2];
+    dayNumber = `Day ${combinedMatch[3]}`;
+    day = `Day ${combinedMatch[3]}`;
+  }
+
+  // Check for "Class and Section: Class 11, Section C" or "Class & Section: 11 C"
+  const classAndSecMatch = clean.match(
+    /(?:^|\n)\s*(?:Class\s*(?:and|&)\s*Section|Class\s*\/\s*Section)\s*:\s*(?:Class\s*)?([^\n,]+)(?:,\s*(?:Section\s*)?([^\n,]+))?/i
+  );
+  if (classAndSecMatch) {
+    if (classAndSecMatch[1]) {
+      const parsedClass = cleanPlainText(classAndSecMatch[1]);
+      className = /^\d+[A-Za-z]?$/.test(parsedClass) ? `Class ${parsedClass}` : parsedClass;
+    }
+    if (classAndSecMatch[2]) {
+      const parsedSec = cleanPlainText(classAndSecMatch[2]);
+      section = parsedSec.replace(/^Section\s*/i, '');
+    }
+  }
+
+  // 2. Teacher Name
+  const teacherMatch = clean.match(/(?:^|\n)\s*(?:(?:Name of\s+)?Teacher(?:\s*Name)?|Instructor|Educator)\s*:\s*([^\n|]+)/i);
+  const teacherName = teacherMatch && teacherMatch[1] ? cleanPlainText(teacherMatch[1]) : undefined;
+
+  // 3. Subject
+  const subjectMatch = clean.match(/(?:^|\n)\s*(?:Subject|Course|Discipline)\s*:\s*([^\n|]+)/i);
+  const subject = subjectMatch && subjectMatch[1] ? cleanPlainText(subjectMatch[1]) : undefined;
+
+  // 4. Topic (CRITICAL: Never match Attainment Target or Standard as Topic!)
+  const topicMatch = clean.match(/(?:^|\n)\s*(?:(?:Lesson\s+)?Topic|Theme|Sub-?topic|Unit\s*\/\s*Topic)\s*:\s*([^\n|]+)/i) ||
+                     clean.match(/(?:^|\n)\s*Lesson\s*Plan\s*[-–—:]\s*([^\n|]+)/i);
+  let topic: string | undefined;
+  if (topicMatch && topicMatch[1]) {
+    const rawTopic = cleanPlainText(topicMatch[1]);
+    if (!/^(?:Attainment\s+Target|Target|Standard|CCSS|NGSS)\b/i.test(rawTopic)) {
+      topic = rawTopic;
+    }
+  }
+
+  // 5. Class Name & Section (if not already extracted)
+  if (!className) {
+    const classMatch = clean.match(/(?:^|\n)\s*(?:Class(?:\s*Name)?|Grade)\s*:\s*([^\n,|]+)/i) ||
+                       clean.match(/(?:^|\n)\s*#+\s*(?:Class|Grade)\s*(\d+[A-Za-z]?|[A-Za-z0-9_-]+)/i);
+    if (classMatch && classMatch[1]) {
+      const rawClassVal = cleanPlainText(classMatch[1]);
+      // Check if it's formatted like "11 C" or "10 A"
+      const splitMatch = rawClassVal.match(/^(\d+[A-Za-z]?)\s+([A-Za-z0-9]+)$/);
+      if (splitMatch) {
+        className = `Class ${splitMatch[1]}`;
+        if (!section) section = splitMatch[2];
+      } else {
+        className = /^\d+[A-Za-z]?$/.test(rawClassVal) ? `Class ${rawClassVal}` : rawClassVal;
+      }
+    }
+  }
+
+  if (!section) {
+    const secMatch = clean.match(/(?:^|\n)\s*(?:Section|Room|Stream)\s*:\s*([^\n,|]+)/i) ||
+                     clean.match(/\bSection\s+([A-Za-z0-9]+)\b/i);
+    if (secMatch && secMatch[1]) {
+      section = cleanPlainText(secMatch[1]).replace(/^Section\s*/i, '');
+    }
+  }
+
+  // 6. Day Number
+  if (!dayNumber) {
+    const dayNumMatch = clean.match(/(?:^|\n)\s*(?:Day\s*Number|Day\s*#)\s*:\s*([^\n|]+)/i) ||
+                        clean.match(/(?:^|\n)\s*(?:Day)\s*:\s*(Day\s*\d+|\d+)/i) ||
+                        clean.match(/(?:^|\n)\s*#+\s*(?:Day\s*)(\d+)/i);
+    if (dayNumMatch && dayNumMatch[1]) {
+      const val = cleanPlainText(dayNumMatch[1]);
+      dayNumber = /^\d+$/.test(val) ? `Day ${val}` : val;
+    }
+  }
+
+  // 7. Day of Week or Day Identifier
+  if (!day) {
+    const dayNameMatch = clean.match(/(?:^|\n)\s*(?:Day\s*:?|##?\s*)\s*(Monday|Tuesday|Wednesday|Thursday|Friday|Saturday|Sunday)/i);
+    if (dayNameMatch && dayNameMatch[1]) {
+      day = cleanPlainText(dayNameMatch[1]);
+    } else if (dayNumber) {
+      day = dayNumber;
+    }
+  }
+
+  // 8. Duration
+  const durMatch = clean.match(/(?:^|\n)\s*(?:Duration|Period|Length)\s*:\s*([^\n|]+)/i) ||
+                   clean.match(/(?:^|\n)\s*(?:Time|Duration)\s*:\s*(\d+\s*(?:mins?|minutes?|hours?|hrs?))/i);
+  const duration = durMatch && durMatch[1] ? cleanPlainText(durMatch[1]) : undefined;
+
+  // 9. Attainment Target (Keep strictly separate from Topic and Learning Outcomes)
+  // Supports both "Attainment Target: text..." and heading format "Attainment Target\ntext..."
+  const targetMatch = clean.match(
+    /(?:^|\n)\s*(?:Attainment Target|Curriculum Target|Standard|Competency)(?:\s*:|\s*\n+)\s*([^\n]+(?:\n(?!\s*(?:Learning Outcomes?|SLOs?|BSS Learner Profile|Lesson Delivery|Content And Teacher|Name of Teacher|Topic|Class|Duration|Total:|\bBlock\b)[^:\n]*)[^\n]+)*)/i
+  ) || clean.match(
+    /(?:^|\n)\s*(?:Learning Target|Target)(?:\s*:|\s*\n+)\s*([^\n]+(?:\n(?!\s*(?:Learning Outcomes?|SLOs?|BSS Learner Profile|Lesson Delivery|Content And Teacher|Name of Teacher|Topic|Class|Duration|Total:|\bBlock\b)[^:\n]*)[^\n]+)*)/i
+  );
   const target = targetMatch && targetMatch[1] ? cleanPlainText(targetMatch[1]) : '';
 
-  // 2. Learning Outcomes
-  const outcomesMatch = text.match(/(?:^|\n)\s*(?:Learning Outcomes?|Specific Learning Outcomes?|Outcomes?|Learning Objectives?|Objectives?|SWBAT)\s*:\s*([^\n]+(?:\n(?!\s*(?:Attainment Target|Target|Activities|Procedures|Block|##|###|Day|Class)\s*[:#])[^\n]+)*)/i);
+  // 10. Learning Outcomes
+  // Supports both "Learning Outcomes (SLOs): ..." and heading format "Learning Outcomes (SLOs)\n..."
+  const outcomesMatch = clean.match(
+    /(?:^|\n)\s*(?:(?:Specific\s+)?Learning Outcomes?(?:\s*\(SLOs\))?|Outcomes?|Learning Objectives?|Objectives?|SWBAT)(?:\s*:|\s*\n+)\s*([^\n]+(?:\n(?!\s*(?:BSS Learner Profile|Lesson Delivery|Content And Teacher|Attainment Target|Name of Teacher|Topic|Class|Duration|Total:|\bBlock\b)[^:\n]*)[^\n]+)*)/i
+  );
   const learningOutcomes = outcomesMatch && outcomesMatch[1] ? cleanPlainText(outcomesMatch[1]) : '';
 
-  // 3. Activities / Procedures overview
-  const actMatch = text.match(/(?:^|\n)\s*(?:Activities & Procedures|Activities|Procedures|Lesson Overview|Lesson Sequence)\s*:\s*([^\n]+(?:\n(?!\s*(?:Block|##|###|Day|Class|Teacher Activity)\s*[:#])[^\n]+)*)/i);
+  // 11. Activities & Procedures Overview
+  const actMatch = clean.match(
+    /(?:^|\n)\s*(?:Activities\s*(?:&|and)?\s*Procedures|Activities|Procedures|Lesson Overview|Lesson Sequence)\s*:\s*([^\n]+(?:\n(?!\s*(?:Block|Teacher Activity|Student Activity|##|###)[^:\n]*:)[^\n]+)*)/i
+  );
   const activities = actMatch && actMatch[1] ? cleanPlainText(actMatch[1]) : '';
 
-  // 4. Day & Class
-  const dayMatch = text.match(/(?:^|\n)\s*(?:Day\s*:?|##?\s*)\s*(Monday|Tuesday|Wednesday|Thursday|Friday)/i);
-  const day = dayMatch && dayMatch[1] ? cleanPlainText(dayMatch[1]) : undefined;
-
-  const classMatch = text.match(/(?:^|\n)\s*(?:Class|Grade)\s*:\s*([^\n]+)/i);
-  const className = classMatch && classMatch[1] ? cleanPlainText(classMatch[1]) : undefined;
+  if (!sourceLessonId && (className || section || dayNumber)) {
+    sourceLessonId = `${className || ''} ${section ? `[${section}]` : ''} ${dayNumber || ''}`.trim();
+  }
 
   return {
-    day,
+    teacherName,
+    subject,
+    topic,
     className,
+    section,
+    dayNumber,
+    day,
+    duration,
+    sourceLessonId,
     target,
     learningOutcomes,
     activities,
@@ -434,7 +665,7 @@ function extractLessonMetadata(text: string): {
 
 /**
  * Heuristic fallback parser when AI is unavailable or for deterministic unit testing.
- * Parses markdown tables and heading structures directly into LessonDrafts with high fidelity.
+ * Faithfully preserves lesson metadata, school identifiers, and 5-field activity blocks in source order.
  */
 export function heuristicParseDocument({
   extractedDoc,
@@ -515,6 +746,9 @@ export function heuristicParseDocument({
   for (let tIdx = 0; tIdx < tableBlocks.length; tIdx++) {
     const { headers, rows, precedingText } = tableBlocks[tIdx];
 
+    // Filter out repeated header rows or artifacts
+    const nonArtifactRows = rows.filter(r => !isTableArtifactRow(r, headers));
+
     // Check if this is an Activity Block Table (rows are blocks)
     const isActivityBlockTable =
       headers.some(h => /teacher/i.test(h)) ||
@@ -531,7 +765,7 @@ export function heuristicParseDocument({
       const assessIdx = headers.findIndex(h => /assess|evaluation|exit|check/i.test(h));
       const blockIdx = headers.findIndex(h => /^block|^step|^activity\s*#/i.test(h));
 
-      const blocks: ParsedBlockDraft[] = rows.map((row, rIdx) => {
+      const blocks: ParsedBlockDraft[] = nonArtifactRows.map((row, rIdx) => {
         let blockNumber = rIdx + 1;
         if (blockIdx !== -1 && row[blockIdx] && /^\d+$/.test(row[blockIdx].trim())) {
           blockNumber = parseInt(row[blockIdx].trim(), 10);
@@ -577,14 +811,20 @@ export function heuristicParseDocument({
 
       lessons.push({
         id: `draft_h_tbl_${tIdx + 1}_${crypto.randomUUID().slice(0, 5)}`,
+        sourceLessonId: meta.sourceLessonId,
+        teacherName: meta.teacherName,
+        subject: meta.subject,
+        topic: meta.topic,
+        dayNumber: meta.dayNumber,
         day: meta.day || days[lessons.length % days.length],
-        className: meta.className || `Class ${lessons.length + 1}`,
+        className: meta.className || (meta.sourceLessonId ? meta.sourceLessonId : `Class ${lessons.length + 1}`),
         section: meta.section || '',
+        duration: meta.duration,
         date: '',
         target: meta.target || 'Complete curriculum unit.',
         learningOutcomes: meta.learningOutcomes || '',
         activities: meta.activities || (blocks.length > 0 ? `${blocks.length} activity blocks planned.` : ''),
-        needsReview: blocks.some(b => b.needsReview) || !meta.target,
+        needsReview: blocks.some(b => b.needsReview) || !meta.target || !meta.topic,
         blocks,
       });
       continue;
@@ -592,25 +832,42 @@ export function heuristicParseDocument({
 
     // Check if this is a Multi-Day Curriculum Grid (rows are days/lessons)
     const dayColIdx = headers.findIndex(h => /day/i.test(h));
+    const classColIdx = headers.findIndex(h => /class|grade/i.test(h));
+    const secColIdx = headers.findIndex(h => /section/i.test(h));
+    const topicColIdx = headers.findIndex(h => /topic|theme/i.test(h));
     const targetColIdx = headers.findIndex(h => /target/i.test(h) && !/outcome/i.test(h));
     const outcomesColIdx = headers.findIndex(h => /outcome/i.test(h) || /objective/i.test(h));
     const actColIdx = headers.findIndex(h => /activit/i.test(h) || /procedure/i.test(h));
+    const durColIdx = headers.findIndex(h => /duration|length/i.test(h));
 
-    if (dayColIdx !== -1 || targetColIdx !== -1) {
-      for (let r = 0; r < rows.length; r++) {
-        const row = rows[r];
+    if (dayColIdx !== -1 || targetColIdx !== -1 || topicColIdx !== -1) {
+      for (let r = 0; r < nonArtifactRows.length; r++) {
+        const row = nonArtifactRows[r];
         if (row.length < 2) continue;
 
         const dayText = dayColIdx !== -1 && row[dayColIdx] ? row[dayColIdx] : days[r % days.length];
+        const classText = classColIdx !== -1 && row[classColIdx] ? cleanPlainText(row[classColIdx]) : '';
+        const secText = secColIdx !== -1 && row[secColIdx] ? cleanPlainText(row[secColIdx]) : '';
+        const topicText = topicColIdx !== -1 && row[topicColIdx] ? cleanPlainText(row[topicColIdx]) : '';
         const targetText = targetColIdx !== -1 && row[targetColIdx] ? cleanPlainText(row[targetColIdx]) : '';
         const outcomesText = outcomesColIdx !== -1 && row[outcomesColIdx] ? cleanPlainText(row[outcomesColIdx]) : '';
         const actText = actColIdx !== -1 && row[actColIdx] ? cleanPlainText(row[actColIdx]) : '';
+        const durText = durColIdx !== -1 && row[durColIdx] ? cleanPlainText(row[durColIdx]) : '';
 
         // Extract block columns
         const blocks: ParsedBlockDraft[] = [];
         let bNum = 1;
         for (let c = 0; c < row.length; c++) {
-          if (c === dayColIdx || c === targetColIdx || c === outcomesColIdx || c === actColIdx) {
+          if (
+            c === dayColIdx ||
+            c === classColIdx ||
+            c === secColIdx ||
+            c === topicColIdx ||
+            c === targetColIdx ||
+            c === outcomesColIdx ||
+            c === actColIdx ||
+            c === durColIdx
+          ) {
             continue;
           }
           const colHeader = headers[c] || '';
@@ -636,16 +893,24 @@ export function heuristicParseDocument({
           });
         }
 
+        // Determine day number or clean day
+        const cleanDay = cleanPlainText(dayText);
+        const dayNumberMatch = cleanDay.match(/Day\s*(\d+)|\b(\d+)\b/i);
+        const dayNum = dayNumberMatch ? `Day ${dayNumberMatch[1] || dayNumberMatch[2]}` : undefined;
+
         lessons.push({
           id: `draft_h_grid_${r + 1}_${crypto.randomUUID().slice(0, 5)}`,
-          day: cleanPlainText(dayText) || days[r % days.length],
-          className: 'Class 1',
-          section: '',
+          topic: topicText || undefined,
+          dayNumber: dayNum,
+          day: cleanDay || days[r % days.length],
+          className: classText || `Class ${r + 1}`,
+          section: secText,
+          duration: durText || undefined,
           date: '',
           target: targetText || 'Curriculum unit target.',
           learningOutcomes: outcomesText,
           activities: actText || 'Curriculum activities.',
-          needsReview: blocks.some(b => b.needsReview) || !targetText,
+          needsReview: blocks.some(b => b.needsReview) || !targetText || !topicText,
           blocks,
         });
       }
@@ -654,29 +919,42 @@ export function heuristicParseDocument({
 
   // Strategy 2: Text / Section-based parsing (if no tables were found or extracted)
   if (lessons.length === 0) {
-    // Look for day section splits (e.g. "# Monday", "## Monday", "Day: Monday")
-    const dayRegex = /(?:^|\n)(?:#+\s*|Day\s*:\s*)(Monday|Tuesday|Wednesday|Thursday|Friday)[^\n]*/gi;
-    const dayMatches: Array<{ day: string; index: number }> = [];
+    // Look for lesson section splits (Day labels, Lesson Plan titles, or Class/Section/Day headers)
+    const boundaryRegex = /(?:^|\n)\s*(?:#+\s*|Day\s*:\s*)*(Monday|Tuesday|Wednesday|Thursday|Friday|Day\s*\d+|\d+\s*[A-Za-z]\s*Day\s*\d+|Class\s*\d+[A-Za-z]?(?:\s*(?:Section\s*)?[A-Za-z0-9]+)?\s*Day\s*\d+|Lesson\s*Plan\s*[-–—:][^\n]+)/gi;
+    const boundaries: Array<{ rawLabel: string; index: number }> = [];
     let dMatch: RegExpExecArray | null;
-    while ((dMatch = dayRegex.exec(content)) !== null) {
-      dayMatches.push({
-        day: dMatch[1],
-        index: dMatch.index,
-      });
+    while ((dMatch = boundaryRegex.exec(content)) !== null) {
+      if (boundaries.length === 0 || dMatch.index - boundaries[boundaries.length - 1].index > 80) {
+        boundaries.push({
+          rawLabel: dMatch[1] || dMatch[0],
+          index: dMatch.index,
+        });
+      }
     }
 
-    if (dayMatches.length > 0) {
-      for (let i = 0; i < dayMatches.length; i++) {
-        const start = dayMatches[i].index;
-        const end = i + 1 < dayMatches.length ? dayMatches[i + 1].index : content.length;
+    if (boundaries.length > 0) {
+      // If the first boundary is near the top, start at index 0 to capture any header lines
+      if (boundaries[0].index > 0 && boundaries[0].index < 350) {
+        boundaries[0].index = 0;
+      }
+
+      for (let i = 0; i < boundaries.length; i++) {
+        const start = boundaries[i].index;
+        const end = i + 1 < boundaries.length ? boundaries[i + 1].index : content.length;
         const sectionText = content.slice(start, end);
         const meta = extractLessonMetadata(sectionText);
 
-        // Extract blocks within this day section
-        const blockSplitRegex = /(?:^|\n)(?:#+\s*Block\s*\d+|Block\s*\d+\s*:|Activity\s*\d+\s*:)[^\n]*/gi;
+        // Filter out post-activity supplementary sections like "Total: 40 Minutes", "Sample Pseudocode Questions", "Key Exam Points", etc.
+        const suppMatch = sectionText.match(/(?:^|\n)\s*(?:Total\s*:\s*\d+\s*min|Sample Pseudocode Questions|Key Exam Points|TEF Alignment|CAT Preparation Focus|Evidence of Learning)\b/i);
+        const activitySectionText = suppMatch && suppMatch.index !== undefined
+          ? sectionText.slice(0, suppMatch.index)
+          : sectionText;
+
+        // Extract blocks within this lesson's activity section
+        const blockSplitRegex = /(?:^|\n)(?:#+\s*Block\s*\d+|Block\s*\d+\s*:|Activity\s*\d+\s*:|(?:Recap & Starter|Teacher Explanation|Pseudocode Practice|Recap & Revision|Teacher-Guided Revision|Cramming|Past-Paper Practice|Marking & Error Correction|Recap & Reflection|Recap)\s*[-–—:]?)[^\n]*/gi;
         const blockSplits: Array<{ index: number }> = [];
         let bMatch: RegExpExecArray | null;
-        while ((bMatch = blockSplitRegex.exec(sectionText)) !== null) {
+        while ((bMatch = blockSplitRegex.exec(activitySectionText)) !== null) {
           blockSplits.push({ index: bMatch.index });
         }
 
@@ -684,8 +962,8 @@ export function heuristicParseDocument({
         if (blockSplits.length > 0) {
           for (let b = 0; b < blockSplits.length; b++) {
             const bStart = blockSplits[b].index;
-            const bEnd = b + 1 < blockSplits.length ? blockSplits[b + 1].index : sectionText.length;
-            const bText = sectionText.slice(bStart, bEnd);
+            const bEnd = b + 1 < blockSplits.length ? blockSplits[b + 1].index : activitySectionText.length;
+            const bText = activitySectionText.slice(bStart, bEnd);
             const parsed = extractBlockFieldsFromText(bText);
             blocks.push({
               blockNumber: b + 1,
@@ -695,7 +973,7 @@ export function heuristicParseDocument({
           }
         } else {
           // Check if teacher activity exists directly in section
-          const parsed = extractBlockFieldsFromText(sectionText);
+          const parsed = extractBlockFieldsFromText(activitySectionText);
           blocks.push({
             blockNumber: 1,
             fields: parsed.fields,
@@ -705,14 +983,20 @@ export function heuristicParseDocument({
 
         lessons.push({
           id: `draft_h_sec_${i + 1}_${crypto.randomUUID().slice(0, 5)}`,
-          day: dayMatches[i].day,
-          className: meta.className || `Class ${i + 1}`,
+          sourceLessonId: meta.sourceLessonId,
+          teacherName: meta.teacherName,
+          subject: meta.subject,
+          topic: meta.topic,
+          dayNumber: meta.dayNumber,
+          day: meta.day || (meta.dayNumber ? meta.dayNumber : (i === 0 ? 'Day 3' : `Day ${i + 3}`)),
+          className: meta.className || (meta.sourceLessonId ? meta.sourceLessonId : `Class ${i + 1}`),
           section: meta.section || '',
+          duration: meta.duration,
           date: '',
           target: meta.target || (lines.find(l => l.trim().length > 0) ? cleanPlainText(lines.find(l => l.trim().length > 0)!) : 'Weekly Learning Target'),
           learningOutcomes: meta.learningOutcomes,
           activities: meta.activities || 'Class activities and procedures',
-          needsReview: blocks.some(b => b.needsReview) || !meta.target,
+          needsReview: blocks.some(b => b.needsReview) || !meta.target || !meta.topic || !meta.dayNumber,
           blocks,
         });
       }
@@ -755,9 +1039,15 @@ export function heuristicParseDocument({
 
     lessons.push({
       id: `draft_h_single_${crypto.randomUUID().slice(0, 5)}`,
+      sourceLessonId: meta.sourceLessonId,
+      teacherName: meta.teacherName,
+      subject: meta.subject,
+      topic: meta.topic,
+      dayNumber: meta.dayNumber,
       day: meta.day || 'Monday',
       className: meta.className || 'Class 1',
-      section: '',
+      section: meta.section || '',
+      duration: meta.duration,
       date: '',
       target: meta.target || (lines[0] ? cleanPlainText(lines[0]) : 'Weekly Learning Target'),
       learningOutcomes: meta.learningOutcomes,

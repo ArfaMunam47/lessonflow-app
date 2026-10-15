@@ -429,6 +429,12 @@ class Database {
       section?: string;
       day: string;
       date?: string;
+      teacherName?: string;
+      subject?: string;
+      topic?: string;
+      dayNumber?: string;
+      duration?: string;
+      sourceLessonId?: string;
       target?: string;
       learningOutcomes?: string;
       activities?: string;
@@ -482,10 +488,16 @@ class Database {
       id: recordId,
       weekId,
       userId,
-      className: cleanPlainText(data.className) || 'Class',
+      className: cleanPlainText(data.className) || (data.sourceLessonId ? cleanPlainText(data.sourceLessonId) : 'Class'),
       section: cleanPlainText(data.section) || '',
-      day: cleanPlainText(data.day) || 'Monday',
+      day: cleanPlainText(data.day) || cleanPlainText(data.dayNumber) || 'Day 1',
       date: data.date || '',
+      teacherName: data.teacherName ? cleanPlainText(data.teacherName) : undefined,
+      subject: data.subject ? cleanPlainText(data.subject) : undefined,
+      topic: data.topic ? cleanPlainText(data.topic) : undefined,
+      dayNumber: data.dayNumber ? cleanPlainText(data.dayNumber) : undefined,
+      duration: data.duration ? cleanPlainText(data.duration) : undefined,
+      sourceLessonId: data.sourceLessonId ? cleanPlainText(data.sourceLessonId) : undefined,
       target: cleanPlainText(data.target) || '',
       learningOutcomes: data.learningOutcomes !== undefined ? cleanPlainText(data.learningOutcomes) : undefined,
       activities: cleanPlainText(data.activities) || '',
@@ -515,6 +527,12 @@ class Database {
     if (updates.section !== undefined) record.section = cleanPlainText(updates.section);
     if (updates.day !== undefined) record.day = cleanPlainText(updates.day);
     if (updates.date !== undefined) record.date = updates.date;
+    if (updates.teacherName !== undefined) record.teacherName = cleanPlainText(updates.teacherName);
+    if (updates.subject !== undefined) record.subject = cleanPlainText(updates.subject);
+    if (updates.topic !== undefined) record.topic = cleanPlainText(updates.topic);
+    if (updates.dayNumber !== undefined) record.dayNumber = cleanPlainText(updates.dayNumber);
+    if (updates.duration !== undefined) record.duration = cleanPlainText(updates.duration);
+    if (updates.sourceLessonId !== undefined) record.sourceLessonId = cleanPlainText(updates.sourceLessonId);
     if (updates.target !== undefined) record.target = cleanPlainText(updates.target);
     if (updates.learningOutcomes !== undefined) record.learningOutcomes = cleanPlainText(updates.learningOutcomes);
     if (updates.activities !== undefined) record.activities = cleanPlainText(updates.activities);
