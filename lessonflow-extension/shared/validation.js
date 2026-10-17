@@ -95,8 +95,13 @@ export function validateSelector(selector) {
 
   const s = selector.trim();
 
-  // Safety check: Never target submit/publish buttons
-  if (/type=["']?submit["']?/i.test(s) || /button:contains\(['"]submit['"]\)/i.test(s)) {
+  // Safety check: Never target submit/publish buttons or final submission controls
+  if (
+    /type=["']?submit["']?/i.test(s) ||
+    /button:contains\(['"]submit['"]\)/i.test(s) ||
+    /(?:^|[-_#.])(?:submit|publish)(?:[-_.]|$)/i.test(s) ||
+    /submit[-_]?btn|btn[-_]?submit|submit[-_]?button/i.test(s)
+  ) {
     return { valid: false, error: 'Targeting final submit buttons is strictly prohibited.' };
   }
 
@@ -133,7 +138,8 @@ export function validateMapping(mapping) {
 
 /**
  * Checks if a hostname or URL is suitable for extension operation.
- * Prevents running on chrome://, edge://, or extension gallery pages.
+ * Allows teacher-authorized HTTP/HTTPS school websites, BEAMS, and local test portals.
+ * Prevents running on chrome://, edge://, about:blank, chrome-error://, or extension gallery pages.
  */
 export function isAllowedHost(urlStr) {
   if (!urlStr || typeof urlStr !== 'string') return false;
@@ -143,12 +149,152 @@ export function isAllowedHost(urlStr) {
     if (protocol !== 'http:' && protocol !== 'https:') return false;
 
     const host = parsed.hostname.toLowerCase();
-    // Disallow browser webstores and internal domains
-    if (host.includes('chromewebstore.google.com') || host.includes('chrome.google.com')) {
+    // Disallow browser webstores and internal extension galleries
+    if (
+      host === 'chromewebstore.google.com' ||
+      host === 'chrome.google.com' ||
+      host.endsWith('.chromewebstore.google.com') ||
+      host.includes('microsoftedge.microsoft.com')
+    ) {
       return false;
     }
     return true;
   } catch {
     return false;
+  }
+}
+
+/**
+ * Returns the match pattern origin for Chrome optional host permission requests.
+ * E.g., 'https://beams.school.edu/app' -> 'https://beams.school.edu/*'
+ */
+export function getOriginPattern(urlStr) {
+  if (!urlStr || typeof urlStr !== 'string') return null;
+  try {
+    const parsed = new URL(urlStr);
+    if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') return null;
+    return `${parsed.protocol}//${parsed.hostname}/*`;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Returns rich display and classification info for the active browser tab.
+ */
+export function getTabDisplayInfo(urlStr) {
+  if (!urlStr || typeof urlStr !== 'string') {
+    return {
+      isAllowed: false,
+      hostname: '',
+      origin: '',
+      originPattern: null,
+      friendlyName: 'No active tab',
+      restricted: true,
+      reason: 'No tab URL available.',
+    };
+  }
+
+  try {
+    const parsed = new URL(urlStr);
+    const protocol = parsed.protocol.toLowerCase();
+    const hostname = parsed.hostname.toLowerCase();
+
+    // Browser internal pages
+    if (protocol === 'chrome:' || protocol === 'edge:' || protocol === 'about:') {
+      if (urlStr.includes('newtab') || urlStr === 'about:blank') {
+        return {
+          isAllowed: false,
+          hostname: '',
+          origin: '',
+          originPattern: null,
+          friendlyName: 'New Browser Tab',
+          restricted: true,
+          reason: 'Please navigate to your school website or portal.',
+        };
+      }
+      if (urlStr.includes('extensions')) {
+        return {
+          isAllowed: false,
+          hostname: '',
+          origin: '',
+          originPattern: null,
+          friendlyName: 'Browser Extensions (Restricted)',
+          restricted: true,
+          reason: 'Browser extensions pages cannot be modified.',
+        };
+      }
+      return {
+        isAllowed: false,
+        hostname: '',
+        origin: '',
+        originPattern: null,
+        friendlyName: 'Browser Internal Page (Restricted)',
+        restricted: true,
+        reason: 'Extensions cannot run on browser system pages.',
+      };
+    }
+
+    if (protocol === 'chrome-error:') {
+      return {
+        isAllowed: false,
+        hostname: '',
+        origin: '',
+        originPattern: null,
+        friendlyName: 'Browser Error Page',
+        restricted: true,
+        reason: 'Page failed to load. Check website address.',
+      };
+    }
+
+    if (protocol !== 'http:' && protocol !== 'https:') {
+      return {
+        isAllowed: false,
+        hostname: '',
+        origin: '',
+        originPattern: null,
+        friendlyName: 'Restricted Tab',
+        restricted: true,
+        reason: `Unsupported URL protocol: ${protocol}`,
+      };
+    }
+
+    // Web stores
+    if (
+      hostname === 'chromewebstore.google.com' ||
+      hostname === 'chrome.google.com' ||
+      hostname.endsWith('.chromewebstore.google.com') ||
+      hostname.includes('microsoftedge.microsoft.com')
+    ) {
+      return {
+        isAllowed: false,
+        hostname: parsed.hostname,
+        origin: parsed.origin,
+        originPattern: null,
+        friendlyName: 'Web Store (Restricted)',
+        restricted: true,
+        reason: 'Chrome extensions cannot run inside web store pages.',
+      };
+    }
+
+    const originPattern = `${parsed.protocol}//${parsed.hostname}/*`;
+    return {
+      isAllowed: true,
+      hostname: parsed.hostname,
+      origin: parsed.origin,
+      originPattern,
+      friendlyName: parsed.hostname,
+      restricted: false,
+    };
+  } catch {
+    return {
+      isAllowed: false,
+      hostname: '',
+      origin: '',
+      originPattern: null,
+      friendlyName: 'Special browser tab',
+      restricted: true,
+      reason: 'Could not parse tab URL.',
+    };
   }
 }

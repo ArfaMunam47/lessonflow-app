@@ -42,11 +42,28 @@
     <div id="website-banner" class="lf-card lf-card-website">
       <div class="lf-card-header-compact">
         <span class="lf-section-tag">Target Website</span>
-        <span id="site-status-badge" class="lf-badge lf-badge-neutral">Detecting...</span>
+        <span id="site-status-badge" class="lf-badge lf-badge-neutral">Scanning Tab...</span>
       </div>
       <div class="lf-site-row">
-        <span id="current-hostname" class="lf-hostname">Scanning active tab...</span>
+        <span id="current-hostname" class="lf-hostname">Detecting active website...</span>
       </div>
+
+      <!-- Permission Request Bar (Optional Host Permissions) -->
+      <div id="site-permission-bar" class="lf-site-permission-bar" style="display: none;">
+        <div class="lf-permission-msg">
+          <span>🔒 Access permission required for <strong id="perm-hostname">this site</strong></span>
+          <p class="lf-permission-sub">Click below to grant access to inspect fields and transfer lesson plans.</p>
+        </div>
+        <button id="btn-grant-permission" class="lf-btn lf-btn-primary lf-btn-sm">
+          Grant Website Access
+        </button>
+      </div>
+
+      <!-- Notice box for restricted tabs or errors -->
+      <div id="site-msg-box" class="lf-site-msg-box" style="display: none;">
+        <span id="site-msg-text"></span>
+      </div>
+
       <div class="lf-site-actions">
         <button id="btn-inspect-page" class="lf-btn lf-btn-secondary lf-btn-sm">
           🔍 Inspect Website Fields

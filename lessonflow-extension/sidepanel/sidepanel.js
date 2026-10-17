@@ -12,10 +12,17 @@
 import {
   ConnectionStatus,
   FillMode,
+  PageStatus,
   ExtensionMessage,
   DEFAULT_CONFIG,
 } from '../shared/types.js';
-import { cleanPlainText, validateMapping } from '../shared/validation.js';
+import {
+  cleanPlainText,
+  validateMapping,
+  isAllowedHost,
+  getTabDisplayInfo,
+  getOriginPattern,
+} from '../shared/validation.js';
 
 // Application State
 let config = { ...DEFAULT_CONFIG };
@@ -37,6 +44,12 @@ const elConnPill = document.getElementById('conn-pill');
 const elConnText = document.getElementById('conn-text');
 const elHostname = document.getElementById('current-hostname');
 const elSiteBadge = document.getElementById('site-status-badge');
+const elPermissionBar = document.getElementById('site-permission-bar');
+const elPermHostname = document.getElementById('perm-hostname');
+const elBtnGrantPermission = document.getElementById('btn-grant-permission');
+const elSiteMsgBox = document.getElementById('site-msg-box');
+const elSiteMsgText = document.getElementById('site-msg-text');
+const elBtnInspectPage = document.getElementById('btn-inspect-page');
 const elMappingCount = document.getElementById('mapping-count');
 const elSelectWeek = document.getElementById('select-week');
 const elSelectLesson = document.getElementById('select-lesson');
@@ -91,8 +104,13 @@ function setupEventListeners() {
   });
 
   // Inspection
-  document.getElementById('btn-inspect-page').addEventListener('click', startInspection);
+  elBtnInspectPage.addEventListener('click', startInspection);
   document.getElementById('btn-cancel-inspect').addEventListener('click', cancelInspection);
+
+  // Permission Request
+  if (elBtnGrantPermission) {
+    elBtnGrantPermission.addEventListener('click', handleGrantPermission);
+  }
 
   // Mapping Modal
   document.getElementById('btn-close-map-modal').addEventListener('click', closeMappingModal);
@@ -119,10 +137,30 @@ function setupEventListeners() {
     } else if (message.action === 'LF_INSPECTION_CANCELLED') {
       elInspectBar.style.display = 'none';
       showToast('Inspection cancelled.');
-    } else if (message.action === 'LF_PAGE_NAVIGATED') {
+    } else if (
+      message.action === 'LF_PAGE_NAVIGATED' ||
+      message.action === ExtensionMessage.PAGE_NAVIGATED ||
+      message.action === 'LF_TAB_ACTIVATED' ||
+      message.action === ExtensionMessage.TAB_ACTIVATED
+    ) {
       detectActiveTab();
     }
   });
+
+  // Listen directly for tab switching and navigation if permissions allow
+  if (chrome.tabs && chrome.tabs.onActivated) {
+    chrome.tabs.onActivated.addListener(() => {
+      detectActiveTab();
+    });
+  }
+
+  if (chrome.tabs && chrome.tabs.onUpdated) {
+    chrome.tabs.onUpdated.addListener((tabId, changeInfo) => {
+      if (activeTab && activeTab.id === tabId && (changeInfo.status === 'complete' || changeInfo.url)) {
+        detectActiveTab();
+      }
+    });
+  }
 }
 
 // -------------------------------------------------------------
@@ -137,57 +175,195 @@ async function loadConfiguration() {
   document.getElementById('cfg-api-token').value = config.apiToken;
 }
 
+// -------------------------------------------------------------
+// Active Tab Detection & Injection
+// -------------------------------------------------------------
+function setSiteBadge(text, className) {
+  if (!elSiteBadge) return;
+  elSiteBadge.textContent = text;
+  elSiteBadge.className = `lf-badge ${className}`;
+}
+
+function showPermissionBar(originPattern) {
+  if (elPermHostname) {
+    elPermHostname.textContent = currentHostname || originPattern || 'this website';
+  }
+  if (elPermissionBar) {
+    elPermissionBar.style.display = 'flex';
+  }
+}
+
+function hidePermissionBar() {
+  if (elPermissionBar) {
+    elPermissionBar.style.display = 'none';
+  }
+}
+
+function showSiteMsg(msg) {
+  if (elSiteMsgText && elSiteMsgBox) {
+    elSiteMsgText.textContent = msg;
+    elSiteMsgBox.style.display = 'block';
+  }
+}
+
+function hideSiteMsg() {
+  if (elSiteMsgBox) {
+    elSiteMsgBox.style.display = 'none';
+  }
+  if (elSiteMsgText) {
+    elSiteMsgText.textContent = '';
+  }
+}
+
 async function detectActiveTab() {
+  hidePermissionBar();
+  hideSiteMsg();
+
   try {
     const tabs = await chrome.tabs.query({ active: true, currentWindow: true });
-    if (!tabs || tabs.length === 0) return;
+    if (!tabs || tabs.length === 0) {
+      setSiteBadge('No Active Tab', 'lf-badge-neutral');
+      elHostname.textContent = 'No tab detected';
+      if (elBtnInspectPage) elBtnInspectPage.disabled = true;
+      return;
+    }
 
     activeTab = tabs[0];
-    if (activeTab.url) {
-      try {
-        const urlObj = new URL(activeTab.url);
-        currentHostname = urlObj.hostname;
-        elHostname.textContent = `${currentHostname}${urlObj.pathname.length > 1 ? urlObj.pathname : ''}`;
-        
-        // Ensure content script is ready
-        chrome.runtime.sendMessage({
-          action: 'LF_ENSURE_CONTENT_SCRIPT',
-          tabId: activeTab.id,
-        }).catch(() => {});
+    const tabInfo = getTabDisplayInfo(activeTab.url);
 
-        // Fetch page info
-        checkPageSupport();
-        // Load mappings for this domain
-        await loadMappingsForCurrentSite();
-      } catch {
-        elHostname.textContent = 'Special browser tab';
+    // If page is restricted (chrome://, webstore, about:blank, etc.)
+    if (!tabInfo.isAllowed) {
+      currentHostname = '';
+      activeMappings = [];
+      elMappingCount.textContent = '0';
+      setSiteBadge('Restricted Tab', 'lf-badge-neutral');
+      elHostname.textContent = tabInfo.friendlyName;
+      showSiteMsg(tabInfo.reason || 'Extensions cannot run on this page.');
+      if (elBtnInspectPage) elBtnInspectPage.disabled = true;
+      return;
+    }
+
+    currentHostname = tabInfo.hostname;
+    elHostname.textContent = currentHostname;
+    await loadMappingsForCurrentSite();
+
+    // Set checking status
+    setSiteBadge('Connecting...', 'lf-badge-neutral');
+
+    // Await content script injection
+    const injectRes = await new Promise(resolve => {
+      chrome.runtime.sendMessage(
+        { action: 'LF_ENSURE_CONTENT_SCRIPT', tabId: activeTab.id },
+        resp => {
+          if (chrome.runtime.lastError) {
+            resolve({ success: false, error: chrome.runtime.lastError.message });
+          } else {
+            resolve(resp || { success: false, error: 'No response from background worker.' });
+          }
+        }
+      );
+    });
+
+    if (!injectRes.success) {
+      if (injectRes.needsPermission) {
+        setSiteBadge('Permission Needed', 'lf-badge-warning');
+        showPermissionBar(tabInfo.originPattern || currentHostname);
+        showSiteMsg(`Please grant access to ${currentHostname} to inspect fields and transfer lesson plans.`);
+        if (elBtnInspectPage) elBtnInspectPage.disabled = true;
+        return;
       }
+
+      if (injectRes.restricted) {
+        setSiteBadge('Restricted Page', 'lf-badge-neutral');
+        showSiteMsg(injectRes.error || 'This browser page cannot be modified.');
+        if (elBtnInspectPage) elBtnInspectPage.disabled = true;
+        return;
+      }
+
+      setSiteBadge('Unavailable', 'lf-badge-danger');
+      showSiteMsg(injectRes.error || 'Could not connect to page content.');
+      if (elBtnInspectPage) elBtnInspectPage.disabled = true;
+      return;
+    }
+
+    // Injection succeeded: content script is ready
+    hidePermissionBar();
+    hideSiteMsg();
+    if (elBtnInspectPage) elBtnInspectPage.disabled = false;
+
+    // Fetch page info only after content script is ready
+    await checkPageSupport();
+  } catch (err) {
+    console.warn('[LessonFlow] Failed to detect active tab:', err);
+    setSiteBadge('Error', 'lf-badge-danger');
+    showSiteMsg(`Error: ${err.message || 'Tab detection failed'}`);
+    if (elBtnInspectPage) elBtnInspectPage.disabled = true;
+  }
+}
+
+async function handleGrantPermission() {
+  if (!activeTab || !activeTab.url) {
+    showToast('No active tab to authorize.', 'error');
+    return;
+  }
+
+  const originPattern = getOriginPattern(activeTab.url);
+  if (!originPattern) {
+    showToast('Cannot determine valid origin pattern for this site.', 'error');
+    return;
+  }
+
+  try {
+    if (!chrome.permissions || !chrome.permissions.request) {
+      showToast('Permissions API not available.', 'error');
+      return;
+    }
+
+    // Teacher explicitly initiates permission request for this site
+    const granted = await chrome.permissions.request({
+      origins: [originPattern],
+    });
+
+    if (granted) {
+      showToast(`✓ Permission granted for ${currentHostname}!`, 'success');
+      hidePermissionBar();
+      // Re-run injection now that permission is present
+      await detectActiveTab();
+    } else {
+      setSiteBadge('Access Denied', 'lf-badge-warning');
+      showToast('Website permission request was denied.', 'warning');
     }
   } catch (err) {
-    console.warn('[LessonFlow] Failed to query active tab:', err);
+    console.warn('[LessonFlow] Permission request error:', err);
+    showToast(`Permission error: ${err.message}`, 'error');
   }
 }
 
 async function checkPageSupport() {
   if (!activeTab || !activeTab.id) return;
   try {
-    chrome.tabs.sendMessage(activeTab.id, { action: 'LF_GET_PAGE_INFO' }, resp => {
-      if (chrome.runtime.lastError || !resp) {
-        elSiteBadge.textContent = 'Page accessible';
-        elSiteBadge.className = 'lf-badge lf-badge-neutral';
-        return;
-      }
-
-      if (resp.hasForms) {
-        elSiteBadge.textContent = 'Form Detected';
-        elSiteBadge.className = 'lf-badge lf-badge-ready';
-      } else {
-        elSiteBadge.textContent = 'Active Tab';
-        elSiteBadge.className = 'lf-badge lf-badge-neutral';
-      }
+    const resp = await new Promise(resolve => {
+      chrome.tabs.sendMessage(activeTab.id, { action: 'LF_GET_PAGE_INFO' }, response => {
+        if (chrome.runtime.lastError) {
+          resolve(null);
+        } else {
+          resolve(response);
+        }
+      });
     });
+
+    if (!resp) {
+      setSiteBadge('Page Ready', 'lf-badge-neutral');
+      return;
+    }
+
+    if (resp.hasForms) {
+      setSiteBadge('Form Detected', 'lf-badge-ready');
+    } else {
+      setSiteBadge('Page Ready', 'lf-badge-neutral');
+    }
   } catch {
-    // Ignore tab communication errors
+    setSiteBadge('Page Ready', 'lf-badge-neutral');
   }
 }
 
@@ -678,13 +854,22 @@ function startInspection() {
   }
 
   elInspectBar.style.display = 'flex';
-  chrome.tabs.sendMessage(activeTab.id, { action: ExtensionMessage.START_INSPECTION });
+  chrome.tabs.sendMessage(activeTab.id, { action: ExtensionMessage.START_INSPECTION }, resp => {
+    if (chrome.runtime.lastError) {
+      elInspectBar.style.display = 'none';
+      showToast('Could not start inspector on this page. Check permissions.', 'error');
+    }
+  });
 }
 
 function cancelInspection() {
   elInspectBar.style.display = 'none';
   if (activeTab && activeTab.id) {
-    chrome.tabs.sendMessage(activeTab.id, { action: ExtensionMessage.STOP_INSPECTION });
+    chrome.tabs.sendMessage(activeTab.id, { action: ExtensionMessage.STOP_INSPECTION }, () => {
+      if (chrome.runtime.lastError) {
+        // Ignored
+      }
+    });
   }
 }
 
@@ -761,6 +946,10 @@ async function testCurrentMappingElement() {
     action: ExtensionMessage.TEST_SELECTOR,
     selector: pendingInspectionData.selector,
   }, resp => {
+    if (chrome.runtime.lastError) {
+      showToast(chrome.runtime.lastError.message || 'Error communicating with page.', 'error');
+      return;
+    }
     if (resp && resp.valid) {
       showToast('Element highlighted on school website!', 'success');
     } else {

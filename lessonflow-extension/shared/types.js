@@ -44,6 +44,18 @@ export const MappingElementType = {
   CUSTOM: 'custom',
 };
 
+export const PageStatus = {
+  DETECTING: 'detecting',
+  READY: 'ready',
+  FORM_DETECTED: 'form_detected',
+  NO_FORMS: 'no_forms',
+  RESTRICTED: 'restricted',
+  PERMISSION_NEEDED: 'permission_needed',
+  PERMISSION_DENIED: 'permission_denied',
+  INJECTION_FAILED: 'injection_failed',
+  NO_TAB: 'no_tab',
+};
+
 export const ExtensionMessage = {
   // Sidepanel -> Background / Content Script
   PING: 'LF_PING',
@@ -55,12 +67,15 @@ export const ExtensionMessage = {
   FILL_SINGLE_FIELD: 'LF_FILL_SINGLE_FIELD',
   CLICK_ADD_BLOCK: 'LF_CLICK_ADD_BLOCK',
   VERIFY_BLOCK_COUNT: 'LF_VERIFY_BLOCK_COUNT',
+  ENSURE_CONTENT_SCRIPT: 'LF_ENSURE_CONTENT_SCRIPT',
+  CHECK_HOST_PERMISSION: 'LF_CHECK_HOST_PERMISSION',
   
-  // Content Script -> Sidepanel / Background
+  // Content Script / Background -> Sidepanel
   INSPECTION_RESULT: 'LF_INSPECTION_RESULT',
   INSPECTION_CANCELLED: 'LF_INSPECTION_CANCELLED',
   FILL_RESULT: 'LF_FILL_RESULT',
   PAGE_NAVIGATED: 'LF_PAGE_NAVIGATED',
+  TAB_ACTIVATED: 'LF_TAB_ACTIVATED',
 };
 
 export const DEFAULT_CONFIG = {

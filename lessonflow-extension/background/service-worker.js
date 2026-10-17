@@ -35,30 +35,83 @@ chrome.runtime.onInstalled.addListener(() => {
 
 /**
  * Ensures the content script and styles are injected into the specified tab.
+ * Respects Chrome optional host permissions and detects restricted pages.
  */
-async function ensureContentScriptInjected(tabId) {
+export async function ensureContentScriptInjected(tabId) {
   try {
     const tab = await chrome.tabs.get(tabId).catch(() => null);
-    if (tab && tab.url && !isAllowedHost(tab.url)) {
-      return { success: false, error: 'Cannot inject into restricted page.' };
+    if (!tab || !tab.url) {
+      return { success: false, error: 'Tab not found or no URL available.' };
+    }
+    if (!isAllowedHost(tab.url)) {
+      return {
+        success: false,
+        error: 'Cannot inject into restricted page (internal browser or web store page).',
+        restricted: true,
+      };
     }
 
-    // Send a quick ping to see if already responding
-    const pingResp = await chrome.tabs.sendMessage(tabId, { action: ExtensionMessage.PING }).catch(() => null);
+    // 1. Send a quick ping to see if already responding
+    const pingResp = await new Promise(resolve => {
+      chrome.tabs.sendMessage(tabId, { action: ExtensionMessage.PING }, resp => {
+        if (chrome.runtime.lastError || !resp || !resp.pong) {
+          resolve(null);
+        } else {
+          resolve(resp);
+        }
+      });
+    });
+
     if (pingResp && pingResp.pong) {
-      return { success: true };
+      return { success: true, alreadyInjected: true };
     }
 
-    // Not yet loaded, inject CSS and JS files programmatically using chrome.scripting
-    await chrome.scripting.insertCSS({
-      target: { tabId },
-      files: ['content/content-script.css'],
+    // 2. Not yet loaded: inject CSS and JS files programmatically using chrome.scripting
+    try {
+      if (chrome.scripting && chrome.scripting.insertCSS) {
+        await chrome.scripting.insertCSS({
+          target: { tabId },
+          files: ['content/content-script.css'],
+        });
+      }
+
+      if (chrome.scripting && chrome.scripting.executeScript) {
+        await chrome.scripting.executeScript({
+          target: { tabId },
+          files: ['content/content-script.js'],
+        });
+      }
+    } catch (injErr) {
+      const msg = injErr?.message || '';
+      const isPermissionDenied = /permission|must request permission|cannot access|host permission/i.test(msg);
+      const isRestricted = /cannot access a chrome:|restricted|cannot be scripted/i.test(msg);
+
+      return {
+        success: false,
+        error: isPermissionDenied ? 'Host permission required for this website.' : msg,
+        needsPermission: isPermissionDenied,
+        restricted: isRestricted,
+      };
+    }
+
+    // 3. Verify newly injected content script responds
+    const verifyResp = await new Promise(resolve => {
+      chrome.tabs.sendMessage(tabId, { action: ExtensionMessage.PING }, resp => {
+        if (chrome.runtime.lastError || !resp || !resp.pong) {
+          resolve(null);
+        } else {
+          resolve(resp);
+        }
+      });
     });
 
-    await chrome.scripting.executeScript({
-      target: { tabId },
-      files: ['content/content-script.js'],
-    });
+    if (!verifyResp || !verifyResp.pong) {
+      return {
+        success: false,
+        error: 'Content script was injected but did not respond to ping.',
+        missingResponse: true,
+      };
+    }
 
     return { success: true };
   } catch (err) {
@@ -78,7 +131,10 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   }
 
   // 2. Ensure content script is ready in active tab
-  if (message.action === 'LF_ENSURE_CONTENT_SCRIPT') {
+  if (
+    message.action === 'LF_ENSURE_CONTENT_SCRIPT' ||
+    message.action === ExtensionMessage.ENSURE_CONTENT_SCRIPT
+  ) {
     ensureContentScriptInjected(message.tabId)
       .then(res => sendResponse(res))
       .catch(err => sendResponse({ success: false, error: err.message }));
@@ -103,7 +159,12 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 
     ensureContentScriptInjected(tabId).then(injectRes => {
       if (!injectRes.success) {
-        sendResponse({ success: false, error: `Could not connect to active page: ${injectRes.error}` });
+        sendResponse({
+          success: false,
+          error: `Could not connect to active page: ${injectRes.error}`,
+          needsPermission: injectRes.needsPermission,
+          restricted: injectRes.restricted,
+        });
         return;
       }
 
@@ -125,16 +186,27 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   return false;
 });
 
-// Guard: monitor tab updates and notify sidepanel if the user navigates away
+// Guard: monitor tab updates and notify sidepanel
 chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
-  if (changeInfo.status === 'complete' && tab.url && isAllowedHost(tab.url)) {
+  if (tab && tab.url && (changeInfo.status === 'complete' || changeInfo.url)) {
     chrome.runtime.sendMessage({
       action: ExtensionMessage.PAGE_NAVIGATED,
       tabId,
       url: tab.url,
-      hostname: new URL(tab.url).hostname,
+      hostname: isAllowedHost(tab.url) ? new URL(tab.url).hostname : '',
+      restricted: !isAllowedHost(tab.url),
     }).catch(() => {
       // Side panel may be closed, ignore
     });
   }
+});
+
+// Guard: monitor tab switches (activation) and notify sidepanel
+chrome.tabs.onActivated.addListener(activeInfo => {
+  chrome.runtime.sendMessage({
+    action: ExtensionMessage.TAB_ACTIVATED,
+    tabId: activeInfo.tabId,
+  }).catch(() => {
+    // Side panel may be closed, ignore
+  });
 });
